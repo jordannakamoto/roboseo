@@ -5,11 +5,19 @@
  * @see https://v0.dev/t/N0Z21HnAW8v
  */
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import React, {useState} from 'react'
 
 import { Button } from "@/components/ui/button"
 import axios from 'axios'
 
 export default function TestBar() {
+  const [isMinimized, setIsMinimized] = useState(false);
+
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
+
 
   const imageToText = async () => {
     console.log("hello")
@@ -28,15 +36,45 @@ export default function TestBar() {
       }
   };
 
+  const renameFrogFolders = async () => {
+    try {
+      const response = await fetch('/api/rename-frog-folders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Send any necessary data
+      });
+  
+      if (!response.ok) {
+        throw new Error('Error processing files');
+      }
+  
+      // Handle response data
+      const result = await response.json();
+      console.log(result);
+    } catch (error) {
+      console.error('Failed to process files:', error);
+    }
+  };
+
   return (
     (
-      <Card className="max-w-md mx-auto" style={{position:'absolute',right:'0',bottom:'0'}}>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">Test Functions</h3>
-        </CardHeader>
+      <Card className="max-w-md mx-auto" style={{position: 'absolute', right: '0', bottom: '0'}}>
+      <CardHeader>
+        <div className="flex justify-between items-center w-full">
+          <h3 className="text-sm font-semibold">Test Functions</h3>
+          <Button onClick={toggleMinimize} variant="ghost">
+            {isMinimized ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+          </Button>
+        </div>
+      </CardHeader>
+      {!isMinimized && (
         <CardContent className="flex flex-col items-center space-y-2">
-          <Button onClick= {imageToText} className="" variant="outline">Read Image</Button>
+          <Button onClick={imageToText} variant="outline">Read Image</Button>
+          <Button onClick={renameFrogFolders} variant="outline">Rename Frog Folders</Button>
         </CardContent>
-      </Card>)
+      )}
+    </Card>)
   );
 }

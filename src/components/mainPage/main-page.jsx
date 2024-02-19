@@ -1,57 +1,72 @@
-import AltTagPanel from "./alt-tag-panel"
-import { Button } from "@/components/ui/button"
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/dIQtGOmibVk
- */
-import { Label } from "@/components/ui/label"
-import { Link2Icon } from "@radix-ui/react-icons"
-import Sidebar from "@/components/mainPage/sidebar"
-import TestBar from '@/components/misc/testbar'
-import { Textarea } from "@/components/ui/textarea"
+'use client';
+
+import React, { useEffect, useState } from 'react';
+
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Link2Icon } from "@radix-ui/react-icons";
+import Sidebar from "@/components/mainPage/sidebar";
+import TestBar from '@/components/misc/testbar';
+import { Textarea } from "@/components/ui/textarea";
+import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 export default function Component() {
+  // Using the context to get the webpages
+  const { clientWebpageData } = useClientWebpage();
+  const [activeTab, setActiveTab] = useState(null);
+
+  // Ensure there's an array to map over, even if it's empty
+  const webpages = Array.isArray(clientWebpageData) ? clientWebpageData : [];
+
+  // Set the first webpage as the active tab on initial load
+  useEffect(() => {
+    if (webpages.length > 0 && activeTab === null) {
+      setActiveTab(webpages[0].webpageTitle);
+    }
+  }, [webpages, activeTab]);
 
   return (
-    <div className="flex w-full">
-      <Sidebar/>
-      <div className="grid gap-6 p-4 md:p-6" style={{ width: 800 }}>
-      <div className="bg-white rounded-lg shadow-md dark:bg-gray-950">
+      <div className="flex w-full">
+        <Sidebar />
+        <div className="grid gap-6 p-4 md:p-6" style={{ width: 800 }}>
+          <div className="bg-white rounded-lg shadow-md dark:bg-gray-950">
             <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-800">
-                <h2 className="text-xl font-bold">HomePage</h2>
-                <a href="your-url-here">
-                <Button variant="outline">
-                    <Link2Icon className="h-4 w-4" />
+              {/* Tab Headers */}
+              <div className="flex space-x-4">
+              {webpages.map((webpage) => (
+                <Button
+                  key={webpage.webpageTitle}
+                  variant="outline"
+                  onClick={() => setActiveTab(webpage.webpageTitle)}
+                  style={{
+                    textDecoration: activeTab === webpage.webpageTitle ? 'underline' : 'none',
+                  }}
+                >
+                  {webpage.webpageTitle}
                 </Button>
-                </a>
-            </div>
-            <div className="grid gap-4 p-4 md:grid-cols-3">
-            <div className="md:col-span-1">
-              <Label htmlFor="keywords" className="mr-2">Keywords</Label>
-              <ul className="list-inside border border-gray-200 rounded p-4" style={{ fontSize: "13px" }}>
-                <li>student apartments knoxville tn</li>
-                <li>knoxville student apartments</li>
-                <li>apartments for rent near university of tennessee knoxville</li>
-              </ul>
-            </div>
-            <div className="md:col-span-2">
-              <div className="grid gap-1.5">
-                <Label htmlFor="title-1-after" className="mr-2">Title</Label>
-                <Textarea id="title-1-after" placeholder="Enter title here." />
-                <Label htmlFor="meta-1-after" className="mr-2">Meta</Label>
-                <Textarea id="meta-1-after" placeholder="Enter meta here." />
-                <Label htmlFor="h1-1-after" className="mr-2">H1</Label>
-                <Textarea id="h1-1-after" placeholder="Enter H1 here." />
-                <Label htmlFor="onPage-1-after" className="mr-2">On-Page</Label>
-                <Textarea id="onPage-1-after" placeholder="Enter copy here." />
+              ))}
               </div>
+              <a href={webpages.find(webpage => webpage.webpageTitle === activeTab)?.webpageUrl || '#'}>
+                <Button variant="outline">
+                  <Link2Icon className="h-4 w-4" />
+                </Button>
+              </a>
+            </div>
+            {/* Tab Content */}
+            <div className="p-4">
+              {webpages
+                .filter(webpage => webpage.webpageTitle === activeTab)
+                .map((webpage) => (
+                  <div key={webpage.webpageTitle}>
+                    <Label>{webpage.webpageTitle}</Label>
+                    <Textarea placeholder={`Content for ${webpage.webpageTitle}`} />
+                    {/* You may want to include other fields from the webpage object */}
+                  </div>
+                ))}
             </div>
           </div>
         </div>
-        
+        <TestBar />
       </div>
-      {/* <AltTagPanel/> */}
-      <TestBar/>
-    </div>
-  )
+  );
 }
