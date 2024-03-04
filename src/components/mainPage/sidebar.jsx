@@ -11,7 +11,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 export default function Sidebar () {
     const [tokens, setTokens] = useState(null);
     const [clientList, setClientList] = useState([]);
-    const { clientWebpageData, setClientWebpageData } = useClientWebpage(); // Use the hook at the top level
+    const { setPages } = useClientWebpage(); // Use the hook at the top level
 
     // Load Stored Tokens
     useEffect(() => {
@@ -142,7 +142,7 @@ export default function Sidebar () {
 
             const webpagesResult = await webpagesResponse.json();
             const webPages = webpagesResult.webpages; // Assuming the backend sends an object with a webpages array
-            setClientWebpageData(webPages);
+            setPages(webPages);
             // Now we have a list of webpages
             
           } catch (error) {

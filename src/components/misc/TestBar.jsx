@@ -10,9 +10,11 @@ import React, {useState} from 'react'
 
 import { Button } from "@/components/ui/button"
 import axios from 'axios'
+import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 export default function TestBar() {
-  const [isMinimized, setIsMinimized] = useState(false);
+  const { pages, setPages } = useClientWebpage();
+  const [isMinimized, setIsMinimized] = useState(true);
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
@@ -58,6 +60,32 @@ export default function TestBar() {
     }
   };
 
+  // I'm gonna have to use a context provider
+  const testCSVParse = async () => {
+    try {
+      const response = await fetch('/api/load-from-frog', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dir: "unionknoxville",
+          webpages: pages // Add the webpages array here
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error('Error processing files');
+      }
+  
+      // Handle response data
+      const result = await response.json();
+      console.log(result);
+    } catch (error) {
+      console.error('Failed to process files:', error);
+    }
+  };
+
   return (
     (
       <Card className="max-w-md mx-auto" style={{position: 'absolute', right: '0', bottom: '0'}}>
@@ -73,6 +101,7 @@ export default function TestBar() {
         <CardContent className="flex flex-col items-center space-y-2">
           <Button onClick={imageToText} variant="outline">Read Image</Button>
           <Button onClick={renameFrogFolders} variant="outline">Rename Frog Folders</Button>
+          <Button onClick={testCSVParse} variant="outline">Parse CSV</Button>
         </CardContent>
       )}
     </Card>)

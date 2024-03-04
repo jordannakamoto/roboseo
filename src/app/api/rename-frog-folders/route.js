@@ -1,3 +1,6 @@
+// Renames a frog folder name based on the contents the related CSV file
+//
+
 import fs from 'fs';
 import path from 'path';
 

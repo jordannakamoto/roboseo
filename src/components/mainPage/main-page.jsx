@@ -12,12 +12,12 @@ import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 export default function Component() {
   // Using the context to get the webpages
-  const { clientWebpageData } = useClientWebpage();
+  const { pages, setPages } = useClientWebpage();
   const [activeTab, setActiveTab] = useState(null);
 
   // Ensure there's an array to map over, even if it's empty
-  const webpages = Array.isArray(clientWebpageData) ? clientWebpageData : [];
-
+  const webpages = pages.length ? pages : [];
+  
   // Set the first webpage as the active tab on initial load
   useEffect(() => {
     if (webpages.length > 0 && activeTab === null) {
