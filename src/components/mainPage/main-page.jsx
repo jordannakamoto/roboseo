@@ -26,19 +26,21 @@ export default function Component() {
   }, [webpages, activeTab]);
 
   return (
-      <div className="flex w-full">
+      <div className="flex h-screen w-full">
         <Sidebar />
         <div className="grid gap-6 p-4 md:p-6" style={{ width: 800 }}>
           <div className="bg-white rounded-lg shadow-md dark:bg-gray-950">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center">
               {/* Tab Headers */}
-              <div className="flex space-x-4">
+              <div className="flex">
               {webpages.map((webpage) => (
                 <Button
                   key={webpage.webpageTitle}
                   variant="outline"
                   onClick={() => setActiveTab(webpage.webpageTitle)}
                   style={{
+                    borderBottom: "none",
+                    borderRadius: 0,
                     textDecoration: activeTab === webpage.webpageTitle ? 'underline' : 'none',
                   }}
                 >
@@ -59,6 +61,8 @@ export default function Component() {
                 .map((webpage) => (
                   <div key={webpage.webpageTitle}>
                     <Label>{webpage.webpageTitle}</Label>
+                    <Textarea placeholder={`Content for ${webpage.webpageTitle}`} />
+                    <Textarea placeholder={`Content for ${webpage.webpageTitle}`} />
                     <Textarea placeholder={`Content for ${webpage.webpageTitle}`} />
                     {/* You may want to include other fields from the webpage object */}
                   </div>

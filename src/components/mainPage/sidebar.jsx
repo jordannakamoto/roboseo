@@ -11,6 +11,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 export default function Sidebar () {
     const [tokens, setTokens] = useState(null);
     const [clientList, setClientList] = useState([]);
+    const [isSidebarVisible, setIsSidebarVisible] = useState(true); // State to control visibility
     const { setPages } = useClientWebpage(); // Use the hook at the top level
 
     // Load Stored Tokens
@@ -71,6 +72,24 @@ export default function Sidebar () {
           }
       }
     }, []);
+
+    useEffect(() => {
+      // Event handler to capture key combinations
+      const handleKeyDown = (event) => {
+          if (event.metaKey && (event.key === 'ArrowRight' || event.key === 'ArrowLeft')) {
+            setIsSidebarVisible(!isSidebarVisible);
+            console.log(isSidebarVisible);
+          }
+      };
+
+      // Add event listener for keyboard events
+      document.addEventListener('keydown', handleKeyDown);
+
+      // Cleanup function to remove the event listener
+      return () => {
+          document.removeEventListener('keydown', handleKeyDown);
+      };
+  }, [isSidebarVisible]);
 
     const login = useGoogleLogin({
       onSuccess: async ({ code }) => {
@@ -212,20 +231,22 @@ export default function Sidebar () {
     };
 
     return (
-        <div className="md:col-span-1 border-r border-gray-200 mr-10 p-5" style={{ background: 'rgba(255, 255, 255, 0.3)', width: '180px' }}>
-            <ul className="list-inside" style={{ fontSize: "13px" }}>
-              {clientList.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-            <div id="userConfig" className="mt-20">
-            <input onChange={handleLoadClient} id="active-client-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="Active Client"></input>
-            <input onChange={handleLoadSheet} id="master-sheet-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="mastersheet url" style={{fontSize:"11px"}}></input>
-                {/* Conditionally render button text and style based on `tokens` state */}
-                <Button onClick={!tokens ? login : undefined} disabled={!!tokens} style={{ opacity: tokens ? 0.5 : 1, cursor: tokens ? 'not-allowed' : 'pointer' }}>
-                    {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
-                </Button>
-            </div>
+      <div id="sidebar-wrapper" className={isSidebarVisible ? '' : 'hidden'}>
+          <div className="h-screen md:col-span-1 border-r border-gray-200 mr-10 p-5}" style={{ background: 'rgba(255, 255, 255, 0.3)', width: '180px' }}>
+              <ul className="list-inside p-5" style={{ fontSize: "13px" }}>
+                {clientList.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+              <div id="userConfig" className="mt-20">
+              <input onChange={handleLoadClient} id="active-client-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="Active Client"></input>
+              <input onChange={handleLoadSheet} id="master-sheet-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="mastersheet url" style={{fontSize:"11px"}}></input>
+                  {/* Conditionally render button text and style based on `tokens` state */}
+                  <Button onClick={!tokens ? login : undefined} disabled={!!tokens} style={{ opacity: tokens ? 0.5 : 1, cursor: tokens ? 'not-allowed' : 'pointer' }}>
+                      {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
+                  </Button>
+              </div>
+          </div>
         </div>
     );
 }
