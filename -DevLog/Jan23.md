@@ -1,0 +1,1 @@
+Disabled alt-tag bar
