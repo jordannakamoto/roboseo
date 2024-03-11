@@ -20,17 +20,17 @@ export async function POST(request) {
     });
     console.log(response)
 
-    // writing test
-    const write = await sheets.spreadsheets.values.update({
-        spreadsheetId: data.spreadsheetId,
-        range: 'A29', // Specify the target cell
-        valueInputOption: 'RAW', // Treat the input as plain text
-        resource: {
-            values: [['programmer: jnax']] // The value you want to write
-        }
-    })
+    // // writing test
+    // const write = await sheets.spreadsheets.values.update({
+    //     spreadsheetId: data.spreadsheetId,
+    //     range: 'A29', // Specify the target cell
+    //     valueInputOption: 'RAW', // Treat the input as plain text
+    //     resource: {
+    //         values: [['programmer: jnax']] // The value you want to write
+    //     }
+    // })
 
-    console.log(write)
+    // console.log(write)
 
     return NextResponse.json({ response }, { status: 200 });
 }

@@ -42,30 +42,15 @@ export default function Sidebar () {
       } catch (error) {
         console.error("Error loading master sheet URL from local storage:", error);
         localStorage.removeItem('masterSheetURL');
-      }
+      };
       // LOAD CLIENT LIST
-      try {
-        const storedTokens = localStorage.getItem('client');
-        if (storedTokens) {
-          const savedTokens = JSON.parse(storedTokens);
-          // Ensure that the parsed tokens are in the expected format or not null
-          if (savedTokens && typeof savedTokens === 'object') {
-            setTokens(savedTokens);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading tokens from local storage:", error);
-        // Handle error or clear corrupted local storage item if necessary
-        localStorage.removeItem('tokens');
-      }
-      // LOAD CLIENT LIST
-      const storedClientNames = localStorage.getItem('clientNames');
-      if (storedClientNames) {
+      const storedClients = localStorage.getItem('clients');
+      if (storedClients) {
           try {
               // Parse the JSON string to an array
-              const clientNamesArray = JSON.parse(storedClientNames);
+              const clientArray = JSON.parse(storedClients);
               // Update the clientList state with the retrieved array
-              setClientList(clientNamesArray);
+              setClientList(clientArray);
           } catch (error) {
               console.error("Error parsing clientNames from local storage:", error);
               // Handle parsing error (e.g., corrupted data)
@@ -170,8 +155,7 @@ export default function Sidebar () {
 
           // ... get the webpages
 
-          
-
+        
         } catch (error) {
           console.error('Failed to load sheet titles:', error);
         }
@@ -184,8 +168,13 @@ export default function Sidebar () {
       const url = document.getElementById('master-sheet-url').value;
       const sheetId = extractSheetIdFromUrl(url);
 
+      const now = new Date();
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
       // TODO date corresponding to sheet name...
-      const test_date = 'January 2023';
+      const test_date = 'January 2023'; //'${monthNames[now.getMonth()]} 2023'
       const range = `${test_date}!C:G`;
 
       if (sheetId && tokens) {
@@ -207,15 +196,18 @@ export default function Sidebar () {
           }
 
           let res = await response.json();
-          console.log(res.response.data.values)
+          // console.log(res.response.data.values)
           let data = res.response.data.values.slice(1) // Skip the first row
           .filter(row => row[0] && row.length > 2 ) // Filter out empty rows or rows that have notes in them
 
-          const clientNames = data.map(row => row[0]);
+          let clients = data.map(row => ({
+            name: row[0],
+            workbookURL: row[4]
+          }));
 
-          setClientList(clientNames);
+          setClientList(clients);
           localStorage.setItem('masterSheetURL', JSON.stringify(url));
-          localStorage.setItem('clientNames', JSON.stringify(clientNames));
+          localStorage.setItem('clients', JSON.stringify(clients));
 
         } catch (error) {
           console.error('Failed to load sheet:', error);
@@ -233,19 +225,19 @@ export default function Sidebar () {
     return (
       <div id="sidebar-wrapper" className={isSidebarVisible ? '' : 'hidden'}>
           <div className="h-screen md:col-span-1 border-r border-gray-200 mr-10 p-5}" style={{ background: 'rgba(255, 255, 255, 0.3)', width: '180px' }}>
-              <ul className="list-inside p-5" style={{ fontSize: "13px" }}>
-                {clientList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-              <div id="userConfig" className="mt-20">
+              <div id="userConfig" className="pt-5">
               <input onChange={handleLoadClient} id="active-client-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="Active Client"></input>
               <input onChange={handleLoadSheet} id="master-sheet-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="mastersheet url" style={{fontSize:"11px"}}></input>
                   {/* Conditionally render button text and style based on `tokens` state */}
-                  <Button onClick={!tokens ? login : undefined} disabled={!!tokens} style={{ opacity: tokens ? 0.5 : 1, cursor: tokens ? 'not-allowed' : 'pointer' }}>
+                  <Button onClick={login} style={{ opacity: tokens ? 0.1 : 1}}>
                       {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
                   </Button>
               </div>
+              <ul className="list-inside p-5" style={{ fontSize: "13px" }}>
+                {clientList.map((item, index) => (
+                  <li key={index}>{item.name}</li>
+                ))}
+              </ul>
           </div>
         </div>
     );
