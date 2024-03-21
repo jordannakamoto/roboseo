@@ -148,7 +148,6 @@ export default function Sidebar () {
             const webPages = webpagesResult.webpages; // Assuming the backend sends an object with a webpages array
             setPages(webPages);
             setSheetTitles(sheetTitles);
-            console.log(sheetTitles);
             // Now we have a list of webpages
             
           } catch (error) {
