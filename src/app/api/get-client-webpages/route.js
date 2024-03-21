@@ -51,8 +51,8 @@ export async function POST(request) {
         }
 
         const webpages = rows.slice(rowIndex + 1).map(row => ({
-            webpageTitle: row[pageIndex] || '',
-            webpageUrl: row[urlIndex] || '',
+            name: row[pageIndex] || '',
+            url: row[urlIndex] || '',
         }));
 
         return NextResponse.json({ webpages }, { status: 200 });

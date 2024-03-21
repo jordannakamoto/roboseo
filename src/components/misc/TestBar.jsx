@@ -79,8 +79,21 @@ export default function TestBar() {
       }
   
       // Handle response data
-      const result = await response.json();
-      console.log(result);
+      const { result } = await response.json();
+
+      // Assuming 'result' is the array of objects with the scraped data
+      // Make sure to include the 'name' field when mapping over your data
+      let mergedData = pages.map(page => {
+        const matchingResult = result.find(r => r.url === page.url);
+        return {
+          ...matchingResult, // This spreads all properties from the matching result
+          ...page,           // This spreads all properties from the page, potentially overwriting duplicates from result
+          name: page.name    // Ensure the 'name' field is explicitly set from the page object
+        };
+      });
+
+      setPages(mergedData);
+      console.log(pages);
     } catch (error) {
       console.error('Failed to process files:', error);
     }

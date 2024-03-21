@@ -12,7 +12,7 @@ export default function Sidebar () {
     const [tokens, setTokens] = useState(null);
     const [clientList, setClientList] = useState([]);
     const [isSidebarVisible, setIsSidebarVisible] = useState(true); // State to control visibility
-    const { setPages } = useClientWebpage(); // Use the hook at the top level
+    const { setPages, setSheetTitles } = useClientWebpage(); // Use the hook at the top level
 
     // Load Stored Tokens
     useEffect(() => {
@@ -147,6 +147,8 @@ export default function Sidebar () {
             const webpagesResult = await webpagesResponse.json();
             const webPages = webpagesResult.webpages; // Assuming the backend sends an object with a webpages array
             setPages(webPages);
+            setSheetTitles(sheetTitles);
+            console.log(sheetTitles);
             // Now we have a list of webpages
             
           } catch (error) {

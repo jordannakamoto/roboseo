@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Link2Icon } from "@radix-ui/react-icons";
 import Sidebar from "@/components/mainPage/sidebar";
+import TableView from '@/components/mainPage/tableview'
 import TestBar from '@/components/misc/testbar';
 import { Textarea } from "@/components/ui/textarea";
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
@@ -21,6 +22,7 @@ export default function Component() {
   return (
       <div className="flex h-screen w-full">
         <Sidebar/>
+        <TableView webpages={pages} />
         <TestBar />
       </div>
   );

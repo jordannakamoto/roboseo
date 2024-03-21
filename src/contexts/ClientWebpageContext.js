@@ -5,9 +5,11 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 // Create the context with initial values and setter functions placeholders
 const ClientWebpageContext = createContext({
   clientName: '',
+  sheetTitles: [],
   pages: [], // Added pages array
   setClientName: () => {},
   setPages: () => {}, // Setter function for pages
+  setSheetTitles: () => {},
 });
 
 // Hook to use the context
@@ -16,6 +18,7 @@ export const useClientWebpage = () => useContext(ClientWebpageContext);
 // Provider component
 export const ClientWebpageProvider = ({ children }) => {
   const [clientName, setClientName] = useState('');
+  const [sheetTitles, setSheetTitles] = useState([]);
   const [pages, setPages] = useState([]); // State for pages
 
   // // Example of a custom setter function to add a page to the pages array
@@ -32,8 +35,10 @@ export const ClientWebpageProvider = ({ children }) => {
   const value = {
     clientName,
     pages,
+    sheetTitles,
     setClientName,
-    setPages
+    setPages,
+    setSheetTitles
   };
 
   return (

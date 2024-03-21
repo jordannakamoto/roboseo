@@ -18,7 +18,7 @@ export default function Component() {
   // Ensure there's an array to map over, even if it's empty
   const webpages = pages.length ? pages : [];
   
-  // Set the first webpage as the active tab on initial load
+  // Set the first webpage as the active tab on initial 
   useEffect(() => {
     if (webpages.length > 0 && activeTab === null) {
       setActiveTab(webpages[0].webpageTitle);
