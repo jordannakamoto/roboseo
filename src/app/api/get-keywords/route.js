@@ -5,7 +5,6 @@ import { google } from 'googleapis';
 
 export async function POST(request) {
     const data = await request.json();
-    // console.log(data);
 
     const client = new OAuth2Client(
         process.env.CLIENT_ID,
@@ -29,34 +28,53 @@ export async function POST(request) {
         let pageIndex;
         let urlIndex;
 
-        // console.log(rows.length)
-        while (rowIndex < rows.length) { // && (pageIndex === undefined || urlIndex === undefined)
+        // Determine the index of the header row
+        while (rowIndex < rows.length) {
             const row = rows[rowIndex].map(header => header.toLowerCase());
-            // console.log(row);
-            pageIndex = row.indexOf('page name');
-            urlIndex = row.indexOf('url');
-            if (pageIndex !== -1) {
+            pageIndex = row.indexOf('keywords');     // get column of keyword
+            urlIndex = row.indexOf('target page');  // get column of url ('target page')
+            if (pageIndex !== -1) { // break if we found the expected header
                 headerRow = row;
                 break;
             }
             rowIndex++;
         }
+        
         // ERROR CHECK
         if (!headerRow) {
             throw new Error('Required columns not found');
         }
         if (pageIndex === -1 || urlIndex === -1) {
-            // console.log(pageIndex)
-            // console.log(urlIndex)
+            // console.log(pageIndex); console.log(urlIndex);
             throw new Error('Required columns not found');
         }
 
-        const webpages = rows.slice(rowIndex + 1).map(row => ({
-            name: row[pageIndex] || '',
-            url: row[urlIndex] || '',
-        }));
+        let keywords_groups = rows.slice(rowIndex + 1).reduce((acc, row) => {
+            const keywords = row[pageIndex] || '';
+            const url = row[urlIndex] || '';
 
-        return NextResponse.json({ webpages }, { status: 200 });
+            // set multiple keywords to array keyed by url
+            if (acc[url]) {
+                acc[url].push(keywords);
+            } else {
+                acc[url] = [keywords];
+            }
+            return acc;
+        }, {});
+
+        
+        data.pages.forEach(page => {
+            const matchingUrl = Object.keys(keywords_groups).find(url => url === page.url);
+            if (matchingUrl) {
+                page.keywords = keywords_groups[matchingUrl];
+            } else {
+                page.keywords = []; // or any default value if no matching webpage is found
+            }
+        });
+
+        const webpagesWithKeywords = data.pages;
+
+        return NextResponse.json( {webpagesWithKeywords} , { status: 200 });
     } catch (error) {
         console.error('Failed to process sheet:', error);
         // Respond with an error message

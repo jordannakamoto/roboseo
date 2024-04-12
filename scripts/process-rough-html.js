@@ -1,3 +1,5 @@
+// Removes HTML tags and extraneous newlines
+
 const fs = require('fs');
 const csvParser = require('csv-parser');
 const { JSDOM } = require('jsdom');

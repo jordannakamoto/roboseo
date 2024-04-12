@@ -2,148 +2,101 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
+async function getSheetValues(client, sheetId, sheetName) {
+    const range = `${sheetName}!A:A`;
+    const response = await client.spreadsheets.values.batchGet({
+        spreadsheetId: sheetId,
+        ranges: range,
+    });
+    return response.data.valueRanges[0].values.flat();
+}
+
+async function updateSheetValues(client, sheetId, sheetName, updates) {
+    if (updates.length > 0) {
+        await client.spreadsheets.values.batchUpdate({
+            spreadsheetId: sheetId,
+            requestBody: {
+                valueInputOption: 'RAW',
+                data: updates,
+            }   ,
+        });
+    }
+}
+
 export async function POST(request) {
     const data = await request.json();
-  
+
     const client = new OAuth2Client(
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET,
-    'http://localhost:3000',
+        process.env.CLIENT_ID,
+        process.env.CLIENT_SECRET,
+        'http://localhost:3000',
     );
 
-    // reading test
     client.setCredentials(data.tokens)
-    const sheets = google.sheets({ version: 'v4', auth: client});
+    const sheets = google.sheets({ version: 'v4', auth: client });
 
-    let sheetTitles = data.sheetTitles;
-
-    // Find the sheet with "Title Tag" in its name
-    const titleTagSheetName = sheetTitles.find(title => title.includes("Title Tag"));
-    
-    if (!titleTagSheetName) {
-        return NextResponse.json({ error: 'No sheet with "Title Tag" in its name found.' }, { status: 404 });
-    }
-    // console.log(titleTagSheetName);
-
-    // Prepare batchGet to read column A values from the found sheet
-    let range = `${titleTagSheetName}!A:A`; // Adjust the range if needed
-    let readResponse = await sheets.spreadsheets.values.batchGet({
-        spreadsheetId: data.sheetId,
-        ranges: range,
-    });
-
-    let columnAValues = readResponse.data.valueRanges[0].values.flat();
-
-    // Prepare batchUpdate request body
-    let batchUpdateData = [];
-
-    data.webpages.forEach(page => {
-        const rowIndex = columnAValues.findIndex(value => value === page.name);
-        if (rowIndex !== -1) {
-            // +1 due to Google Sheets indexing, +1 to skip header if present
-            const cell = `D${rowIndex + 2}`; 
-            batchUpdateData.push({
-                range: `${titleTagSheetName}!${cell}`,
-                values: [[page.title]],
-            });
+    const findAndProcessSheet = async (keyword, processRow) => {
+        const sheetName = data.sheetTitles.find(title => title.includes(keyword));
+        if (!sheetName) {
+            return { error: `No sheet with "${keyword}" in its name found.`, status: 404 };
         }
-    });
+        
+        const columnAValues = await getSheetValues(sheets, data.sheetId, sheetName);
+        const batchUpdateData = [];
 
-    // Execute batchUpdate if there's any data to update
-    if (batchUpdateData.length > 0) {
-        await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId: data.sheetId,
-            requestBody: {
-                valueInputOption: 'RAW',
-                data: batchUpdateData,
-            },
+        data.webpages.forEach(page => {
+            const rowIndex = columnAValues.findIndex(value => value === page.name);
+            if (rowIndex !== -1) {
+                processRow(page, rowIndex, batchUpdateData, sheetName);
+            }
         });
-    }
 
-    const metaSheetName = sheetTitles.find(title => title.includes("Meta"));
+        await updateSheetValues(sheets, data.sheetId, sheetName, batchUpdateData);
+        return { updatedCells: batchUpdateData.length };
+    };
 
-    if (!metaSheetName) {
-        return NextResponse.json({ error: 'No sheet with "Meta" in its name found.' }, { status: 404 });
-    }
+    const processResults = [];
+    processResults.push(await findAndProcessSheet("Title Tag", (page, rowIndex, updates, sheetName) => {
+        const baseIndex = rowIndex + 2;
+        updates.push(
+            { range: `${sheetName}!C${baseIndex}`, values: [[page.keywords.join('\n')]] },
+            { range: `${sheetName}!D${baseIndex}`, values: [[page.title]] },
+            { range: `${sheetName}!F${baseIndex}`, values: [[page.title]] }
+        );
+    }));
 
-    // Prepare batchGet to read column A values from the found sheet
-    range = `${metaSheetName}!A:A`; // Adjust the range if needed
-    readResponse = await sheets.spreadsheets.values.batchGet({
-        spreadsheetId: data.sheetId,
-        ranges: range,
-    });
+    // Repeat for "Meta" and "H1/H2" sheets with appropriate adjustments
+    processResults.push(await findAndProcessSheet("Meta", (page, rowIndex, updates, sheetName) => {
+        const baseIndex = rowIndex + 2;
+        updates.push(
+            { range: `${sheetName}!D${baseIndex}`, values: [[page.meta]] },
+            { range: `${sheetName}!F${baseIndex}`, values: [[page.meta]] }
+        );
+    }));
 
-    columnAValues = readResponse.data.valueRanges[0].values.flat();
-
-    // Prepare batchUpdate request body
-    batchUpdateData = [];
-
-    data.webpages.forEach(page => {
-        const rowIndex = columnAValues.findIndex(value => value === page.name);
-        if (rowIndex !== -1) {
-            // +1 due to Google Sheets indexing, +1 to skip header if present
-            const cell = `D${rowIndex + 2}`; 
-            batchUpdateData.push({
-                range: `${metaSheetName}!${cell}`,
-                values: [[page.meta]],
-            });
+    processResults.push(await findAndProcessSheet("H1/H2", (page, rowIndex, updates, sheetName) => {
+        const baseIndex = rowIndex + 3; // Adjusted index for H1/H2 sheet specifics
+        if(data.hMode == "h1"){
+            updates.push(
+                { range: `${sheetName}!D${baseIndex}`, values: [[page.h1]] },
+                { range: `${sheetName}!F${baseIndex}`, values: [[page.h1]] }
+            );
         }
-    });
-
-    // Execute batchUpdate if there's any data to update
-    if (batchUpdateData.length > 0) {
-        await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId: data.sheetId,
-            requestBody: {
-                valueInputOption: 'RAW',
-                data: batchUpdateData,
-            },
-        });
-    }
-
-    const h1SheetName = sheetTitles.find(title => title.includes("H1/H2"));
-
-    if (!h1SheetName) {
-        return NextResponse.json({ error: 'No sheet with "h1" in its name found.' }, { status: 404 });
-    }
-    
-    // Prepare batchGet to read column A values from the found sheet
-    range = `${h1SheetName}!A:A`; // Adjust the range if needed
-    readResponse = await sheets.spreadsheets.values.batchGet({
-        spreadsheetId: data.sheetId,
-        ranges: range,
-    });
-
-    columnAValues = readResponse.data.valueRanges[0].values.flat();
-
-    // Prepare batchUpdate request body
-    batchUpdateData = [];
-
-    data.webpages.forEach(page => {
-        const rowIndex = columnAValues.findIndex(value => value === page.name);
-        if (rowIndex !== -1) {
-            console.log(rowIndex)
-            // +1 due to Google Sheets indexing, +1 to skip header if present
-            const cell = `D${rowIndex + 3}`; 
-            batchUpdateData.push({
-                range: `${h1SheetName}!${cell}`,
-                values: [[page.h1]],
-            });
+        else if(data.hMode == "h2"){
+            updates.push(
+                { range: `${sheetName}!D${baseIndex}`, values: [[page.h2]] },
+                { range: `${sheetName}!F${baseIndex}`, values: [[page.h2]] }
+            );
         }
-    });
+    }));
 
-    // Execute batchUpdate if there's any data to update
-    if (batchUpdateData.length > 0) {
-        await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId: data.sheetId,
-            requestBody: {
-                valueInputOption: 'RAW',
-                data: batchUpdateData,
-            },
-        });
+    const firstError = processResults.find(result => result.error);
+    if (firstError) {
+        return NextResponse.json({ error: firstError.error }, { status: firstError.status });
     }
 
-    return NextResponse.json({ success: true, updatedCells: batchUpdateData.length }, { status: 200 });
+    const totalUpdatedCells = processResults.reduce((acc, { updatedCells }) => acc + updatedCells, 0);
+    return NextResponse.json({ success: true, updatedCells: totalUpdatedCells }, { status: 200 });
 }
 
 export async function GET(request) {
