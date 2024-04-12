@@ -284,6 +284,10 @@ export default function TopBar () {
       // Handle response data
       const { result } = await response.json();
       console.log(result);
+      const urls = result;
+      console.log(urls);
+      const formattedUrls = urls.map(url => `  "${url}",`).join('\n');
+      console.log(`const urls = [\n${formattedUrls}\n];`);
     }
     catch (err) {
       console.error('Failed to process files:', err);}
