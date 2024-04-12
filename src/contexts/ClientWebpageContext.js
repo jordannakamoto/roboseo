@@ -7,9 +7,13 @@ const ClientWebpageContext = createContext({
   clientName: '',
   sheetTitles: [],
   pages: [], // Added pages array
+  sheetUrl: '',
+  altImages: [],
   setClientName: () => {},
   setPages: () => {}, // Setter function for pages
   setSheetTitles: () => {},
+  setSheetUrl: () => {},
+  setAltImages: () => {}
 });
 
 // Hook to use the context
@@ -20,13 +24,10 @@ export const ClientWebpageProvider = ({ children }) => {
   const [clientName, setClientName] = useState('');
   const [sheetTitles, setSheetTitles] = useState([]);
   const [pages, setPages] = useState([]); // State for pages
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [altImages, setAltImages] = useState([]);
 
-  // // Example of a custom setter function to add a page to the pages array
-  // const addPage = (page) => {
-  //   setPages((currentPages) => [...currentPages, page]);
-  // };
-
-  // Logging state changes for demonstration
+  // Logging state changes...
   useEffect(() => {
     console.log('Client webpage data changed:', { clientName, pages });
   }, [clientName, pages]); // Dependency array
@@ -36,9 +37,13 @@ export const ClientWebpageProvider = ({ children }) => {
     clientName,
     pages,
     sheetTitles,
+    sheetUrl,
+    altImages,
     setClientName,
     setPages,
-    setSheetTitles
+    setSheetTitles,
+    setSheetUrl,
+    setAltImages
   };
 
   return (
@@ -47,3 +52,8 @@ export const ClientWebpageProvider = ({ children }) => {
     </ClientWebpageContext.Provider>
   );
 };
+
+  // // Example of a custom setter function to add a page to the pages array
+  // const addPage = (page) => {
+  //   setPages((currentPages) => [...currentPages, page]);
+  // };

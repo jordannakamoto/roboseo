@@ -2,10 +2,13 @@
 
 import React, { useState } from 'react';
 
-function ImageList() {
+import { useClientWebpage } from '@/contexts/ClientWebpageContext';
+
+export default function AltTagsPanel() {
   const [urls, setUrls] = useState(""); // State to store the pasted URLs as a string
   const urlArray = urls.split('\n'); // Split the string into an array of URLs
   const [captions, setCaptions] = useState(new Array(urlArray.length).fill("")); // State to store captions
+  const { altImages } = useClientWebpage();
 
   const handleCaptionChange = (index, caption) => {
     const updatedCaptions = [...captions];
@@ -14,12 +17,7 @@ function ImageList() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <textarea
-        id="altPasteArea"
-        onChange={(e) => setUrls(e.target.value)} // Update the URLs when the textarea changes
-        value={urls}
-      ></textarea>
+    <div className="flex ml-5" style={{ width:"800px"}}>
       <main className="flex-1 overflow-y-auto p-4 pt-20">
         <table className="w-full max-w-2xl mx-auto">
           <thead>
@@ -29,7 +27,7 @@ function ImageList() {
             </tr>
           </thead>
           <tbody>
-            {urlArray.map((url, index) => (
+            {altImages.map((url, index) => (
               <tr key={index}>
                 <td>
                   <img
@@ -55,5 +53,3 @@ function ImageList() {
     </div>
   );
 }
-
-export default ImageList;

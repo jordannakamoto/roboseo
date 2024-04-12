@@ -12,8 +12,15 @@ export default function Sidebar () {
     const [tokens, setTokens] = useState(null);
     const [clientList, setClientList] = useState([]);
     const [isSidebarVisible, setIsSidebarVisible] = useState(true); // State to control visibility
-    const { setPages, setSheetTitles } = useClientWebpage(); // Use the hook at the top level
+    const { setPages, setSheetTitles, setSheetUrl } = useClientWebpage(); // Use the hook at the top level
 
+    const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+
+    // Toggles the visibility of the dropdown
+    const toggleDropdown = () => {
+      setIsDropdownVisible(!isDropdownVisible);
+    };
+    
     // Load Stored Tokens
     useEffect(() => {
       // LOAD TOKENS
@@ -98,6 +105,7 @@ export default function Sidebar () {
       const response = await axios.post('http://localhost:3000/api/image-to-text');
     }
 
+    // LOAD CLIENT DATA INTO PROGRAM MEMORY
     const handleLoadClient = async () => {
       const url = document.getElementById('active-client-url').value;
       const sheetId = extractSheetIdFromUrl(url);
@@ -148,15 +156,11 @@ export default function Sidebar () {
             const webPages = webpagesResult.webpages; // Assuming the backend sends an object with a webpages array
             setPages(webPages);
             setSheetTitles(sheetTitles);
+            setSheetUrl(url);
             // Now we have a list of webpages
-            
           } catch (error) {
             console.error('Failed to load client webpages:', error);
-          }
-
-          // ... get the webpages
-
-        
+          }        
         } catch (error) {
           console.error('Failed to load sheet titles:', error);
         }
@@ -165,6 +169,7 @@ export default function Sidebar () {
       }
     }
 
+    // LOAD CLIENT LIST
     const handleLoadSheet = async () => {
       const url = document.getElementById('master-sheet-url').value;
       const sheetId = extractSheetIdFromUrl(url);
@@ -224,22 +229,50 @@ export default function Sidebar () {
     };
 
     return (
-      <div id="sidebar-wrapper" className={isSidebarVisible ? '' : 'hidden'}>
-          <div className="h-screen md:col-span-1 border-r border-gray-200 mr-10 p-5}" style={{ background: 'rgba(255, 255, 255, 0.3)', width: '180px' }}>
-              <div id="userConfig" className="pt-5">
-              <input onChange={handleLoadClient} id="active-client-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="Active Client"></input>
-              <input onChange={handleLoadSheet} id="master-sheet-url" className="w-full p-2 border border-gray-300 rounded mb-2" placeholder="mastersheet url" style={{fontSize:"11px"}}></input>
-                  {/* Conditionally render button text and style based on `tokens` state */}
-                  <Button onClick={login} style={{ opacity: tokens ? 0.1 : 1}}>
-                      {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
-                  </Button>
-              </div>
-              <ul className="list-inside p-5" style={{ fontSize: "13px" }}>
-                {clientList.map((item, index) => (
-                  <li key={index}>{item.name}</li>
-                ))}
-              </ul>
+        <div className={`absolute top-0 left-0 right-0 z-10 border-b border-gray-200 ${isSidebarVisible ? '' : 'hidden'}`} style={{ background: 'rgba(255, 255, 255, 0.7)'}}>
+          <div className="flex justify-between items-center">
+            <div className="flex flex-grow items-center space-x-4">
+              <input
+                  id="active-client-url"
+                  onChange={handleLoadClient}
+                  className="p-2 border border-gray-300 rounded"
+                  placeholder="Active Client"
+                  style={{flexGrow: 1, fontSize: "11px"}}
+              />
+              <input
+                  id="master-sheet-url"
+                  onChange={handleLoadSheet}
+                  className="p-2 border border-gray-300 rounded"
+                  placeholder="Master sheet URL"
+                  style={{flexGrow: 1, fontSize: "11px"}}
+              />
+              {/* Conditionally render button text and style based on `tokens` state */}
+              <Button
+                  onClick={login}
+                  style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px"}}
+              >
+                  {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
+              </Button>
+            </div>
+            {/* Dropdown for client list */}
+            <div className="relative">
+              <button onClick={toggleDropdown} className="block h-10 w-full rounded-sm border border-gray-300 bg-white p-2">
+                Clients
+              </button>
+              {isDropdownVisible && (
+                <div className="absolute right-0 z-10 mt-1 w-48 py-1 bg-white border border-gray-300 rounded shadow-lg">
+                  <ul className="text-sm text-gray-700">
+                    {clientList.map((item, index) => (
+                        <li key={index} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                            {item.name}
+                        </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
     );
 }

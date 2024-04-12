@@ -4,7 +4,7 @@ import { google } from 'googleapis';
 
 export async function POST(request) {
     const data = await request.json();
-    console.log(data);
+    // console.log(data);
 
     const client = new OAuth2Client(
         process.env.CLIENT_ID,
@@ -28,10 +28,10 @@ export async function POST(request) {
         let pageIndex;
         let urlIndex;
 
-        console.log(rows.length)
+        // console.log(rows.length)
         while (rowIndex < rows.length) { // && (pageIndex === undefined || urlIndex === undefined)
             const row = rows[rowIndex].map(header => header.toLowerCase());
-            console.log(row);
+            // console.log(row);
             pageIndex = row.indexOf('page name');
             urlIndex = row.indexOf('url');
             if (pageIndex !== -1) {
@@ -45,8 +45,8 @@ export async function POST(request) {
             throw new Error('Required columns not found');
         }
         if (pageIndex === -1 || urlIndex === -1) {
-            console.log(pageIndex)
-            console.log(urlIndex)
+            // console.log(pageIndex)
+            // console.log(urlIndex)
             throw new Error('Required columns not found');
         }
 

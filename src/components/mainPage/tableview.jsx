@@ -8,7 +8,7 @@ const TableView = ({ webpages }) => {
   const attributes = ['Title', 'h1', 'h2', 'meta'];
 
   return (
-    <table className="customTable">
+    <table className="customTable flex" style={{marginTop:"50px"}}>
       <tbody>
         {webpages.map((page, pageIndex) => (
           // Render the page name as a separate row
