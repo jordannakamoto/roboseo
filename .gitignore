@@ -8,6 +8,7 @@ public/frog/*/
 /.pnp
 .pnp.js
 .yarn/install-state.gz
+.vscode
 
 # testing
 /coverage
