@@ -1,1 +1,6 @@
-REINSTALL NEXTJS
+[x] Change frog folder naming convention
+[] Edit frog configuration to take screenshots of the mobile version
+[x]Plug in functionality into parseCSV in testbar
+[]Create test dataset with accessible clients only...
+[]Rename testbar to command palette + encapsulate
+[]Prepare package for Bryce

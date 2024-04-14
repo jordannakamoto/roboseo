@@ -8,15 +8,19 @@ import { Button } from '@/components/ui/button'
 import { FcGoogle } from 'react-icons/fc'
 import axios from 'axios'
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
+import { useClientsContext } from '@/contexts/ClientsContext'
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function TopBar () {
   const [tokens, setTokens] = useState(null);
+  // Local clients state
   const [clientList, setClientList] = useState([]);
   const { pages, setPages, setSheetTitles, setSheetUrl } = useClientWebpage(); // Use the hook at the top level
-  const [currentClient, setCurrentClient] = useState({});
+  // Global clients context state
+  const {allClients, currentClient, setAllClients, setCurrentClient} = useClientsContext();
 
-  // Load Stored Tokens
+  // > On Page Load
+  // Restore Saved Tokens, URLS, ClientList
   useEffect(() => {
     // LOAD TOKENS
     try {
@@ -49,13 +53,14 @@ export default function TopBar () {
     const storedClients = localStorage.getItem('clients');
     if (storedClients) {
         try {
-            // Parse the JSON string to an array
-            const clientArray = JSON.parse(storedClients);
-            // Update the clientList state with the retrieved array
-            setClientList(clientArray);
+            let clientArray = JSON.parse(storedClients); // Parse the JSON string to an array
+            clientArray = clientArray.filter(cl => cl.workbookURL.length >= 12);
+            console.log(clientArray);
+            setClientList(clientArray); // Update the local clientList state with the retrieved array
+            // !New Feature
+            setAllClients(clientArray);
         } catch (error) {
             console.error("Error parsing clientNames from local storage:", error);
-            // Handle parsing error (e.g., corrupted data)
         }
     }
   }, []);
@@ -78,7 +83,77 @@ export default function TopBar () {
     flow: 'auth-code',
   });
 
-  // LOAD CLIENT DATA INTO PROGRAM MEMORY
+  // > When we Load a new Master Sheet...
+  // LOAD CLIENT LIST
+  const handleLoadSheet = async () => {
+    const url = document.getElementById('master-sheet-url').value;
+    const sheetId = extractSheetIdFromUrl(url);
+
+    const now = new Date();
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const test_date = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+    const range = `${test_date}!C:G`;
+    console.log(range);
+    
+    if (sheetId && tokens) {
+      try {
+        const response = await fetch('/api/google_sheets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tokens,
+            spreadsheetId: sheetId,
+            range,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        let res = await response.json();
+        // console.log(res.response.data.values)
+        let data = res.response.data.values.slice(1) // Skip the first row
+        .filter(row => row[0] && row.length > 2 ) // Filter out empty rows or rows that have notes in them
+
+        let clientArray = data.map(row => ({
+          name: row[0],
+          workbookURL: row[4]
+        }));
+
+        clientArray = clientArray.filter(cl => cl.workbookURL.length >= 12);
+        console.log(clientArray);
+        // Update the clientList state with the retrieved array
+        setClientList(clientArray);
+        localStorage.setItem('masterSheetURL', JSON.stringify(url));
+        localStorage.setItem('clients', JSON.stringify(clientArray));
+
+      } catch (error) {
+        console.error('Failed to load sheet:', error);
+      }
+    } else {
+      console.log("Handle error: either URL is missing, or user is not authenticated");
+    }
+  };
+
+  // > When we select a client from the UI...
+  // LOAD CURRENT CLIENT DATA INTO PROGRAM MEMORY
   const handleLoadClient = async () => {
     const url = document.getElementById('active-client-url').value;
     const sheetId = extractSheetIdFromUrl(url);
@@ -184,114 +259,62 @@ export default function TopBar () {
     }
   }
 
-  // LOAD CLIENT LIST
-  const handleLoadSheet = async () => {
-    const url = document.getElementById('master-sheet-url').value;
-    const sheetId = extractSheetIdFromUrl(url);
-
-    const now = new Date();
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
-    const test_date = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-    const range = `${test_date}!C:G`;
-    console.log(range);
-    
-    if (sheetId && tokens) {
-      try {
-        const response = await fetch('/api/google_sheets', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            tokens,
-            spreadsheetId: sheetId,
-            range,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        let res = await response.json();
-        // console.log(res.response.data.values)
-        let data = res.response.data.values.slice(1) // Skip the first row
-        .filter(row => row[0] && row.length > 2 ) // Filter out empty rows or rows that have notes in them
-
-        let clients = data.map(row => ({
-          name: row[0],
-          workbookURL: row[4]
-        }));
-
-        setClientList(clients);
-        localStorage.setItem('masterSheetURL', JSON.stringify(url));
-        localStorage.setItem('clients', JSON.stringify(clients));
-
-      } catch (error) {
-        console.error('Failed to load sheet:', error);
-      }
-    } else {
-      console.log("Handle error: either URL is missing, or user is not authenticated");
-    }
-  };
 
   const extractSheetIdFromUrl = (url) => {
     const matches = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/.exec(url);
     return matches ? matches[1] : null;
+    console.log(matches[1]);
   };
 
   const selectClient = (client) => {
     setCurrentClient(client);
     localStorage.setItem('currentClient', JSON.stringify(client));
     document.getElementById('active-client-url').value = client.workbookURL;
+    handleLoadClient();
   }
+
+  // Call this to set the global clients 
   const loadFrogScraper = async () => {
-    let urlList = clientList.map((client) => {
-      return extractSheetIdFromUrl(client.workbookURL);
+    let clientList_modified = clientList.map((client) => {
+      let workbookSheetId = extractSheetIdFromUrl(client.workbookURL);
+      if(workbookSheetId == null){
+        alert("Error loading sheetID for client," + client.name + " workbook url: " + client.workbookURL);
+      }
+      client.workbookSheetId = workbookSheetId;
+      return client;
     });
-    urlList = urlList.filter(url => url !== null);
-    console.log(urlList);
+    setClientList(clientList_modified);
+    // urlList = urlList.filter(url => url !== null);
     if(tokens){
-    try {
-      const response = await fetch('/api/get-all-client-urls', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tokens,
-          clientUrls: urlList,
-        }),
-      });
-  
-      // if (!response.ok) {
-      //   throw new Error('Error processing files');
-      // }
-      // Handle response data
-      const { result } = await response.json();
-      console.log(result);
-      const urls = result;
-      console.log(urls);
-      const formattedUrls = urls.map(url => `  "${url}",`).join('\n');
-      console.log(`const urls = [\n${formattedUrls}\n];`);
-    }
-    catch (err) {
-      console.error('Failed to process files:', err);}
-    }
+      try {
+        const response = await fetch('/api/get-all-client-urls', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tokens,
+            clients: clientList,
+          }),
+        });
+    
+        // if (!response.ok) {
+        //   throw new Error('Error processing files');
+        // }
+        // Handle response data
+        const result = await response.json();
+        const resultArray = result.responseList;
+        // set the local Client list
+        setClientList(resultArray);
+        // set the stored client list
+        localStorage.setItem('clients', JSON.stringify(resultArray));
+        // set the global client list context
+        setAllClients(resultArray);
+        
+      }
+      catch (err) {
+        console.error('Failed to process files:', err);}
+      }
   }
   // Component Render
   return (
@@ -331,11 +354,11 @@ export default function TopBar () {
                   ))}
                 </ul>
               </div>
-          <button className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+          {/* <button className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
               Next
-            </button>
+            </button> */}
             <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-              Load
+              LoadHomepages
             </button>
         </div>
       </div>

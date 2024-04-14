@@ -1,11 +1,12 @@
 'use client'
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+// import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import React, {useEffect, useState} from 'react'
 
 import { Button } from "@/components/ui/button"
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
+import { useClientsContext } from "@/contexts/ClientsContext";
 
 //Helper
 const extractSheetIdFromUrl = (url) => {
@@ -15,6 +16,7 @@ const extractSheetIdFromUrl = (url) => {
 
 export default function TestBar() {
   const { pages, setPages, sheetTitles, sheetUrl, altImages, setAltImages } = useClientWebpage();
+  const {allClients, currentClient, setAllClients, setCurrentClient} = useClientsContext();
   const [isMinimized, setIsMinimized] = useState(false);
   const [tokens, setTokens] = useState(null);
 
@@ -65,6 +67,9 @@ export default function TestBar() {
 
   // I'm gonna have to use a context provider
   const testCSVParse = async () => {
+    let currClientHomepage = currentClient.homepage;
+    currClientHomepage = currClientHomepage.replace(/^https?:\/\//, '');
+
     try {
       const response = await fetch('/api/load-from-frog-csvs', {
         method: 'POST',
@@ -72,7 +77,7 @@ export default function TestBar() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          dir: "unionknoxville",
+          dir: currClientHomepage,
           webpages: pages // Add the webpages array here
         })
       });

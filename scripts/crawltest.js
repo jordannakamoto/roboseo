@@ -1,40 +1,47 @@
 const { exec } = require("child_process");
 const fs = require("fs");
 
-// List of URLs to crawl
-// ----------------------------------------------------------------//
-const urls = [
-  "https://ink.scottscollection.com/",
-  "https://livesonya.com/",
-  "https://rigbydc.com/",
-  // Add more URLs as needed
-];
+// > Output Location
+const outputLocation = "/Users/jordannakamoto/Desktop/Bryceproject/appv0/roboseo/public/frog/";
 
-// Output Location
-const outputLocation =
-  "/Users/jordannakamoto/Desktop/Bryceproject/appv0/roboseo/public/frog/";
-
+// > List of URLs to crawl
 // ----------------------------------------------------------------//
 
-// Function to execute the Screaming Frog command
-function runCrawl(url) {
-  // Removing http://, https://, www, and anything after .com
-  // TODO Add this to Utils functions
-  const outputFolderName = url.replace(/https?:\/\/(www\.)?/, "").split(".com")[0];
-
-  // Construct the output folder path
-  const outputPath = outputLocation + outputFolderName;
-  
-  // Check if the directory exists
-  if (fs.existsSync(outputPath)) {
-    console.log(`Directory exists for ${url}, skipping crawl.`);
-    return Promise.resolve(); // Skip the crawl
+// Read URLs from file and start crawl process
+fs.readFile("homepageList.txt", 'utf8', (err, data) => {
+  if (err) {
+    console.error('Failed to read file:', err);
+    return;
   }
 
-  // Directory does not exist, so create it
-  fs.mkdirSync(outputPath, { recursive: true });
+  // Split the content by new lines to create an array of URLs
+  let urls = data.split('\n').filter(line => line.trim() !== '');
+
+  // Function to execute crawls sequentially
+  async function runCrawlsSequentially() {
+    for (const url of urls) {
+      console.log(`Crawling ${url}...`);
+      await runCrawl(url);
+    }
+    console.log("All crawls completed.");
+  }
+
+  // Start the crawling process
+  runCrawlsSequentially();
+});
+
+function runCrawl(url) {
+  // Transformations and command construction remain the same
+  const outputFolderName = url.replace(/^https?:\/\//, '');
+  const outputPath = outputLocation + outputFolderName;
   
-  // Construct the Screaming Frog command FOR MAC OS
+  if (fs.existsSync(outputPath)) {
+    console.log(`Directory exists for ${url}, skipping crawl.`);
+    return Promise.resolve();
+  }
+
+  fs.mkdirSync(outputPath, { recursive: true });
+
   const command = `"/Applications/Screaming\ Frog\ SEO\ Spider.app/Contents/MacOS/ScreamingFrogSEOSpiderLauncher" --crawl ${url} --config "${outputLocation}config.seospiderconfig" \
   --headless \
   --export-tabs "Custom Extraction:All,Internal:PDF,H2:All,H1:All,Meta Description:All,Page Titles:All,URL:All,Internal:HTML" \
@@ -42,8 +49,7 @@ function runCrawl(url) {
   --save-crawl \
   --output-folder "${outputPath}" \
   --overwrite`;
-  
-  // Execute the command
+
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -56,16 +62,6 @@ function runCrawl(url) {
   });
 }
 
-// Function to execute crawls sequentially
-async function runCrawlsSequentially() {
-  for (const url of urls) {
-    await runCrawl(url);
-  }
-  console.log("All crawls completed.");
-}
-
-// Start the crawling process
-runCrawlsSequentially();
 
 
 /*
