@@ -232,15 +232,16 @@ export default function TopBar () {
               }),
             });
 
+            if (!keywordResponse.ok) {
+              throw new Error(`HTTP error! Status: ${keywordResponse.status}`);
+            }
+            
             const keywordResult = await keywordResponse.json();
             setPages(keywordResult.webpagesWithKeywords);
             
             // Store Data in Context Provider
             // setPages(webpagesWithKeywords);
 
-            if (!keywordResult.ok) {
-              throw new Error(`HTTP error! Status: ${webpagesResponse.status}`);
-            }
             
             // Now we have the keywords corresponding to the pages
           } catch (error) {
@@ -265,6 +266,7 @@ export default function TopBar () {
     console.log(matches[1]);
   };
 
+  // > When a client is clicked from the list panel
   const selectClient = (client) => {
     setCurrentClient(client);
     localStorage.setItem('currentClient', JSON.stringify(client));
@@ -272,7 +274,9 @@ export default function TopBar () {
     handleLoadClient();
   }
 
-  // Call this to set the global clients 
+
+  // > Call this to prepare homepage list for frog
+  // & set the global clients context
   const loadFrogScraper = async () => {
     let clientList_modified = clientList.map((client) => {
       let workbookSheetId = extractSheetIdFromUrl(client.workbookURL);
@@ -283,7 +287,7 @@ export default function TopBar () {
       return client;
     });
     setClientList(clientList_modified);
-    // urlList = urlList.filter(url => url !== null);
+    // urlList = urlList.filter(url => url !== null); // Optional filtering...
     if(tokens){
       try {
         const response = await fetch('/api/get-all-client-urls', {
@@ -301,18 +305,18 @@ export default function TopBar () {
         const result = await response.json();
         const resultArray = result.responseList;
         // set the local Client list
+        // - stored client list
+        // - global client list context
         setClientList(resultArray);
-        // set the stored client list
         localStorage.setItem('clients', JSON.stringify(resultArray));
-        // set the global client list context
         setAllClients(resultArray);
-        
       }
       catch (err) {
         console.error('Failed to process files:', err);}
       }
   }
-  // Component Render
+
+  // _ Component Render _
   return (
       <div className={`absolute top-0 left-0 right-0 z-10 border-b border-gray-200`} style={{ background: 'rgba(255, 255, 255, 0.7)'}}>
         <div className="flex justify-between items-center">
