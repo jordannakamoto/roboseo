@@ -57,7 +57,6 @@ export default function TopBar () {
             clientArray = clientArray.filter(cl => cl.workbookURL.length >= 12);
             console.log(clientArray);
             setClientList(clientArray); // Update the local clientList state with the retrieved array
-            // !New Feature
             setAllClients(clientArray);
         } catch (error) {
             console.error("Error parsing clientNames from local storage:", error);
@@ -298,9 +297,6 @@ export default function TopBar () {
           }),
         });
     
-        // if (!response.ok) {
-        //   throw new Error('Error processing files');
-        // }
         // Handle response data
         const result = await response.json();
         const resultArray = result.responseList;

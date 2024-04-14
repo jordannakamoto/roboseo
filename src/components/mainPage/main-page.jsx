@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import AltTagsPanel from "@/components/mainPage/alt-tags-panel";
 import TableView from "@/components/mainPage/tableview";
-import TestBar from "@/components/misc/testbar";
+import TestBar from "@/components/mainPage/CommandBar";
 import TopBar from "@/components/mainPage/topbar";
 import { useClientWebpage } from "@/contexts/ClientWebpageContext";
 
@@ -21,8 +21,7 @@ export default function Component() {
         <TopBar />
         <TableView webpages={pages} />
         {/* <AltTagsPanel /> */}
-      <TestBar />
-
+        <TestBar />
       </div>
     </>
   );
