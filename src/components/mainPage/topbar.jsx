@@ -133,7 +133,7 @@ export default function TopBar () {
 
         let clientArray = data.map(row => ({
           name: row[0],
-          workbookURL: row[4]
+          workbookURL: row[4],
         }));
 
         clientArray = clientArray.filter(cl => cl.workbookURL.length >= 12);
@@ -348,7 +348,8 @@ export default function TopBar () {
               <div className="absolute top-10 right-0 z-10 mt-1 w-48 py-1 bg-white border border-gray-300 rounded shadow-lg" style={{"height": "70vh", overflow:"scroll"}}>
                 <ul className="text-sm text-gray-700">
                   {clientList.map((item, index) => (
-                      <li key={index} onClick={() => selectClient(item)} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                      <li key={index} onClick={() => selectClient(item)} className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
+                        currentClient === item ? 'bg-blue-600 text-white': ''}`}>
                           {item.name}
                       </li>
                   ))}
@@ -358,7 +359,7 @@ export default function TopBar () {
               Next
             </button> */}
             <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-              LoadHomepages
+             FeedFrog
             </button>
         </div>
       </div>

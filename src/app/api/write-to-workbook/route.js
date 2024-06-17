@@ -4,11 +4,21 @@ import { google } from 'googleapis';
 
 async function getSheetValues(client, sheetId, sheetName) {
     const range = `${sheetName}!A:A`;
-    const response = await client.spreadsheets.values.batchGet({
+    const response = await client.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        ranges: range,
+        range: range,
     });
-    return response.data.valueRanges[0].values.flat();
+
+    // Create an array with the same length as the row count, filled with nulls
+    const rowCount = response.data.values ? response.data.values.length : 0;
+    const values = Array(rowCount).fill(null);
+
+    // Populate the values array with the actual data
+    response.data.values.forEach((row, index) => {
+        values[index] = row[0];  // Assuming single column (A)
+    });
+
+    return values;
 }
 
 async function updateSheetValues(client, sheetId, sheetName, updates) {
@@ -36,9 +46,20 @@ export async function POST(request) {
     const sheets = google.sheets({ version: 'v4', auth: client });
 
     const findAndProcessSheet = async (keyword, processRow) => {
-        const sheetName = data.sheetTitles.find(title => title.includes(keyword));
+        // Fetch the sheet metadata to determine visibility
+        const sheetMetadata = await sheets.spreadsheets.get({
+            spreadsheetId: data.sheetId,
+            fields: 'sheets(properties(title,hidden))'
+        });
+
+        // Filter to get visible sheets with the keyword in their titles
+        const visibleSheets = sheetMetadata.data.sheets
+            .filter(sheet => !sheet.properties.hidden)
+            .map(sheet => sheet.properties.title);
+        
+        const sheetName = visibleSheets.find(title => title.includes(keyword));
         if (!sheetName) {
-            return { error: `No sheet with "${keyword}" in its name found.`, status: 404 };
+            return { error: `No visible sheet with "${keyword}" in its name found.`, status: 404 };
         }
         
         const columnAValues = await getSheetValues(sheets, data.sheetId, sheetName);
@@ -55,9 +76,43 @@ export async function POST(request) {
         return { updatedCells: batchUpdateData.length };
     };
 
+    const findAndProcessOnPageSheet = async (keyword, processRow) => {
+        // Fetch the sheet metadata to determine visibility
+        const sheetMetadata = await sheets.spreadsheets.get({
+            spreadsheetId: data.sheetId,
+            fields: 'sheets(properties(title,hidden))'
+        });
+
+        // Filter to get visible sheets with the keyword in their titles
+        const visibleSheets = sheetMetadata.data.sheets
+            .filter(sheet => !sheet.properties.hidden)
+            .map(sheet => sheet.properties.title);
+        
+        const sheetName = visibleSheets.find(title => title.includes(keyword));
+        if (!sheetName) {
+            return { error: `No visible sheet with "${keyword}" in its name found.`, status: 404 };
+        }
+        
+        const columnAValues = await getSheetValues(sheets, data.sheetId, sheetName);
+        const batchUpdateData = [];
+
+        data.webpages.forEach(page => {
+            const rowIndex = columnAValues.findIndex(value => value === page.url);
+            if (rowIndex !== -1) {
+                processRow(page, rowIndex+1, batchUpdateData, sheetName);
+            }
+        });
+
+        await updateSheetValues(sheets, data.sheetId, sheetName, batchUpdateData);
+        return { updatedCells: batchUpdateData.length };
+    };
+
+    // Collection of all actions to be sent to API
     const processResults = [];
+
+    // 1. Title Fields
     processResults.push(await findAndProcessSheet("Title Tag", (page, rowIndex, updates, sheetName) => {
-        const baseIndex = rowIndex + 2;
+        const baseIndex = rowIndex+1;
         updates.push(
             { range: `${sheetName}!C${baseIndex}`, values: [[page.keywords.join('\n')]] },
             { range: `${sheetName}!D${baseIndex}`, values: [[page.title]] },
@@ -65,17 +120,19 @@ export async function POST(request) {
         );
     }));
 
+    // 2. Meta desc
     // Repeat for "Meta" and "H1/H2" sheets with appropriate adjustments
     processResults.push(await findAndProcessSheet("Meta", (page, rowIndex, updates, sheetName) => {
-        const baseIndex = rowIndex + 2;
+        const baseIndex = rowIndex+1;
         updates.push(
             { range: `${sheetName}!D${baseIndex}`, values: [[page.meta]] },
             { range: `${sheetName}!F${baseIndex}`, values: [[page.meta]] }
         );
     }));
 
+    // 3. H1/H2
     processResults.push(await findAndProcessSheet("H1/H2", (page, rowIndex, updates, sheetName) => {
-        const baseIndex = rowIndex + 3; // Adjusted index for H1/H2 sheet specifics
+        const baseIndex = rowIndex+1; // Adjusted index for H1/H2 sheet specifics
         if(data.hMode == "h1"){
             updates.push(
                 { range: `${sheetName}!D${baseIndex}`, values: [[page.h1]] },
@@ -88,6 +145,16 @@ export async function POST(request) {
                 { range: `${sheetName}!F${baseIndex}`, values: [[page.h2]] }
             );
         }
+    }));
+
+    // 4. On-Page
+    // Filter for matching urls and copy keywords in appropriate format
+    processResults.push(await findAndProcessOnPageSheet("On-Page", (page, rowIndex, updates, sheetName) => {
+        const baseIndex = rowIndex+1;
+        const keywordsText = `Targeted Keyword(s):\n${page.keywords.join('\n')}`;
+        updates.push(
+            { range: `${sheetName}!A${baseIndex}`, values: [[keywordsText]] },
+        );
     }));
 
     const firstError = processResults.find(result => result.error);

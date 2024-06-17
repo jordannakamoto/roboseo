@@ -43,30 +43,9 @@ export default function TestBar() {
     setIsMinimized(!isMinimized);
   };
 
-  const renameFrogFolders = async () => {
-    try {
-      const response = await fetch('/api/rename-frog-folders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Send any necessary data
-      });
-  
-      if (!response.ok) {
-        throw new Error('Error processing files');
-      }
-  
-      // Handle response data
-      const result = await response.json();
-      console.log(result);
-    } catch (error) {
-      console.error('Failed to process files:', error);
-    }
-  };
-
   // I'm gonna have to use a context provider
   const testCSVParse = async () => {
+    console.log(currentClient)
     let currClientHomepage = currentClient.homepage;
     currClientHomepage = currClientHomepage.replace(/^https?:\/\//, '');
 
@@ -143,6 +122,10 @@ export default function TestBar() {
     }
   };
 
+  const collectFrogData = async () =>{
+    console.log("running frog scraping process")
+  }
+
   // Populate Alt Images
   const populateAltImages = async () => {
     try {
@@ -192,3 +175,28 @@ export default function TestBar() {
     </Card>)
   );
 }
+
+
+// Graveyard
+
+  // const renameFrogFolders = async () => {
+  //   try {
+  //     const response = await fetch('/api/rename-frog-folders', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       // Send any necessary data
+  //     });
+  
+  //     if (!response.ok) {
+  //       throw new Error('Error processing files');
+  //     }
+  
+  //     // Handle response data
+  //     const result = await response.json();
+  //     console.log(result);
+  //   } catch (error) {
+  //     console.error('Failed to process files:', error);
+  //   }
+  // };
