@@ -320,8 +320,8 @@ export default function TopBar () {
   return (
       <div className={`absolute top-0 left-0 right-0 z-10 border-b border-gray-200`} style={{ background: 'rgba(255, 255, 255, 0.7)'}}>
         <div className="flex justify-between items-center">
-          <div className="flex flex-grow items-center space-x-4">'
-            <span>{currentClient.name}</span>
+          <div className="flex flex-grow items-center space-x-4">
+            <span style={{marginLeft:"20px"}}>{currentClient.name}</span>
             <input
                 id="active-client-url"
                 onChange={handleLoadClient}

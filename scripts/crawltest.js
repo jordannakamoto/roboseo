@@ -44,11 +44,14 @@ function runCrawl(url) {
 
   const command = `"/Applications/Screaming\ Frog\ SEO\ Spider.app/Contents/MacOS/ScreamingFrogSEOSpiderLauncher" --crawl ${url} --config "${outputLocation}config.seospiderconfig" \
   --headless \
-  --export-tabs "Custom Extraction:All,Internal:PDF,H2:All,H1:All,Meta Description:All,Page Titles:All,URL:All,Internal:HTML" \
+  --export-tabs "H2:All,H1:All,Meta Description:All,Page Titles:All,URL:All" \
   --bulk-export "Web:Screenshots,Images:All Image Inlinks" \
   --save-crawl \
   --output-folder "${outputPath}" \
   --overwrite`;
+
+  // Custom Extraction:All,Internal:PDF
+  // OnPage Strategy Future... Internal:HTML
 
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {

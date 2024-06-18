@@ -84,6 +84,31 @@ export default function TestBar() {
     } catch (error) {
       console.error('Failed to process files:', error);
     }
+    try {
+      const response = await fetch('/api/load-from-frog-alt-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dir: currClientHomepage,
+          alts: altImages
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error('Error processing files');
+      }
+  
+      // Handle response data
+      const { result } = await response.json();
+
+      // Assuming 'result' is the array of objects with the scraped data
+      setAltImages(result);
+      console.log(altImages);
+    } catch (error){
+
+    }
   };
 
   const logPages = () => {
@@ -125,33 +150,6 @@ export default function TestBar() {
   const collectFrogData = async () =>{
     console.log("running frog scraping process")
   }
-
-  // Populate Alt Images
-  const populateAltImages = async () => {
-    try {
-      const response = await fetch('/api/populate-alt-images', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dir: "unionknoxville",
-        })
-      });
-  
-      if (!response.ok) {
-        throw new Error('Error processing files');
-      }
-      const { result } = await response.json();
-      setAltImages(result);
-      // DONE POPULATING
-      console.log("Populated Alt Images ");
-
-    } catch (error) {
-      console.error('Failed to process files:', error);
-    }
-  };
-
   
 
   return (

@@ -26,7 +26,7 @@ export async function POST(request) {
                 columns: true,
                 skip_empty_lines: true,
                 bom: true
-            });
+            });when
         };
 
         // Read and parse the CSV files

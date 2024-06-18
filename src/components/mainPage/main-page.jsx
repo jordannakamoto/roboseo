@@ -10,7 +10,7 @@ import { useClientWebpage } from "@/contexts/ClientWebpageContext";
 
 export default function Component() {
   // Using the context to get the webpages
-  const { pages, setPages } = useClientWebpage();
+  const { pages, setPages, altImages } = useClientWebpage();
 
   // Ensure there's an array to map over, even if it's empty
   const webpages = pages.length ? pages : [];
@@ -19,8 +19,10 @@ export default function Component() {
     <>
       <div className="flex h-screen w-full" style={{ marginBottom: "300px" }}>
         <TopBar />
-        <TableView webpages={pages} />
-        {/* <AltTagsPanel /> */}
+        <div style={{display: "flex", flexDirection: "column"}}>
+          <TableView webpages={pages} />  
+          <AltTagsPanel alts={altImages}/>
+          </div>
         <TestBar />
       </div>
     </>
