@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { FcGoogle } from 'react-icons/fc';
+import LoadingModal from '@/components/loader';
 import axios from 'axios';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 import { useClientsContext } from '@/contexts/ClientsContext';
@@ -21,15 +22,19 @@ const extractSheetIdFromUrl = (url) => {
 export default function TopBar() {
   const [tokens, setTokens] = useState(null);
   const [clientList, setClientList] = useState([]);
+  const [showCompleted, setShowCompleted] = useState(true);
   const { pages, setPages, sheetTitles, sheetUrl, altImages, setAltImages, setSheetTitles, setSheetUrl } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
-
+  // - Loading Modal
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  
   // Load initial data from local storage when component mounts
   useEffect(() => {
     try {
       const storedTokens = localStorage.getItem('tokens');
       if (storedTokens) setTokens(JSON.parse(storedTokens));
-
+2
       const storedMSheet = localStorage.getItem('masterSheetURL');
       if (storedMSheet) document.getElementById('master-sheet-url').value = JSON.parse(storedMSheet);
 
@@ -73,6 +78,8 @@ export default function TopBar() {
 
     if (sheetId && tokens) {
       try {
+        setIsLoading(true);
+        setLoadingMessage('Loading client list...');
         const response = await fetch('/api/google_sheets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -87,8 +94,10 @@ export default function TopBar() {
         setClientList(clientArray);
         localStorage.setItem('masterSheetURL', JSON.stringify(url));
         localStorage.setItem('clients', JSON.stringify(clientArray));
+        setIsLoading(false);
       } catch (error) {
         console.error('Failed to load sheet:', error);
+        setIsLoading(false);
       }
     } else {
       console.error("Error: either URL is missing, or user is not authenticated");
@@ -103,6 +112,8 @@ export default function TopBar() {
 
     if (sheetId && tokens) {
       try {
+        setIsLoading(true);
+        setLoadingMessage('Loading client...');
         // Fetch sheet titles
         const titlesResponse = await fetch('/api/get-sheet-titles', {
           method: 'POST',
@@ -142,8 +153,10 @@ export default function TopBar() {
 
         const keywordsRes = await keywordsResponse.json();
         setPages(keywordsRes.webpagesWithKeywords);
+        setIsLoading(false);
       } catch (error) {
         console.error('Failed to load client data:', error);
+        setIsLoading(false);
       }
     } else {
       console.error("Error: either URL is missing, or user is not authenticated");
@@ -277,44 +290,74 @@ export default function TopBar() {
     }
   };
 
+  // *** UI ************************************************* //
+  const toggleClientCompletion = (clientIndex) => {
+    const updatedClientList = clientList.map((client, index) => 
+      index === clientIndex ? { ...client, completed: !client.completed } : client
+    );
+    setClientList(updatedClientList);
+    localStorage.setItem('clients', JSON.stringify(updatedClientList));
+  };
+
+  // ******************************************************** //
+
   return (
     <>
-      {/* Top bar for input fields and buttons */}
-      <div className={`fixed top-0 left-0 right-0 z-10 border-b border-gray-200`} style={{ background: 'rgba(255, 255, 255, 1.0)' }}>
-        <div className="flex justify-between items-center">
-          <div className="flex flex-grow items-center space-x-4">
-            <span style={{ marginLeft: "20px" }}>{currentClient?.name}</span>
-            <input
-              id="active-client-url"
-              onChange={() => handleLoadClient(currentClient)}
-              className="p-2 border border-gray-300 rounded"
-              placeholder="Active Client"
-              style={{ flexGrow: 1, fontSize: "11px" }}
-            />
-            <input
-              id="master-sheet-url"
-              onChange={handleLoadSheet}
-              className="p-2 border border-gray-300 rounded"
-              placeholder="Master sheet URL"
-              style={{ flexGrow: 1, fontSize: "11px" }}
-            />
-            <Button onClick={login} style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px" }}>
-              {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
-            </Button>
-          </div>
-          <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ height: "70vh", width: "230px", overflow: "scroll" }}>
-            <ul className="text-sm text-gray-700">
-              {clientList.map((item, index) => (
-                <li key={index} onClick={() => selectClient(item)} className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${currentClient === item ? 'bg-blue-600 text-white' : ''}`}>
-                  {item.name}
+    <LoadingModal isVisible={isLoading} message={loadingMessage} />
+    <div className="fixed top-0 left-0 right-0 z-10 border-b border-gray-200" style={{ background: 'rgba(255, 255, 255, 1.0)' }}>
+      <div className="flex justify-between items-center">
+        <div className="flex flex-grow items-center space-x-4">
+          <span style={{ marginLeft: "20px" }}>{currentClient.name}</span>
+          <input
+            id="active-client-url"
+            onChange={handleLoadClient}
+            className="p-2 border border-gray-300 rounded"
+            placeholder="Active Client"
+            style={{ flexGrow: 1, fontSize: "11px" }}
+          />
+          <input
+            id="master-sheet-url"
+            onChange={handleLoadSheet}
+            className="p-2 border border-gray-300 rounded"
+            placeholder="Master sheet URL"
+            style={{ flexGrow: 1, fontSize: "11px" }}
+          />
+          <Button onClick={login} style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px" }}>
+            {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
+          </Button>
+        </div>
+        <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ height: "70vh", width: "230px", overflow: "scroll" }}>
+          <ul className="text-sm text-gray-700">
+            {clientList
+              .filter(client => showCompleted || !client.completed)
+              .map((client, index) => (
+                <li key={index} className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    checked={client.completed || false}
+                    onChange={() => toggleClientCompletion(index)}
+                    className="mr-2"
+                  />
+                  <span
+                    onClick={() => selectClient(client)}
+                    className={`flex-grow ${client.completed ? 'line-through' : ''}`}
+                  >
+                    {client.name}
+                  </span>
                 </li>
               ))}
-            </ul>
-          </div>
-          <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-            FeedFrog
+          </ul>
+          <button
+            onClick={() => setShowCompleted(prev => !prev)}
+            className="absolute bottom-0 left-0 right-0 py-2 text-sm text-gray-700"
+          >
+            {showCompleted ? 'Hide Completed' : 'Show Completed'}
           </button>
         </div>
+        <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+          FeedFrog
+        </button>
+      </div>
       </div>
       {/* Bottom card for additional buttons */}
       <Card className="max-w-md mx-auto" style={{ position: 'fixed', right: '0', bottom: '0' }}>
