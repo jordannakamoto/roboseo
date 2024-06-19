@@ -308,6 +308,9 @@ export default function TopBar () {
         // Handle response data
         const result = await response.json();
         const resultArray = result.responseList;
+        if(result.failedClients.length > 0){
+          console.log(failedClients);
+        }
         // set the local Client list
         // - stored client list
         // - global client list context

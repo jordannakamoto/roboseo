@@ -16,22 +16,29 @@ export async function POST(request) {
     // > Connect to Google Sheets
 
     const client = new OAuth2Client(
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET,
-    'http://localhost:3000',
+        process.env.CLIENT_ID,
+        process.env.CLIENT_SECRET,
+        'http://localhost:3000',
     );
     client.setCredentials(data.tokens)
     let responseList = [];
+    let failedClients = [];
+    
     try {
         for (const cli of data.clients) {
-            const sheets = google.sheets({ version: 'v4', auth: client});
-            const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: cli.workbookSheetId,
-            range: `'Keyword Research & Strategy'!B7`,
-            });
-            cli.homepage = response.data.values[0][0];
-            responseList.push(cli);
-        };
+            try {
+                const sheets = google.sheets({ version: 'v4', auth: client });
+                const response = await sheets.spreadsheets.values.get({
+                    spreadsheetId: cli.workbookSheetId,
+                    range: `'Keyword Research & Strategy'!B7`,
+                });
+                cli.homepage = response.data.values[0][0];
+                responseList.push(cli);
+            } catch (error) {
+                failedClients.push({ client: cli, error: error.message });
+            }
+        }
+
         // #tag : debug
         // console.log(responseList);
         const outputList = responseList.map(client => client.homepage);
@@ -52,13 +59,13 @@ export async function POST(request) {
         });
 
         // File done writing, provide the client data back to the main application
-        return NextResponse.json({ responseList }, { status: 200 });
+        return NextResponse.json({ responseList, failedClients }, { status: 200 });
     } catch (error) {
         console.error("Failed to upload file:", error);
         // Respond with an error message
         return NextResponse.json(
-        { error: "Failed to upload file"} ,
-        { status: 500 }
+            { error: "Failed to upload file" },
+            { status: 500 }
         );
     }
 }
