@@ -167,6 +167,7 @@ export default function TestBar() {
           <Button onClick={testCSVParse} variant="outline">Parse CSV</Button>
           <Button onClick={() => writeToWorkbook("h1")} variant="outline">Write To Workbook h1</Button>
           <Button onClick={() => writeToWorkbook("h2")} variant="outline">Write To Workbook h2</Button>
+          <Button onClick={() => writeToWorkbook("h2")} variant="outline">Mark Done</Button>
           {/* <Button onClick={populateAltImages} variant="outline">Populate Alt Images</Button> */}
         </CardContent>
       )}
