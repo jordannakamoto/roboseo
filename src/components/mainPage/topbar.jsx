@@ -278,15 +278,19 @@ export default function TopBar () {
   // > Call this to prepare homepage list for frog
   // & set the global clients context
   const loadFrogScraper = async () => {
-    let clientList_modified = clientList.map((client) => {
+    let clientList_modified = clientList
+    .map((client) => {
       let workbookSheetId = extractSheetIdFromUrl(client.workbookURL);
-      if(workbookSheetId == null){
-        alert("Error loading sheetID for client," + client.name + " workbook url: " + client.workbookURL);
+      if (workbookSheetId == null) {
+        alert("Error loading sheetID for client, " + client.name + " workbook url: " + client.workbookURL);
+        return null; // Return null for clients with null workbookSheetId
       }
       client.workbookSheetId = workbookSheetId;
       return client;
-    });
-    setClientList(clientList_modified);
+    })
+    .filter(client => client !== null); // Filter out the clients that are null
+
+  setClientList(clientList_modified);
     // urlList = urlList.filter(url => url !== null); // Optional filtering...
     if(tokens){
       try {
