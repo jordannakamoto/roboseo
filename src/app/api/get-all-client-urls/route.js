@@ -23,10 +23,18 @@ export async function POST(request) {
     client.setCredentials(data.tokens)
     let responseList = [];
     let failedClients = [];
+    let noWorkbookUrlClients = 0;
+    let noWorkbookUrlClientNames = [];
+    let failedClientNames = [];
     
     try {
         for (const cli of data.clients) {
             try {
+                if (!cli.workbookSheetId) {
+                    noWorkbookUrlClients++;
+                    noWorkbookUrlClientNames.push(cli.name); // Assuming cli has a name property
+                    continue;
+                }
                 const sheets = google.sheets({ version: 'v4', auth: client });
                 const response = await sheets.spreadsheets.values.get({
                     spreadsheetId: cli.workbookSheetId,
@@ -36,6 +44,7 @@ export async function POST(request) {
                 responseList.push(cli);
             } catch (error) {
                 failedClients.push({ client: cli, error: error.message });
+                failedClientNames.push(cli.name); // Assuming cli has a name property
             }
         }
 
@@ -58,8 +67,26 @@ export async function POST(request) {
             }
         });
 
+        // Alerting the statistics
+        const totalClients = data.clients.length;
+        const failedForOtherReasons = failedClients.length;
+
+        console.log(`Total clients expected: ${totalClients}`);
+        console.log(`Number of clients with no workbook URL: ${noWorkbookUrlClients}`);
+        console.log(`Clients with no workbook URL: ${noWorkbookUrlClientNames.join(', ')}`);
+        console.log(`Number of clients failed for other reasons: ${failedForOtherReasons}`);
+        console.log(`Clients failed for other reasons: ${failedClientNames.join(', ')}`);
+
         // File done writing, provide the client data back to the main application
-        return NextResponse.json({ responseList, failedClients }, { status: 200 });
+        return NextResponse.json({ 
+            responseList, 
+            failedClients, 
+            noWorkbookUrlClients, 
+            noWorkbookUrlClientNames, 
+            totalClients, 
+            failedForOtherReasons, 
+            failedClientNames
+        }, { status: 200 });
     } catch (error) {
         console.error("Failed to upload file:", error);
         // Respond with an error message

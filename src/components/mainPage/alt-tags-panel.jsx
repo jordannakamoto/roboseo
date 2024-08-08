@@ -1,9 +1,27 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { useSortBy, useTable } from 'react-table';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRowSelect, useSortBy, useTable } from 'react-table';
 
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
+
+// Add a checkbox for row selection
+const IndeterminateCheckbox = React.forwardRef(
+  ({ indeterminate, ...rest }, ref) => {
+    const defaultRef = useRef();
+    const resolvedRef = ref || defaultRef;
+
+    useEffect(() => {
+      resolvedRef.current.indeterminate = indeterminate;
+    }, [resolvedRef, indeterminate]);
+
+    return (
+      <>
+        <input type="checkbox" ref={resolvedRef} {...rest} />
+      </>
+    );
+  }
+);
 
 const EditableCell = ({
   value: initialValue,
@@ -63,6 +81,51 @@ const EditableCell = ({
 const AltTagsPanel = () => {
   const { altImages } = useClientWebpage(); // Assuming this hook provides the altImages data
   const [myData, setMyData] = useState([]);
+  const [dragging, setDragging] = useState(false);
+  const [startRowId, setStartRowId] = useState(null);
+  const [endRowId, setEndRowId] = useState(null);
+
+  const handleMouseDown = (rowId) => {
+    setDragging(true);
+    setStartRowId(rowId);
+  };
+
+  const handleMouseMove = (rowId) => {
+    if (dragging){
+      setEndRowId(rowId);
+      alert(rowId);
+      console.log(endRowId)
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (startRowId !== null && endRowId !== null) {
+      const startRowIndex = rows.findIndex(row => row.id === startRowId);
+      const endRowIndex = rows.findIndex(row => row.id === endRowId);
+      const [start, end] = startRowIndex < endRowIndex ? [startRowIndex, endRowIndex] : [endRowIndex, startRowIndex];
+      const rowIdsToToggle = rows.slice(start, end + 1).map(r => r.id);
+      rowIdsToToggle.forEach(rowId => {
+        toggleRowSelected(rowId);
+      });
+    }
+    setDragging(false);
+    setStartRowId(null);
+    setEndRowId(null);
+  };
+
+  useEffect(() => {
+    const handleMouseUpGlobal = () => {
+      if (dragging) {
+        handleMouseUp();
+      }
+    };
+
+    window.addEventListener('mouseup', handleMouseUpGlobal);
+
+    return () => {
+      window.removeEventListener('mouseup', handleMouseUpGlobal);
+    };
+  }, [dragging]);
 
   useEffect(() => {
     if (altImages) {
@@ -88,7 +151,11 @@ const AltTagsPanel = () => {
     () => [
       {
         Header: 'Page',
-        accessor: 'Source',
+        accessor: row => {
+          const url = row.Source;
+          const startIndex = url.indexOf('.com') + 4; // Get the index after '.com'
+          return url.substring(startIndex); // Return the substring after '.com'
+        },
         width: 300,
         maxWidth: 300,
         className: 'non-editable-cell',
@@ -106,8 +173,25 @@ const AltTagsPanel = () => {
         Cell: props => (
           <EditableCell {...props} updateMyData={updateMyData} />
         ),
-        width: 400,
-        maxWidth: 400,
+        width: 300,
+        maxWidth: 300,
+      },
+      {
+        id: 'selection',
+        Header: '',
+        Cell: ({ row }) => (
+          <div
+            onMouseDown={() => handleMouseDown(row.id)}
+            onMouseMove={() => handleMouseMove(row.id)}
+            style={{
+              height: '100%',
+              width: '100%',
+              cursor: 'pointer',
+            }}
+          />
+        ),
+        width: 30,
+        maxWidth: 30,
       },
     ],
     [updateMyData]
@@ -119,7 +203,7 @@ const AltTagsPanel = () => {
     headerGroups,
     rows,
     prepareRow,
-    state: { sortBy },
+    toggleRowSelected,
   } = useTable(
     {
       columns,
@@ -137,7 +221,8 @@ const AltTagsPanel = () => {
         ],
       },
     },
-    useSortBy
+    useSortBy,
+    useRowSelect,
   );
 
   return (
@@ -149,6 +234,9 @@ const AltTagsPanel = () => {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+          }
+          .selected-row {
+            background: #F0F8FF !important;
           }
         `}
       </style>
@@ -185,7 +273,10 @@ const AltTagsPanel = () => {
           {rows.map(row => {
             prepareRow(row);
             return (
-              <tr {...row.getRowProps()}>
+              <tr
+                {...row.getRowProps()}
+                className={row.isSelected ? 'selected-row' : ''}
+              >
                 {row.cells.map(cell => (
                   <td
                     {...cell.getCellProps()}
@@ -194,7 +285,7 @@ const AltTagsPanel = () => {
                       width: cell.column.width,
                       maxWidth: cell.column.maxWidth,
                       border: 'solid 1px gray',
-                      background: 'white',
+                      // background: 'white',
                     }}
                     className={cell.column.className}
                   >

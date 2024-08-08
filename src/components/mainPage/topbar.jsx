@@ -3,7 +3,7 @@
 // Flash effect on field when url changes
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { FcGoogle } from 'react-icons/fc';
@@ -28,6 +28,9 @@ export default function TopBar() {
   // - Loading Modal
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+
+  // Ref to track if testCSVParse has already been called for the current pages state
+  const csvParsedRef = useRef(false);
   
   // Load initial data from local storage when component mounts
   useEffect(() => {
@@ -170,6 +173,7 @@ export default function TopBar() {
     document.getElementById('active-client-url').value = client.workbookURL;
   };
 
+  // TRIGGER API CALL TO G-SHEET CLIENT DATA
   // When currentClient changes, load the client data
   useEffect(() => {
     if (currentClient) {
@@ -177,9 +181,11 @@ export default function TopBar() {
     }
   }, [currentClient]);
 
+  // TRIGGER PARSE CSV FROM FROG DATA
   // When currentClient and pages change, parse the CSV
   useEffect(() => {
-    if (currentClient && pages.length > 0) {
+    if (currentClient && pages.length > 0 && !csvParsedRef.current) {
+      csvParsedRef.current = true; // Set the ref to true to indicate parsing has started
       testCSVParse();
     }
   }, [currentClient, pages]);

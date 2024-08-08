@@ -59,7 +59,7 @@ export async function POST(request) {
 
         // Remove specified fields from each entry
         const result = filteredData.map(obj => excludeProperties(obj, columnsToRemove));
-        console.log(result);
+        // console.log(result);
 
         return NextResponse.json({ result }, { status: 200 });
     } catch (error) {
