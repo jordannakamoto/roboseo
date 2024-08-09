@@ -33,6 +33,7 @@ export async function POST(request) {
         let filteredData = altTagsData.filter(item => !item.Destination.includes('recaptcha'));
         filteredData = filteredData.filter(item => !item.Destination.includes('loading'));
         filteredData = filteredData.filter(item => !item.Destination.includes('loader'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('transparent'));
         filteredData = filteredData.filter(item => !item['Alt Text'].includes('Logo'));
 
 

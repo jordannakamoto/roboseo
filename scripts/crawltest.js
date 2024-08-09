@@ -20,12 +20,18 @@ fs.readFile("homepageList.txt", 'utf8', (err, data) => {
   // Function to execute crawls sequentially
   async function runCrawlsSequentially() {
     for (const url of urls) {
+      // Skip URLs that don't start with http or https
+      if (!(url.startsWith('http://') || url.startsWith('https://'))) {
+        console.log(`Skipping invalid URL: ${url}`);
+        continue;
+      }
+
       console.log(`Crawling ${url}...`);
       await runCrawl(url);
     }
     console.log("All crawls completed.");
   }
-
+ 
   // Start the crawling process
   runCrawlsSequentially();
 });

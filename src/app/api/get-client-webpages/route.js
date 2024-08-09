@@ -7,9 +7,9 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
+// Edited,
 export async function POST(request) {
     const data = await request.json();
-    // console.log(data);
 
     const client = new OAuth2Client(
         process.env.CLIENT_ID,
@@ -21,43 +21,101 @@ export async function POST(request) {
     const sheets = google.sheets({ version: 'v4', auth: client });
 
     try {
-        // Directly use the provided sheetName in the range
+// > First scan: Gathering unique URLs from column B
+// .. Assumes that all Keyword Strategy and Research pages have urls listed in column B
+
         const gridDataResponse = await sheets.spreadsheets.values.get({
             spreadsheetId: data.spreadsheetId,
-            range: `'${data.sheetName}'!A1:Z`, // Use sheetName from the request
+            range: `'${data.sheetName}'!B1:B`, // Use sheetName from request to select only column B
         });
 
         const rows = gridDataResponse.data.values;
-        let rowIndex = 0;
+        const uniqueValues = [];
+        const seen = new Set();
         let headerRow;
-        let pageIndex;
-        let urlIndex;
+        let linkIndex;
 
-        // console.log(rows.length)
-        while (rowIndex < rows.length) { // && (pageIndex === undefined || urlIndex === undefined)
+        let rowIndex = 0;
+        while (rowIndex < rows.length) { 
             const row = rows[rowIndex].map(header => header.toLowerCase());
-            // console.log(row);
-            pageIndex = row.indexOf('page name');
-            urlIndex = row.indexOf('url');
-            if (pageIndex !== -1) {
+            linkIndex = row.indexOf('target page'); // Assuming URLs are in column B
+
+            if (linkIndex !== -1) {
                 headerRow = row;
                 break;
             }
             rowIndex++;
         }
+        // Collect page names starting from the row after the header row
+        for (let i = rowIndex + 1; i < rows.length; i++) {
+            const row = rows[i];
+            const linkValue = row[linkIndex];
+
+            // Break the loop if the value doesn't start with 'http' or 'https'
+            if (!(linkValue.startsWith('https') || linkValue.startsWith('http'))) {
+                break;
+            }
+
+            // Only add the value if it hasn't been seen before
+            if (!seen.has(linkValue)) {
+                seen.add(linkValue);
+                uniqueValues.push(linkValue);
+            }
+        }
+        // _ Now uniqueValues contains our ordered list of webpage URLs
+
+        // > Second scan: Gathering page names matching the URLs
+        // ..
+        const gridDataResponse2 = await sheets.spreadsheets.values.get({
+            spreadsheetId: data.spreadsheetId,
+            range: `'${data.titleSheet}'!A1:Z`, // Adjust the range to include all columns for header identification
+        });
+
+        const rows2 = gridDataResponse2.data.values;
+        rowIndex = 0;
+        let pageIndex;
+        let urlIndex;
+
+        // Locate the 'page name' header row and set column indices
+        while (rowIndex < rows2.length) {
+            const row2 = rows2[rowIndex].map(header => header.toLowerCase());
+            pageIndex = row2.indexOf('page name');
+            urlIndex = row2.indexOf('url');
+
+            if (pageIndex !== -1 && urlIndex !== -1) {
+                headerRow = row2;
+                break;
+            }
+            rowIndex++;
+        }
+
         // ERROR CHECK
         if (!headerRow) {
             throw new Error('Required columns not found');
         }
         if (pageIndex === -1 || urlIndex === -1) {
-            // console.log(pageIndex)
-            // console.log(urlIndex)
             throw new Error('Required columns not found');
         }
 
-        const webpages = rows.slice(rowIndex + 1).map(row => ({
-            name: row[pageIndex] || '',
-            url: row[urlIndex] || '',
+        // Collect page names starting from the row after the header row
+        const pageNames = [];
+        for (let i = rowIndex + 1; i < rows2.length; i++) {
+            const row = rows2[i];
+            pageNames.push(row[pageIndex] || ''); // Assuming page names are in the identified column
+        }
+
+        // Combine the page names and URLs into the `webpages` array
+        if (uniqueValues.length !== pageNames.length) {
+            console.log("URLS:");
+            console.log(uniqueValues);
+            console.log("PAGE NAMES:");
+            console.log(pageNames);
+            throw new Error('Mismatch between the number of URLs and page names.');
+        }
+
+        const webpages = uniqueValues.map((url, index) => ({
+            name: pageNames[index],
+            url: url,
         }));
 
         return NextResponse.json({ webpages }, { status: 200 });

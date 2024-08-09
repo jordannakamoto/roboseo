@@ -117,7 +117,9 @@ export default function TopBar() {
       try {
         setIsLoading(true);
         setLoadingMessage('Loading client...');
-        // Fetch sheet titles
+        // -- Fetch Sheet Titles
+        // .. First we get all the sheet titles in the spreadsheet document so we can make calls to the right data range
+
         const titlesResponse = await fetch('/api/get-sheet-titles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -129,28 +131,33 @@ export default function TopBar() {
         const titles = titlesRes.visibleSheetTitles;
         setSheetTitles(titles);
 
+        // -- GET CLIENT WEBPAGES -- //
+        // -- Pulls from Keyword Research and Strategy
+
         // Find Title Tag sheet and fetch webpage data
         const titleTagSheet = titles.find(title => title.startsWith("Title Tag"));
         if (!titleTagSheet) throw new Error("Title Tag sheet not found.");
+        // ! Commented out title tag sheet, not sure if we need it retrieved later
+
+        // > Find Keyword sheet and fetch keyword data
+        const keywordSheet = titles.find(title => title.startsWith("Keyword"));
+        if (!keywordSheet) throw new Error("Keyword sheet not found.");
 
         const webpagesResponse = await fetch('/api/get-client-webpages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens, spreadsheetId: sheetId, sheetName: titleTagSheet }),
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId, titleSheet: titleTagSheet, sheetName: keywordSheet }),
         });
         if (!webpagesResponse.ok) throw new Error(`HTTP error! Status: ${webpagesResponse.status}`);
 
         const webpagesRes = await webpagesResponse.json();
         const webPages = webpagesRes.webpages;
 
-        // Find Keyword sheet and fetch keyword data
-        const keywordSheet = titles.find(title => title.startsWith("Keyword"));
-        if (!keywordSheet) throw new Error("Keyword sheet not found.");
-
+        // ... keywords
         const keywordsResponse = await fetch('/api/get-keywords', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens, spreadsheetId: sheetId, sheetName: keywordSheet, pages: webPages }),
+          headers: { 'Content-Type': '`application/json' },
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId, sheetName: keywordSheet, titleSheet: titleTagSheet, pages: webPages }),
         });
         if (!keywordsResponse.ok) throw new Error(`HTTP error! Status: ${keywordsResponse.status}`);
 

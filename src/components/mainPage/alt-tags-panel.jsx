@@ -1,25 +1,22 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRowSelect, useSortBy, useTable } from 'react-table';
 
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
-// Add a checkbox for row selection
 const IndeterminateCheckbox = React.forwardRef(
   ({ indeterminate, ...rest }, ref) => {
-    const defaultRef = useRef();
+    const defaultRef = React.useRef();
     const resolvedRef = ref || defaultRef;
 
     useEffect(() => {
-      resolvedRef.current.indeterminate = indeterminate;
+      if (resolvedRef.current) {
+        resolvedRef.current.indeterminate = indeterminate;
+      }
     }, [resolvedRef, indeterminate]);
 
-    return (
-      <>
-        <input type="checkbox" ref={resolvedRef} {...rest} />
-      </>
-    );
+    return <input type="checkbox" ref={resolvedRef} {...rest} />;
   }
 );
 
@@ -58,7 +55,7 @@ const EditableCell = ({
         width: '100%',
         height: '100%',
         boxSizing: 'border-box',
-        resize: 'none', // Prevent resizing
+        resize: 'none',
       }}
       autoFocus
     />
@@ -70,62 +67,18 @@ const EditableCell = ({
         width: '100%',
         boxSizing: 'border-box',
         cursor: 'text',
-        maxHeight: '1.2em', /* Adjust to the height of a single line of text */
+        maxHeight: '1.2em',
       }}
     >
-      {value || '\u00A0' /* Non-breaking space for empty cells */}
+      {value || '\u00A0'}
     </div>
   );
 };
 
 const AltTagsPanel = () => {
-  const { altImages } = useClientWebpage(); // Assuming this hook provides the altImages data
+  const { altImages } = useClientWebpage();
   const [myData, setMyData] = useState([]);
-  const [dragging, setDragging] = useState(false);
-  const [startRowId, setStartRowId] = useState(null);
-  const [endRowId, setEndRowId] = useState(null);
-
-  const handleMouseDown = (rowId) => {
-    setDragging(true);
-    setStartRowId(rowId);
-  };
-
-  const handleMouseMove = (rowId) => {
-    if (dragging){
-      setEndRowId(rowId);
-      alert(rowId);
-      console.log(endRowId)
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (startRowId !== null && endRowId !== null) {
-      const startRowIndex = rows.findIndex(row => row.id === startRowId);
-      const endRowIndex = rows.findIndex(row => row.id === endRowId);
-      const [start, end] = startRowIndex < endRowIndex ? [startRowIndex, endRowIndex] : [endRowIndex, startRowIndex];
-      const rowIdsToToggle = rows.slice(start, end + 1).map(r => r.id);
-      rowIdsToToggle.forEach(rowId => {
-        toggleRowSelected(rowId);
-      });
-    }
-    setDragging(false);
-    setStartRowId(null);
-    setEndRowId(null);
-  };
-
-  useEffect(() => {
-    const handleMouseUpGlobal = () => {
-      if (dragging) {
-        handleMouseUp();
-      }
-    };
-
-    window.addEventListener('mouseup', handleMouseUpGlobal);
-
-    return () => {
-      window.removeEventListener('mouseup', handleMouseUpGlobal);
-    };
-  }, [dragging]);
+  const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState(null);
 
   useEffect(() => {
     if (altImages) {
@@ -153,18 +106,22 @@ const AltTagsPanel = () => {
         Header: 'Page',
         accessor: row => {
           const url = row.Source;
-          const startIndex = url.indexOf('.com') + 4; // Get the index after '.com'
-          return url.substring(startIndex); // Return the substring after '.com'
+          const startIndex = url.indexOf('.com') + 4;
+          return url.substring(startIndex);
         },
-        width: 300,
-        maxWidth: 300,
+        width: 110,
+        maxWidth: 110,
         className: 'non-editable-cell',
       },
       {
         Header: 'Image',
-        accessor: 'Destination',
-        width: 100,
-        maxWidth: 100,
+        accessor: row => {
+          const url = row.Destination;
+          const startIndex = url.indexOf('.com') + 4;
+          return url.substring(startIndex);
+        },
+        width: 250,
+        maxWidth: 250,
         className: 'non-editable-cell',
       },
       {
@@ -173,28 +130,37 @@ const AltTagsPanel = () => {
         Cell: props => (
           <EditableCell {...props} updateMyData={updateMyData} />
         ),
-        width: 300,
-        maxWidth: 300,
+        width: 150,
+        maxWidth: 150,
       },
       {
         id: 'selection',
         Header: '',
         Cell: ({ row }) => (
-          <div
-            onMouseDown={() => handleMouseDown(row.id)}
-            onMouseMove={() => handleMouseMove(row.id)}
-            style={{
-              height: '100%',
-              width: '100%',
-              cursor: 'pointer',
+          <IndeterminateCheckbox
+            {...row.getToggleRowSelectedProps()}
+            onClick={(e) => {
+              const rowIndexInSortedOrder = rows.findIndex(r => r.id === row.id);
+
+              if (e.shiftKey && lastSelectedRowIndex !== null) {
+                const start = Math.min(lastSelectedRowIndex, rowIndexInSortedOrder);
+                const end = Math.max(lastSelectedRowIndex, rowIndexInSortedOrder);
+
+                for (let i = start; i <= end; i++) {
+                  rows[i].toggleRowSelected(true);
+                }
+              } else {
+                row.toggleRowSelected();
+                setLastSelectedRowIndex(rowIndexInSortedOrder);
+              }
             }}
           />
         ),
         width: 30,
         maxWidth: 30,
-      },
+      }
     ],
-    [updateMyData]
+    [updateMyData, lastSelectedRowIndex]
   );
 
   const {
@@ -203,7 +169,6 @@ const AltTagsPanel = () => {
     headerGroups,
     rows,
     prepareRow,
-    toggleRowSelected,
   } = useTable(
     {
       columns,
@@ -222,7 +187,7 @@ const AltTagsPanel = () => {
       },
     },
     useSortBy,
-    useRowSelect,
+    useRowSelect
   );
 
   return (
@@ -230,7 +195,7 @@ const AltTagsPanel = () => {
       <style>
         {`
           .non-editable-cell {
-            max-height: 1.2em; /* Adjust to the height of a single line of text */
+            max-height: 1.2em;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -240,7 +205,7 @@ const AltTagsPanel = () => {
           }
         `}
       </style>
-      <table {...getTableProps()} style={{ border: 'solid 1px black', width: '100%' }}>
+      <table {...getTableProps()} style={{ border: 'solid 1px black', marginLeft: '20px', width: '100%' }}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -285,7 +250,6 @@ const AltTagsPanel = () => {
                       width: cell.column.width,
                       maxWidth: cell.column.maxWidth,
                       border: 'solid 1px gray',
-                      // background: 'white',
                     }}
                     className={cell.column.className}
                   >
