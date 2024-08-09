@@ -3,6 +3,9 @@ const fs = require("fs");
 
 // > Output Location
 const outputLocation = "/Users/jordannakamoto/Desktop/Bryceproject/appv0/roboseo/public/frog/";
+// "/Users/brycesnyder/Documents/RedwoodSEO/roboseo/public/frog/";
+
+// ... Bryce and Jordan Computer Locations
 
 // > List of URLs to crawl
 // ----------------------------------------------------------------//
