@@ -1,0 +1,10 @@
+------------------------------------------------------------------------------------------------------
+Aug 10
+Updates:
+
+Image field in Alt Tag Panel can now be double clicked to show the full url of the image.
+
+Bugs:
+If a client is loaded with non-matching frog data, the app's client data storage seems to corrupt.
+
+------------------------------------------------------------------------------------------------------

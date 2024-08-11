@@ -120,9 +120,11 @@ const AltTagsPanel = () => {
           const startIndex = url.indexOf('.com') + 4;
           return url.substring(startIndex);
         },
+        Cell: props => (
+          <EditableCell {...props} updateMyData={updateMyData} />
+        ),
         width: 250,
         maxWidth: 250,
-        className: 'non-editable-cell',
       },
       {
         Header: 'Alt',
@@ -137,6 +139,7 @@ const AltTagsPanel = () => {
         id: 'selection',
         Header: '',
         Cell: ({ row }) => (
+          // ! Bug here... initial selection has troubles
           <IndeterminateCheckbox
             {...row.getToggleRowSelectedProps()}
             onClick={(e) => {
@@ -147,7 +150,7 @@ const AltTagsPanel = () => {
                 const end = Math.max(lastSelectedRowIndex, rowIndexInSortedOrder);
 
                 for (let i = start; i <= end; i++) {
-                  rows[i].toggleRowSelected(true);
+                  rows[i].toggleRowSelected();
                 }
               } else {
                 row.toggleRowSelected();
@@ -156,8 +159,8 @@ const AltTagsPanel = () => {
             }}
           />
         ),
-        width: 30,
-        maxWidth: 30,
+        width: 10,
+        maxWidth: 10,
       }
     ],
     [updateMyData, lastSelectedRowIndex]
