@@ -42,6 +42,7 @@ const EditableCell = ({
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
+  
 
   useEffect(() => {
     setValue(initialValue);
@@ -81,7 +82,8 @@ const AltTagsPanel = () => {
   const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
   const [myData, setMyData] = useState([]);
   const [selectedImages, setSelectedImages] = useState({});
-  const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState(null);
+  const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState(1);
+  const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
     if (altImages) {
@@ -112,22 +114,37 @@ const AltTagsPanel = () => {
       if (lastSelectedRowIndex > rowIndexInSortedOrder) {
         start = rowIndexInSortedOrder;
         end = lastSelectedRowIndex;
+        console.log(start, end);
+        for (let i = start; i <= end -1; i++) {
+          const selectedRow = rows[i];
+          selectedRow.toggleRowSelected();
+          const selectedId = selectedRow.id;
+          if (selectedId) {
+            if (selectedRow.isSelected) {
+              removeImageFromPreview(selectedId);
+            } else {
+              addImageToPreview(selectedRow);
+            }
+          }
+        }
       } else {
         start = lastSelectedRowIndex;
         end = rowIndexInSortedOrder;
-      }
-      for (let i = start; i <= end; i++) {
-        const selectedRow = rows[i];
-        selectedRow.toggleRowSelected();
-        const selectedId = selectedRow.id;
-        if (selectedId) {
-          if (selectedRow.isSelected) {
-            removeImageFromPreview(selectedId);
-          } else {
-            addImageToPreview(selectedRow);
+        console.log(start, end);
+        for (let i = start - 1; i >= end; i--) {
+          const selectedRow = rows[i];
+          selectedRow.toggleRowSelected();
+          const selectedId = selectedRow.id;
+          if (selectedId) {
+            if (selectedRow.isSelected) {
+              removeImageFromPreview(selectedId);
+            } else {
+              addImageToPreview(selectedRow);
+            }
           }
         }
       }
+      setLastSelectedRowIndex(rowIndexInSortedOrder);
     } else {
       row.toggleRowSelected();
       if (row.isSelected) {
@@ -136,6 +153,7 @@ const AltTagsPanel = () => {
         addImageToPreview(row);
       }
       setLastSelectedRowIndex(rowIndexInSortedOrder);
+      console.log(rowIndexInSortedOrder)
     }
   };
 
@@ -202,6 +220,10 @@ const AltTagsPanel = () => {
     console.log("Expected output of alt tag tool:");
     console.log(updatedRows);
     setAltImagesProcessed(updatedRows);
+
+     // Set the clicked state to true for visual feedback
+    setClicked(true);
+
     return updatedRows;
   };
 
@@ -323,10 +345,11 @@ const AltTagsPanel = () => {
           ))}
         </div>
       </div>
-      <Button style={{marginLeft: '60vw', marginBottom: '20px'}} variant="outline" onClick = {(e) => {
+      <Button style={{marginLeft: '70vw', marginBottom: '20px', backgroundColor: clicked ? '#f5f5f5' : 'white', // Change color based on update status
+}} variant="outline" onClick = {(e) => {
                 createFinalState();
               }} >
-        Approve Alt Tags For Writing
+        {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button>
 
       <table {...getTableProps()} style={{ border: 'solid 1px black', marginLeft: '20px', width: '100%' }}>
