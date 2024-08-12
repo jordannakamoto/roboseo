@@ -1,18 +1,18 @@
 {
     "workbench.iconTheme": "catppuccin-perfect-sequoia",
     "files.exclude": {
-        "**/.vscode": true,
-        "node_modules": true,
-        ".next": true,
-        ".env.local": true,
-        ".eslintrc.json": true,
-        ".gitignore": true,
-        "components.json": true,
-        "jsconfig.json": true,
-        "package-lock.json": true,
-        "postcss.config.js": true,
-        "tailwind.config.js": true,
-        "README.md": true,
-        "src/lib": true
+        "**/.vscode": false,
+        ".vscode": false,
+        "node_modules": false,
+        ".next": false,
+        ".env.local": false,
+        ".eslintrc.json": false,
+        "components.json": false,
+        "jsconfig.json": false,
+        "package-lock.json": false,
+        "postcss.config.js": false,
+        "tailwind.config.js": false,
+        "README.md": false,
+        "src/lib": false
     }
 }
