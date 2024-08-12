@@ -1,3 +1,7 @@
+// Get Sheet Titles
+// - Gets working set of open sheets
+// - Differentiates between (Refresh) and original updates by visibility
+
 import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';

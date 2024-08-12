@@ -50,7 +50,7 @@ export default function TestBar() {
     currClientHomepage = currClientHomepage.replace(/^https?:\/\//, '');
 
     try {
-      const response = await fetch('/api/load-from-frog-csvs', {
+      const response = await fetch('/api/load-from-frog-data-fields', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

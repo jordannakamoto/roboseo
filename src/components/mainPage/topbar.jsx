@@ -22,8 +22,8 @@ const extractSheetIdFromUrl = (url) => {
 export default function TopBar() {
   const [tokens, setTokens] = useState(null);
   const [clientList, setClientList] = useState([]);
-  const [showCompleted, setShowCompleted] = useState(true);
-  const { pages, setPages, sheetTitles, sheetUrl, altImages, setAltImages, setSheetTitles, setSheetUrl } = useClientWebpage();
+  const [showCompleted, setShowCompleted] = useState(false); // Defaults to not showing completed clients in the list
+  const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
   // - Loading Modal
   const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +83,7 @@ export default function TopBar() {
       try {
         setIsLoading(true);
         setLoadingMessage('Loading client list...');
-        const response = await fetch('/api/google_sheets', {
+        const response = await fetch('/api/get-client-list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tokens, spreadsheetId: sheetId, range }),
@@ -208,7 +208,7 @@ export default function TopBar() {
 
     try {
       // Load data from Frog CSVs
-      const response = await fetch('/api/load-from-frog-csvs', {
+      const response = await fetch('/api/load-from-frog-data-fields', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dir: currClientHomepage, webpages: pages }),
@@ -255,6 +255,7 @@ export default function TopBar() {
           sheetTitles,
           webpages: pages,
           tokens,
+          altTags: altImagesProcessed,
           hMode: mode,
         }),
       });
@@ -345,12 +346,12 @@ export default function TopBar() {
               .filter(client => showCompleted || !client.completed)
               .map((client, index) => (
                 <li key={index} className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  <input 
+                  {/* <input 
                     type="checkbox"
                     checked={client.completed || false}
                     onChange={() => toggleClientCompletion(index)}
                     className="mr-2"
-                  />
+                  /> */}
                   <span
                     onClick={() => selectClient(client)}
                     className={`flex-grow ${client.completed ? 'line-through' : ''}`}
@@ -362,8 +363,9 @@ export default function TopBar() {
           </ul>
           <button
             onClick={() => setShowCompleted(prev => !prev)}
-            className="absolute bottom-0 left-0 right-0 py-2 text-sm text-gray-700"
+            className="absolute bottom-0 left-0 right-0 py-2 text-sm text-gray-700 bg-white"
           >
+          {/* TODO: add background */}
             {showCompleted ? 'Hide Completed' : 'Show Completed'}
           </button>
         </div>

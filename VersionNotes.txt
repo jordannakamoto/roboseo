@@ -5,6 +5,10 @@ Updates:
 Image field in Alt Tag Panel can now be double clicked to show the full url of the image.
 
 Bugs:
+Looks like we need to refresh the page in between clients...
 If a client is loaded with non-matching frog data, the app's client data storage seems to corrupt.
 
+
+Todo:
+remove caption from state.
 ------------------------------------------------------------------------------------------------------

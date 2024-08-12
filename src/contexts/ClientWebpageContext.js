@@ -9,11 +9,13 @@ const ClientWebpageContext = createContext({
   pages: [], // Added pages array
   sheetUrl: '',
   altImages: [],
+  altImagesProcessed: [],
   setClientName: () => {},
   setPages: () => {}, // Setter function for pages
   setSheetTitles: () => {},
   setSheetUrl: () => {},
-  setAltImages: () => {}
+  setAltImages: () => {},
+  setAltImagesProcessed: () => {}
 });
 
 // Hook to use the context
@@ -26,8 +28,10 @@ export const ClientWebpageProvider = ({ children }) => {
   const [pages, setPages] = useState([]); // State for pages
   const [sheetUrl, setSheetUrl] = useState('');
   const [altImages, setAltImages] = useState([]);
+  const [altImagesProcessed, setAltImagesProcessed] = useState([]);
 
-  // Logging state changes...
+
+  // .. Logging state changes...
   useEffect(() => {
     console.log('Client webpage data changed:', { clientName, pages });
   }, [clientName, pages]); // Dependency array
@@ -39,11 +43,13 @@ export const ClientWebpageProvider = ({ children }) => {
     sheetTitles,
     sheetUrl,
     altImages,
+    altImagesProcessed,
     setClientName,
     setPages,
     setSheetTitles,
     setSheetUrl,
-    setAltImages
+    setAltImages,
+    setAltImagesProcessed
   };
 
   return (

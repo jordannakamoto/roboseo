@@ -30,9 +30,16 @@ export async function POST(request) {
         const altTagsData = readAndParseCSV(altTagsFilePath);
 
         // Filter out entries with an image URL that contains "recaptcha"
+        // Filtered out Alt Tag rows
         let filteredData = altTagsData.filter(item => !item.Destination.includes('recaptcha'));
         filteredData = filteredData.filter(item => !item.Destination.includes('loading'));
         filteredData = filteredData.filter(item => !item.Destination.includes('loader'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('arrow'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('icon'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('spinner'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('logo'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('.cur'));
+        filteredData = filteredData.filter(item => !item.Destination.includes('.gif'));
         filteredData = filteredData.filter(item => !item.Destination.includes('transparent'));
         filteredData = filteredData.filter(item => !item['Alt Text'].includes('Logo'));
 

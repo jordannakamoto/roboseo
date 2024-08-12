@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRowSelect, useSortBy, useTable } from 'react-table';
 
+import { Button } from '@/components/ui/button';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 const IndeterminateCheckbox = React.forwardRef(
@@ -77,12 +78,14 @@ const EditableCell = ({
 
 const AltTagsPanel = () => {
   const { altImages } = useClientWebpage();
+  const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
   const [myData, setMyData] = useState([]);
+  const [selectedImages, setSelectedImages] = useState({});
   const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState(null);
 
   useEffect(() => {
     if (altImages) {
-      setMyData(altImages);
+      setMyData(altImages.map((row, index) => ({ ...row, id: index.toString() })));
     }
   }, [altImages]);
 
@@ -100,12 +103,114 @@ const AltTagsPanel = () => {
     );
   }, []);
 
+  const handleRowSelection = (row, rows, rowIndexInSortedOrder, e) => {
+    const uniqueId = row.id; // Use the generated ID as the unique identifier
+    if (!uniqueId) return;
+
+    if (e.shiftKey && lastSelectedRowIndex !== null && lastSelectedRowIndex !== rowIndexInSortedOrder) {
+      let start, end;
+      if (lastSelectedRowIndex > rowIndexInSortedOrder) {
+        start = rowIndexInSortedOrder;
+        end = lastSelectedRowIndex;
+      } else {
+        start = lastSelectedRowIndex;
+        end = rowIndexInSortedOrder;
+      }
+      for (let i = start; i <= end; i++) {
+        const selectedRow = rows[i];
+        selectedRow.toggleRowSelected();
+        const selectedId = selectedRow.id;
+        if (selectedId) {
+          if (selectedRow.isSelected) {
+            removeImageFromPreview(selectedId);
+          } else {
+            addImageToPreview(selectedRow);
+          }
+        }
+      }
+    } else {
+      row.toggleRowSelected();
+      if (row.isSelected) {
+        removeImageFromPreview(uniqueId);
+      } else {
+        addImageToPreview(row);
+      }
+      setLastSelectedRowIndex(rowIndexInSortedOrder);
+    }
+  };
+
+  const addImageToPreview = (row) => {
+    const uniqueId = row.id;
+    const imageUrl = row.original?.Destination;
+    if (uniqueId && imageUrl) {
+      setSelectedImages(prev => ({
+        ...prev,
+        [uniqueId]: {
+          url: imageUrl,
+          caption: row.original['Alt Text'],  // Initialize caption from Alt Text
+        },
+      }));
+    }
+  };
+
+  const removeImageFromPreview = (uniqueId) => {
+    setSelectedImages(prev => {
+      const updatedImages = { ...prev };
+      delete updatedImages[uniqueId];
+      return updatedImages;
+    });
+  };
+
+  const handleCaptionChange = (uniqueId, newCaption) => {
+    setSelectedImages(prev => ({
+      ...prev,
+      [uniqueId]: {
+        ...prev[uniqueId],
+        caption: newCaption,
+      },
+    }));
+
+    // Update the corresponding alt text in the table
+    // TODO
+    // setMyData(old =>
+    //   old.map(row => {
+    //     if (row.id === uniqueId) {
+    //       return {
+    //         ...row,
+    //         'Alt Text': newCaption,
+    //       };
+    //     }
+    //     return row;
+    //   })
+    // );
+  };
+
+  const createFinalState = () => {
+    const updatedRows = Object.entries(selectedImages).map(([uniqueId, { caption }]) => {
+      const row = myData.find(row => row.id === uniqueId);
+      if (row) {
+        return {
+          uniqueId,
+          page: row.Source, // Use full Source URL from the row
+          url: row.Destination, // Use full Destination URL from the row
+          originalAlt: row['Alt Text'], // Use full Destination URL from the row
+          newAlt: caption,
+        };
+      }
+      return null;
+    }).filter(Boolean); // Remove any null values
+    console.log("Expected output of alt tag tool:");
+    console.log(updatedRows);
+    setAltImagesProcessed(updatedRows);
+    return updatedRows;
+  };
+
   const columns = React.useMemo(
     () => [
       {
         Header: 'Page',
         accessor: row => {
-          const url = row.Source;
+          const url = row?.Source || '';
           const startIndex = url.indexOf('.com') + 4;
           return url.substring(startIndex);
         },
@@ -116,15 +221,15 @@ const AltTagsPanel = () => {
       {
         Header: 'Image',
         accessor: row => {
-          const url = row.Destination;
+          const url = row?.Destination || '';
           const startIndex = url.indexOf('.com') + 4;
           return url.substring(startIndex);
         },
         Cell: props => (
           <EditableCell {...props} updateMyData={updateMyData} />
         ),
-        width: 250,
-        maxWidth: 250,
+        width: 180,
+        maxWidth: 180,
       },
       {
         Header: 'Alt',
@@ -138,27 +243,17 @@ const AltTagsPanel = () => {
       {
         id: 'selection',
         Header: '',
-        Cell: ({ row }) => (
-          // ! Bug here... initial selection has troubles
-          <IndeterminateCheckbox
-            {...row.getToggleRowSelectedProps()}
-            onClick={(e) => {
-              const rowIndexInSortedOrder = rows.findIndex(r => r.id === row.id);
-
-              if (e.shiftKey && lastSelectedRowIndex !== null) {
-                const start = Math.min(lastSelectedRowIndex, rowIndexInSortedOrder);
-                const end = Math.max(lastSelectedRowIndex, rowIndexInSortedOrder);
-
-                for (let i = start; i <= end; i++) {
-                  rows[i].toggleRowSelected();
-                }
-              } else {
-                row.toggleRowSelected();
-                setLastSelectedRowIndex(rowIndexInSortedOrder);
-              }
-            }}
-          />
-        ),
+        Cell: ({ row }) => {
+          const rowIndexInSortedOrder = rows.findIndex(r => r.id === row.id);
+          return (
+            <IndeterminateCheckbox
+              {...row.getToggleRowSelectedProps()}
+              onClick={(e) => {
+                handleRowSelection(row, rows, rowIndexInSortedOrder, e);
+              }}
+            />
+          );
+        },
         width: 10,
         maxWidth: 10,
       }
@@ -208,6 +303,32 @@ const AltTagsPanel = () => {
           }
         `}
       </style>
+      {/* Container for selected images and captions */}
+      <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
+        <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
+          {Object.entries(selectedImages).map(([uniqueId, { url, caption }]) => (
+            <div key={uniqueId} style={{ textAlign: 'center', width: '200px' }}>
+              <img
+                src={url}
+                alt="Selected"
+                style={{ width: '200px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
+              />
+              <textarea
+                value={caption}
+                onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
+                placeholder="Enter caption"
+                style={{ width: '100%', resize: 'none', fontSize: '12px' }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <Button style={{marginLeft: '60vw', marginBottom: '20px'}} variant="outline" onClick = {(e) => {
+                createFinalState();
+              }} >
+        Approve Alt Tags For Writing
+      </Button>
+
       <table {...getTableProps()} style={{ border: 'solid 1px black', marginLeft: '20px', width: '100%' }}>
         <thead>
           {headerGroups.map(headerGroup => (
@@ -269,3 +390,5 @@ const AltTagsPanel = () => {
 };
 
 export default AltTagsPanel;
+
+

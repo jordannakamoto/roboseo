@@ -2,8 +2,10 @@
 /**--------------------------------------------
  *             GET ALL CLIENT URLS                
  *---------------------------------------------**/
-// Gets all client urls for screaming frog to process
-// Writes homepages to file for frog scraper to work with
+// .. Gets all client urls for screaming frog to process
+// .. Writes homepages to file for frog scraper to work with
+
+// ----------------------------------------------------------------
 
 import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
