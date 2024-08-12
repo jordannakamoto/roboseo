@@ -31,6 +31,40 @@ async function updateSheetValues(client, sheetId, updates) {
     }
 }
 
+// Utility used during On-Page pasting
+async function addRowsToSheet(client, sheetId, sheetName, additionalRows) {
+    try {
+        const requests = [
+            {
+                appendDimension: {
+                    sheetId: await getSheetId(client, sheetId, sheetName),
+                    dimension: 'ROWS',
+                    length: additionalRows
+                }
+            }
+        ];
+
+        await client.spreadsheets.batchUpdate({
+            spreadsheetId: sheetId,
+            requestBody: {
+                requests
+            }
+        });
+    } catch (error) {
+        console.error(`Error adding rows to sheet: ${error.message}`);
+        throw error;
+    }
+}
+
+async function getSheetId(client, sheetId, sheetName) {
+    const sheetMetadata = await client.spreadsheets.get({
+        spreadsheetId: sheetId,
+        fields: 'sheets.properties'
+    });
+    const sheet = sheetMetadata.data.sheets.find(sheet => sheet.properties.title === sheetName);
+    return sheet ? sheet.properties.sheetId : null;
+}
+
 export async function POST(request) {
     const data = await request.json();
 
@@ -72,7 +106,23 @@ export async function POST(request) {
         return { updatedCells: batchUpdateData.length };
     };
 
-    const findAndProcessOnPageSheet = async (keyword, processRow) => {
+
+    const addRequiredRowsIfNeeded = async (sheetName, requiredRows) => {
+        const sheetMetadata = await sheets.spreadsheets.get({
+            spreadsheetId: data.sheetId,
+            fields: 'sheets(properties(title,gridProperties))'
+        });
+
+        const sheetInfo = sheetMetadata.data.sheets.find(sheet => sheet.properties.title === sheetName);
+        const currentRowCount = sheetInfo.properties.gridProperties.rowCount;
+
+        if (requiredRows > currentRowCount) {
+            const rowsToAdd = requiredRows - currentRowCount;
+            await addRowsToSheet(sheets, data.sheetId, sheetName, rowsToAdd);
+        }
+    };
+
+    const processOnPageSheet = async () => {
         const sheetMetadata = await sheets.spreadsheets.get({
             spreadsheetId: data.sheetId,
             fields: 'sheets(properties(title,hidden))'
@@ -82,19 +132,34 @@ export async function POST(request) {
             .filter(sheet => !sheet.properties.hidden)
             .map(sheet => sheet.properties.title);
 
-        const sheetName = visibleSheets.find(title => title.includes(keyword));
+        const sheetName = visibleSheets.find(title => title.includes("On-Page"));
         if (!sheetName) {
-            return { error: `No visible sheet with "${keyword}" in its name found.`, status: 404 };
+            return { error: `No visible sheet with "On-Page" in its name found.`, status: 404 };
         }
 
-        const columnAValues = await getSheetValues(sheets, data.sheetId, sheetName);
-        const batchUpdateData = [];
+        // Calculate the number of rows needed
+        const rowsPerEntry = 7; // As we have 7 rows per entry
+        const requiredRows = 6 + (rowsPerEntry * data.webpages.length); // Starting at row 6
 
-        data.webpages.forEach(page => {
-            const rowIndex = columnAValues.findIndex(value => value === page.url);
-            if (rowIndex !== -1) {
-                processRow(page, rowIndex + 1, batchUpdateData, sheetName);
-            }
+        // Ensure there are enough rows
+        await addRequiredRowsIfNeeded(sheetName, requiredRows);
+
+        const batchUpdateData = [];
+        let rowIndex = 5; // Starting index based on the image provided, adjust as needed.
+
+        data.webpages.forEach((page) => {
+            const webpageText = `Web Page: ${page.url}`;
+
+            const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join(', ')}`;
+
+            batchUpdateData.push(
+                { range: `${sheetName}!A${rowIndex}`, values: [[webpageText]] },
+                { range: `${sheetName}!A${rowIndex + 1}`, values: [[targetedKeywords]] },
+                // { range: `${sheetName}!A${rowIndex + 3}`, values: [['Original Copy:']] },
+                // { range: `${sheetName}!A${rowIndex + 6}`, values: [['Proposed Copy:']] }
+            );
+
+            rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
         });
 
         await updateSheetValues(sheets, data.sheetId, batchUpdateData);
@@ -173,13 +238,7 @@ export async function POST(request) {
     }));
 
     // 4. On-Page
-    processResults.push(await findAndProcessOnPageSheet("On-Page", (page, rowIndex, updates, sheetName) => {
-        const baseIndex = rowIndex + 1;
-        const keywordsText = `Targeted Keyword(s):\n${page.keywords.join('\n')}`;
-        updates.push(
-            { range: `${sheetName}!A${baseIndex}`, values: [[keywordsText]] }
-        );
-    }));
+    processResults.push(await processOnPageSheet());
 
     // 5. Alt Images
     processResults.push(await processAltTagsSheet());
