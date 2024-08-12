@@ -123,7 +123,7 @@ const TableView = ({ webpages }) => {
           marginLeft: '30px',
           position: 'relative',
           minHeight: showTable ? '100vh' : '0',
-          height: showTable ? '100%' : '0',
+          // height: showTable ? '100%' : '0',
           overflow: showTable ? 'visible' : 'hidden',
           marginTop: '60px',
           display: 'flex',
@@ -131,7 +131,7 @@ const TableView = ({ webpages }) => {
         }}
       >
         <Modal isOpen={!!modalData} originalData={modalData} modalPosition={modalPosition} />
-        <div className="tableColumn" style={{ flexGrow: 1 }}>
+        <div className="tableColumn" style={{ flexGrow: 1}}>
           <Button
             style={{ fontSize: '12px', height: '20px', position: 'absolute', bottom: '80px', left: '10px' }}
             variant="outline"
@@ -154,10 +154,10 @@ const TableView = ({ webpages }) => {
               }
 
               return (
-                <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '20px' }}>
-                  <table className="customTable flex" style={{ marginTop: '0px', width: '100%' }}>
+                <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '10px', marginTop: '10px' }}>
+                  <table className="customTable flex" style={{borderBottom: 'solid 1px #e5e5e5', height: '160px',  marginTop: '0px', width: '50%',  paddingBottom: '20px'  }}>
                     <tbody>
-                      <tr style={{ borderBottom: 'solid 1px #e5e5e5' }} key={`page-name-${pageIndex}`} className="pageNameRow">
+                      <tr style={{ }} key={`page-name-${pageIndex}`} className="pageNameRow">
                         <td style={{ verticalAlign: 'top', width: '200px' }}>
                           <div
                             style={{
@@ -169,44 +169,51 @@ const TableView = ({ webpages }) => {
                           >
                             {page.name}
                           </div>
+                          <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.url}</div>
                           <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.keywords.join(', ')}</div>
                         </td>
-                        <td style={{ width: '550px', paddingLeft: '60px' }}>
+                        <td style={{ width: '550px', paddingLeft: '60px'}}>
                           <div style={{ paddingBottom: '15px' }}>⠀</div>
-                          <div
-                            style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
-                            tabIndex={0} // Make the div focusable to capture key events
-                            onFocus={(e) => handleFocus(e, page, rowRef)}
-                            onBlur={handleBlur}
-                          >
-                            <input ref={refs.current[pageIndex].refTitle} style={{ width: '100%' }} defaultValue={page.title} />
-                          </div>
-                          <div
-                            style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
+                          
+                          <textarea
+                            ref={refs.current[pageIndex].refTitle}
+                            style={{ width: '100%', resize: 'none', height: '1.5em',paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
+                            defaultValue={page.title}
                             tabIndex={0}
                             onFocus={(e) => handleFocus(e, page, rowRef)}
                             onBlur={handleBlur}
-                          >
-                            <input ref={refs.current[pageIndex].refH1} style={{ width: '100%' }} defaultValue={page.h1} />
-                          </div>
-                          {showH2 && (
-                            <div
-                              style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
+                          />
+                          
+                          <textarea 
+                            ref={refs.current[pageIndex].refMeta}
+                            style={{ width: '100%', resize: 'none', height: '4.5em', margin: '8px 0px 2px 0px ', paddingBottom: '5px', fontSize: '13px', verticalAlign: 'top' }}
+                            defaultValue={page.meta}
+                            tabIndex={0}
+                            onFocus={(e) => handleFocus(e, page, rowRef)}
+                            onBlur={handleBlur}
+                          />
+                          
+                          <textarea
+                            ref={refs.current[pageIndex].refH1}
+                            style={{ width: '100%', resize: 'none', height: '1.5em', paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
+                            defaultValue={page.h1}
+                            tabIndex={0}
+                            onFocus={(e) => handleFocus(e, page, rowRef)}
+                            onBlur={handleBlur}
+                          />
+                          
+                                                    {showH2 && (
+                            <textarea
+                              ref={refs.current[pageIndex].refH2}
+                              style={{ width: '100%', resize: 'none',height: '1.5em', paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top', color: 'blue' }}
+                              defaultValue={page.h2}
                               tabIndex={0}
                               onFocus={(e) => handleFocus(e, page, rowRef)}
                               onBlur={handleBlur}
-                            >
-                              <input ref={refs.current[pageIndex].refH2} style={{ width: '100%', color: 'blue' }} defaultValue={page.h2} />
-                            </div>
+                            />
                           )}
-                          <div
-                            style={{ paddingBottom: '5px', fontSize: '13px', verticalAlign: 'top' }}
-                            tabIndex={0}
-                            onFocus={(e) => handleFocus(e, page, rowRef)}
-                            onBlur={handleBlur}
-                          >
-                            <textarea ref={refs.current[pageIndex].refMeta} style={{ width: '100%', resize: 'none' }} defaultValue={page.meta} />
-                          </div>
+                          
+                          
                         </td>
                       </tr>
                     </tbody>
