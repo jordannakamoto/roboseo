@@ -150,7 +150,7 @@ export async function POST(request) {
         data.webpages.forEach((page) => {
             const webpageText = `Web Page: ${page.url}`;
 
-            const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join(', ')}`;
+            const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join('\n')}`; //! changing comma separator to newline
 
             batchUpdateData.push(
                 { range: `${sheetName}!A${rowIndex}`, values: [[webpageText]] },
