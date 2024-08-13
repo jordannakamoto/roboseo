@@ -1,5 +1,3 @@
-import './tableview.css'; // Ensure the CSS is properly set up
-
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -40,12 +38,15 @@ const TableView = ({ webpages }) => {
         }}
         ref={modalRef}
       >
-        <table className="customTable flex" style={{ width: '100%' }}>
+        <table className="customTable" style={{ width: '100%' }}>
           <tbody>
             <tr>
-              <td style={{ width: '100%', paddingLeft: '20px' }}>
-                <div style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}>
+              <td style={{ width: '100%', paddingLeft: '10px' }}>
+                <div style={{ paddingBottom: '6px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.title}</div>
+                </div>
+                <div style={{ paddingBottom: '8px', fontSize: '14px', verticalAlign: 'top' }}>
+                  <div>{originalData.meta}</div>
                 </div>
                 <div style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.h1}</div>
@@ -55,9 +56,6 @@ const TableView = ({ webpages }) => {
                     <div style={{ color: 'blue' }}>{originalData.h2}</div>
                   </div>
                 )}
-                <div style={{ paddingBottom: '5px', fontSize: '13px', verticalAlign: 'top' }}>
-                  <div>{originalData.meta}</div>
-                </div>
               </td>
             </tr>
           </tbody>
@@ -69,8 +67,8 @@ const TableView = ({ webpages }) => {
   const handleFocus = (e, page, rowRef) => {
     const rect = rowRef.current.getBoundingClientRect(); // Get the bounding rect of the entire row
     setModalPosition({
-      top: rect.top + 30, //+ window.scrollY 
-      left: rect.left + rect.width + 10 - 600,
+      top: rect.top + - 3, //+ window.scrollY 
+      left: rect.left + rect.width + 10 - 570,
     });
     setModalData(page); 
   };
@@ -122,7 +120,7 @@ const TableView = ({ webpages }) => {
         style={{
           marginLeft: '30px',
           position: 'relative',
-          minHeight: showTable ? '100vh' : '0',
+          minHeight: 'auto',
           // height: showTable ? '100%' : '0',
           overflow: showTable ? 'visible' : 'hidden',
           marginTop: '60px',
@@ -132,13 +130,6 @@ const TableView = ({ webpages }) => {
       >
         <Modal isOpen={!!modalData} originalData={modalData} modalPosition={modalPosition} />
         <div className="tableColumn" style={{ flexGrow: 1}}>
-          <Button
-            style={{ fontSize: '12px', height: '20px', position: 'absolute', bottom: '80px', left: '10px' }}
-            variant="outline"
-            onClick={toggleH2}
-          >
-            H2
-          </Button>
           {showTable &&
             webpages.map((page, pageIndex) => {
               const rowRef = React.createRef(); // Create a ref for the entire row
@@ -155,16 +146,17 @@ const TableView = ({ webpages }) => {
 
               return (
                 <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '10px', marginTop: '10px' }}>
-                  <table className="customTable flex" style={{borderBottom: 'solid 1px #e5e5e5', height: '160px',  marginTop: '0px', width: '50%',  paddingBottom: '20px'  }}>
+                  <table className="customTable" style={{ tableLayout: 'fixed',borderBottom: 'solid 1px #e5e5e5', height: '120px', width: '800px'  }}>
                     <tbody>
-                      <tr style={{ }} key={`page-name-${pageIndex}`} className="pageNameRow">
-                        <td style={{ verticalAlign: 'top', width: '200px' }}>
+                      <tr style={{ width: '750px'}} key={`page-name-${pageIndex}`} className="pageNameRow">
+                        <td style={{ verticalAlign: 'top', width: '200px',flexShrink: 0, flexGrow: 0   }}>
                           <div
                             style={{
                               fontWeight: 'bold',
                               fontSize: '14px',
                               padding: '5px',
                               verticalAlign: 'top',
+                              width: '100%',
                             }}
                           >
                             {page.name}
@@ -172,49 +164,115 @@ const TableView = ({ webpages }) => {
                           <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.url}</div>
                           <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.keywords.join(', ')}</div>
                         </td>
-                        <td style={{ width: '550px', paddingLeft: '60px'}}>
-                          <div style={{ paddingBottom: '15px' }}>⠀</div>
-                          
-                          <textarea
-                            ref={refs.current[pageIndex].refTitle}
-                            style={{ width: '100%', resize: 'none', height: '1.5em',paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
-                            defaultValue={page.title}
-                            tabIndex={0}
-                            onFocus={(e) => handleFocus(e, page, rowRef)}
-                            onBlur={handleBlur}
-                          />
-                          
-                          <textarea 
-                            ref={refs.current[pageIndex].refMeta}
-                            style={{ width: '100%', resize: 'none', height: '4.5em', margin: '8px 0px 2px 0px ', paddingBottom: '5px', fontSize: '13px', verticalAlign: 'top' }}
-                            defaultValue={page.meta}
-                            tabIndex={0}
-                            onFocus={(e) => handleFocus(e, page, rowRef)}
-                            onBlur={handleBlur}
-                          />
-                          
-                          <textarea
-                            ref={refs.current[pageIndex].refH1}
-                            style={{ width: '100%', resize: 'none', height: '1.5em', paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}
-                            defaultValue={page.h1}
-                            tabIndex={0}
-                            onFocus={(e) => handleFocus(e, page, rowRef)}
-                            onBlur={handleBlur}
-                          />
-                          
-                                                    {showH2 && (
-                            <textarea
-                              ref={refs.current[pageIndex].refH2}
-                              style={{ width: '100%', resize: 'none',height: '1.5em', paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top', color: 'blue' }}
-                              defaultValue={page.h2}
-                              tabIndex={0}
-                              onFocus={(e) => handleFocus(e, page, rowRef)}
-                              onBlur={handleBlur}
-                            />
-                          )}
-                          
-                          
-                        </td>
+                        <td style={{ width: '550px', paddingLeft: '50px', verticalAlign: 'top'}}>
+  {/* <div style={{ paddingBottom: '10px' }}></div> */}
+  
+  <textarea
+    ref={refs.current[pageIndex].refTitle}
+    style={{ 
+      width: '100%', 
+      resize: 'none', 
+      height: '1.8em',
+      padding: '2px', 
+      paddingLeft: '4px', 
+      fontSize: '14px', 
+      verticalAlign: 'top',
+      border: '1px solid transparent',
+    }}
+    defaultValue={page.title}
+    tabIndex={0}
+    onFocus={(e) => {
+      e.target.style.outline = '1px solid lightblue'; // Change border on focus
+      handleFocus(e, page, rowRef);
+    }}
+    onBlur={(e) => {
+      e.target.style.outline = '1px solid transparent'; // Revert border on blur
+      handleBlur(e);
+    }}
+  />
+  
+  <textarea 
+    ref={refs.current[pageIndex].refMeta}
+    style={{ 
+      width: '100%', 
+      resize: 'none', 
+      height: '3.6em',
+      padding: '2px',  
+      paddingLeft: '4px', 
+      margin: '2px 0px 0px 0px', 
+      // paddingBottom: '5px', 
+      fontSize: '14px', 
+      verticalAlign: 'top',
+      border: '1px solid transparent',
+    }}
+    defaultValue={page.meta}
+    tabIndex={0}
+    onFocus={(e) => {
+      e.target.style.outline = '1px solid lightblue';
+      handleFocus(e, page, rowRef);
+    }}
+    onBlur={(e) => {
+      e.target.style.outline = '1px solid transparent';
+      handleBlur(e);
+    }}
+  />
+  
+  <textarea
+    ref={refs.current[pageIndex].refH1}
+    style={{ 
+      width: '100%', 
+      overflow: 'hidden', 
+      resize: 'none', 
+      height: '1.8em', 
+      padding: '2px', 
+      paddingLeft: '4px', 
+      paddingBottom: '5px', 
+      fontSize: '14px', 
+      verticalAlign: 'top',
+      border: '1px solid transparent',
+    }}
+    defaultValue={page.h1}
+    tabIndex={0}
+    onFocus={(e) => {
+      e.target.style.outline = '1px solid lightblue';
+      handleFocus(e, page, rowRef);
+    }}
+    onBlur={(e) => {
+      e.target.style.outline = '1px solid transparent';
+      handleBlur(e);
+    }}
+  />
+  
+  {showH2 && (
+    <textarea
+      ref={refs.current[pageIndex].refH2}
+      style={{ 
+        width: '100%', 
+        overflow: 'hidden',
+        resize: 'none',
+        height: '1.5em', 
+        padding: '2px', 
+        paddingLeft: '4px',
+        paddingBottom: '5px', 
+        fontSize: '14px', 
+        verticalAlign: 'top', 
+        color: 'blue',
+        border: '1px solid transparent',
+      }}
+      defaultValue={page.h2}
+      tabIndex={0}
+      onFocus={(e) => {
+        e.target.style.outline = '1px solid lightblue';
+        handleFocus(e, page, rowRef);
+      }}
+      onBlur={(e) => {
+        e.target.style.outline = '1px solid transparent';
+        handleBlur(e);
+      }}
+    />
+  )}
+</td>
+
                       </tr>
                     </tbody>
                   </table>
@@ -223,6 +281,13 @@ const TableView = ({ webpages }) => {
             })}
         </div>
       </div>
+      <Button
+            style={{ marginLeft: '60vw', marginBottom: '20px', fontSize: '12px', height: '20px'}}
+            variant="outline"
+            onClick={toggleH2}
+          >
+            Show H2s
+          </Button>
       <Button
         style={{
           marginLeft: '60vw',

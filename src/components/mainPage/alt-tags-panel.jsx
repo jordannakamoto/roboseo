@@ -352,7 +352,7 @@ const AltTagsPanel = () => {
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button>
 
-      <table {...getTableProps()} style={{ border: 'solid 1px black', marginLeft: '20px', width: '100%' }}>
+      <table {...getTableProps()} style={{ fontSize: '12px',border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
