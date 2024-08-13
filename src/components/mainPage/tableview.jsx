@@ -108,13 +108,27 @@ const TableView = ({ webpages }) => {
     const updatedPages = pages.map((page, pageIndex) => {
       const matchingWebpage = webpages[pageIndex];
       if (matchingWebpage) {
-        return {
-          ...page,
-          titleNew: refs.current[pageIndex].refTitle.current.value,
-          h1New: refs.current[pageIndex].refH1.current.value,
-          h2New: showH2 ? refs.current[pageIndex].refH2.current.value : null,
-          metaNew: refs.current[pageIndex].refMeta.current.value,
-        };
+        const updatedPage = { ...page };
+        
+        const titleValue = refs.current[pageIndex].refTitle.current.value;
+        const h1Value = refs.current[pageIndex].refH1.current.value;
+        const h2Value = showH2 ? refs.current[pageIndex].refH2.current.value : null;
+        const metaValue = refs.current[pageIndex].refMeta.current.value;
+  
+        if (titleValue !== page.title) {
+          updatedPage.titleNew = titleValue;
+        }
+        if (h1Value !== page.h1) {
+          updatedPage.h1New = h1Value;
+        }
+        if (showH2 && h2Value !== page.h2) {
+          updatedPage.h2New = h2Value;
+        }
+        if (metaValue !== page.meta) {
+          updatedPage.metaNew = metaValue;
+        }
+  
+        return updatedPage;
       }
       return page;
     });

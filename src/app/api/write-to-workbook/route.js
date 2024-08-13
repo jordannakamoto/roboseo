@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
-// fff2cc
-// highlight hex color
+// Highlight hex color
+const HIGHLIGHT_COLOR = { red: 1.0, green: 0.949, blue: 0.8 }; // R 255 G 242 B 204 fff2cc
 
 async function getSheetValues(client, sheetId, sheetName) {
     const range = `${sheetName}!A:A`;
@@ -22,19 +22,17 @@ async function getSheetValues(client, sheetId, sheetName) {
     return values;
 }
 
-async function updateSheetValues(client, sheetId, updates) {
-    if (updates.length > 0) {
-        await client.spreadsheets.values.batchUpdate({
+async function updateSheet(client, sheetId, requests) {
+    if (requests.length > 0) {
+        await client.spreadsheets.batchUpdate({
             spreadsheetId: sheetId,
             requestBody: {
-                valueInputOption: 'RAW',
-                data: updates,
+                requests,
             },
         });
     }
 }
 
-// Utility used during On-Page pasting
 async function addRowsToSheet(client, sheetId, sheetName, additionalRows) {
     try {
         const requests = [
@@ -96,19 +94,18 @@ export async function POST(request) {
         }
 
         const columnAValues = await getSheetValues(sheets, data.sheetId, sheetName);
-        const batchUpdateData = [];
+        const requests = [];
 
-        data.webpages.forEach(page => {
+        for (let page of data.webpages) {
             const rowIndex = columnAValues.findIndex(value => value === page.name);
             if (rowIndex !== -1) {
-                processRow(page, rowIndex, batchUpdateData, sheetName);
+                await processRow(page, rowIndex, requests, sheetName);
             }
-        });
+        }
 
-        await updateSheetValues(sheets, data.sheetId, batchUpdateData);
-        return { updatedCells: batchUpdateData.length };
+        await updateSheet(sheets, data.sheetId, requests);
+        return { updatedCells: requests.length };
     };
-
 
     const addRequiredRowsIfNeeded = async (sheetName, requiredRows) => {
         const sheetMetadata = await sheets.spreadsheets.get({
@@ -140,36 +137,32 @@ export async function POST(request) {
             return { error: `No visible sheet with "On-Page" in its name found.`, status: 404 };
         }
 
-        // Calculate the number of rows needed
-        const rowsPerEntry = 7; // As we have 7 rows per entry
-        const requiredRows = 6 + (rowsPerEntry * data.webpages.length); // Starting at row 6
+        const rowsPerEntry = 7;
+        const requiredRows = 6 + (rowsPerEntry * data.webpages.length);
 
-        // Ensure there are enough rows
         await addRequiredRowsIfNeeded(sheetName, requiredRows);
 
-        const batchUpdateData = [];
-        let rowIndex = 5; // Starting index based on the image provided, adjust as needed.
+        const requests = [];
+        let rowIndex = 5;
 
-        data.webpages.forEach((page) => {
+        for (let page of data.webpages) {
             const webpageText = `Web Page: ${page.url}`;
+            const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join('\n')}`;
 
-            const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join('\n')}`; //! changing comma separator to newline
+            const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
 
-            batchUpdateData.push(
-                { range: `${sheetName}!A${rowIndex}`, values: [[webpageText]] },
-                { range: `${sheetName}!A${rowIndex + 1}`, values: [[targetedKeywords]] },
-                // { range: `${sheetName}!A${rowIndex + 3}`, values: [['Original Copy:']] },
-                // { range: `${sheetName}!A${rowIndex + 6}`, values: [['Proposed Copy:']] }
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: webpageText } }] }], fields: 'userEnteredValue' } },
+                { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: targetedKeywords } }] }], fields: 'userEnteredValue' } }
             );
 
-            rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
-        });
+            rowIndex += rowsPerEntry;
+        }
 
-        await updateSheetValues(sheets, data.sheetId, batchUpdateData);
-        return { updatedCells: batchUpdateData.length };
+        await updateSheet(sheets, data.sheetId, requests);
+        return { updatedCells: requests.length };
     };
 
-    // Process Alt Tag Sheet
     const processAltTagsSheet = async () => {
         const sheetMetadata = await sheets.spreadsheets.get({
             spreadsheetId: data.sheetId,
@@ -185,68 +178,98 @@ export async function POST(request) {
             return { error: `No visible sheet with "Alt Tag" in its name found.`, status: 404 };
         }
 
-        const batchUpdateData = [];
+        const requests = [];
 
-        data.altTags.forEach((item, index) => {
-            const baseIndex = index + 4; // hardcoded starting point
-            batchUpdateData.push(
-                { range: `${sheetName}!A${baseIndex}`, values: [[item.page]] },
-                { range: `${sheetName}!B${baseIndex}`, values: [[item.url]] },
-                { range: `${sheetName}!C${baseIndex}`, values: [[item.originalAlt]] },
-                { range: `${sheetName}!D${baseIndex}`, values: [[item.newAlt]] }
+        const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+
+        for (let [index, item] of data.altTags.entries()) {
+            const baseIndex = index + 4;
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.page } }] }], fields: 'userEnteredValue' } },
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 1, endColumnIndex: 2 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.url } }] }], fields: 'userEnteredValue' } },
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 2, endColumnIndex: 3 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.originalAlt } }] }], fields: 'userEnteredValue' } },
+                // ! HIGHLIGHT COLOR??
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.newAlt }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
             );
-        });
+        }
 
-        await updateSheetValues(sheets, data.sheetId, batchUpdateData);
-        return { updatedCells: batchUpdateData.length };
+        await updateSheet(sheets, data.sheetId, requests);
+        return { updatedCells: requests.length };
     };
 
-    // Collection of all actions to be sent to API
-    const processResults = [];  
+    const processResults = [];
 
-    // 1. Title Fields
-    processResults.push(await findAndProcessSheet("Title Tag", (page, rowIndex, updates, sheetName) => {
+    processResults.push(await findAndProcessSheet("Title Tag", async (page, rowIndex, requests, sheetName) => {
         const baseIndex = rowIndex + 1;
-        updates.push(
-            { range: `${sheetName}!B${baseIndex}`, values: [[page.url]] },
-            { range: `${sheetName}!C${baseIndex}`, values: [[page.keywords.join('\n')]] },
-            { range: `${sheetName}!D${baseIndex}`, values: [[page.title]] },
-            { range: `${sheetName}!F${baseIndex}`, values: [[page.titleNew]] }
+        const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+        requests.push(
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 1, endColumnIndex: 2 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.url } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 2, endColumnIndex: 3 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.keywords.join('\n') } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.title } }] }], fields: 'userEnteredValue' } }
         );
-    }));
-
-    // 2. Meta desc
-    processResults.push(await findAndProcessSheet("Meta", (page, rowIndex, updates, sheetName) => {
-        const baseIndex = rowIndex + 1;
-        updates.push(
-            { range: `${sheetName}!D${baseIndex}`, values: [[page.meta]] },
-            { range: `${sheetName}!F${baseIndex}`, values: [[page.metaNew]] }
-        );
-    }));
-
-    // 3. H1/H2
-    processResults.push(await findAndProcessSheet("H1/H2", (page, rowIndex, updates, sheetName) => {
-        const baseIndex = rowIndex + 1; // Adjusted index for H1/H2 sheet specifics
-        if (data.hMode === "h1") {
-            updates.push(
-                { range: `${sheetName}!D${baseIndex}`, values: [[page.h1]] },
-                { range: `${sheetName}!F${baseIndex}`, values: [[page.h1New]] }
+        if (page.titleNew) {
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.titleNew }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
             );
-        } else if (data.hMode === "h2") {
-            updates.push(
-                { range: `${sheetName}!D${baseIndex}`, values: [[page.h2]] },
-                { range: `${sheetName}!F${baseIndex}`, values: [[page.h2New]] }
+        } else {
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.title } }] }], fields: 'userEnteredValue' } }
             );
         }
     }));
 
-    // 4. On-Page
-    processResults.push(await processOnPageSheet());
+    processResults.push(await findAndProcessSheet("Meta", async (page, rowIndex, requests, sheetName) => {
+        const baseIndex = rowIndex + 1;
+        const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+        requests.push(
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.meta } }] }], fields: 'userEnteredValue' } }
+        );
+        if (page.metaNew) {
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.metaNew }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
+            );
+        } else {
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.meta } }] }], fields: 'userEnteredValue' } }
+            );
+        }
+    }));
 
-    // 5. Alt Images
+    processResults.push(await findAndProcessSheet("H1/H2", async (page, rowIndex, requests, sheetName) => {
+        const baseIndex = rowIndex + 1;
+        const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+        if (data.hMode === "h1") {
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } }
+            );
+            if (page.h1New) {
+                requests.push(
+                    { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
+                );
+            } else {
+                requests.push(
+                    { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } }
+                );
+            }
+        } else if (data.hMode === "h2") {
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } }
+            );
+            if (page.h2New) {
+                requests.push(
+                    { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
+                );
+            } else {
+                requests.push(
+                    { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } }
+                );
+            }
+        }
+    }));
+
+    processResults.push(await processOnPageSheet());
     processResults.push(await processAltTagsSheet());
 
-    // Final: Push
     const firstError = processResults.find(result => result.error);
     if (firstError) {
         return NextResponse.json({ error: firstError.error }, { status: firstError.status });
