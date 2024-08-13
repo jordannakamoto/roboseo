@@ -272,11 +272,12 @@ const AltTagsPanel = () => {
       <span
         style={{
           background: 'white',
-          padding: '5px',
+          paddingLeft: '5px',
+          paddingRight: '5px',
           zIndex: '100',
           position: 'absolute',
-          right: '5px',
-          bottom: '5px',
+          right: '0px',
+          bottom: '45px',
           fontSize: '12px',
           color,
           fontWeight,
@@ -388,11 +389,11 @@ const AltTagsPanel = () => {
       <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
         <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
           {Object.entries(selectedImages).map(([uniqueId, { url, caption }]) => (
-            <div key={uniqueId} style={{ textAlign: 'center', width: '200px', position: 'relative' }}>
+            <div key={uniqueId} style={{ textAlign: 'center', width: '400px', position: 'relative' }}>
               <img
                 src={url}
                 alt="Selected"
-                style={{ width: '200px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
+                style={{ width: '400px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
               />
               <textarea
                 value={caption}
