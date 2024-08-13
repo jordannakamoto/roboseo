@@ -417,7 +417,7 @@ const AltTagsPanel = () => {
       </div>
       <div className="flex" style={{ marginLeft: '32vw', position: 'relative'}}>
         <input
-          id="`fill-`input"
+          id="fill-input"
           placeholder="Enter caption, * for wildcard"
           style={{ width: '720px', resize: 'none', fontSize: '12px' }}
           onChange={handleFillInputChange} // Attach the change handler here
