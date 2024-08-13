@@ -42,7 +42,6 @@ const EditableCell = ({
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
-  
 
   useEffect(() => {
     setValue(initialValue);
@@ -78,12 +77,16 @@ const EditableCell = ({
 };
 
 const AltTagsPanel = () => {
+  // > State <
   const { altImages } = useClientWebpage();
   const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
   const [myData, setMyData] = useState([]);
   const [selectedImages, setSelectedImages] = useState({});
   const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState(1);
   const [clicked, setClicked] = useState(false);
+  const [focusedTextarea, setFocusedTextarea] = useState(null);
+  const [charCount, setCharCount] = useState(0);
+  const [fillInputCharCount, setFillInputCharCount] = useState(0); // Add this line to your state
 
   useEffect(() => {
     if (altImages) {
@@ -184,6 +187,9 @@ const AltTagsPanel = () => {
         caption: newCaption,
       },
     }));
+    if (focusedTextarea === uniqueId) {
+      setCharCount(newCaption.length);
+    }
   };
 
   const fillCaptions = () => {
@@ -219,6 +225,16 @@ const AltTagsPanel = () => {
     }
   };
 
+  const handleFocus = (uniqueId, caption) => {
+    setFocusedTextarea(uniqueId);
+    setCharCount(caption.length);
+  };
+
+  const handleFillInputChange = (e) => {
+    setFillInputCharCount(e.target.value.length);
+  };
+  
+
   const createFinalState = () => {
     const updatedRows = Object.entries(selectedImages).map(([uniqueId, { caption }]) => {
       const row = myData.find(row => row.id === uniqueId);
@@ -239,6 +255,36 @@ const AltTagsPanel = () => {
     setClicked(true);
 
     return updatedRows;
+  };
+
+  const renderCharacterCounter = (text, minCount, maxCount) => {
+    const count = text.length;
+    let color = 'black';
+    let fontWeight = 'normal';
+
+    if (count > maxCount) {
+      color = 'red';
+    } else if (count >= minCount) {
+      fontWeight = 'bold';
+    }
+
+    return (
+      <span
+        style={{
+          background: 'white',
+          padding: '5px',
+          zIndex: '100',
+          position: 'absolute',
+          right: '5px',
+          bottom: '5px',
+          fontSize: '12px',
+          color,
+          fontWeight,
+        }}
+      >
+        {count}
+      </span>
+    );
   };
 
   const columns = React.useMemo(
@@ -342,38 +388,56 @@ const AltTagsPanel = () => {
       <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
         <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
           {Object.entries(selectedImages).map(([uniqueId, { url, caption }]) => (
-            <div key={uniqueId} style={{ textAlign: 'center', width: '200px' }}>
+            <div key={uniqueId} style={{ textAlign: 'center', width: '200px', position: 'relative' }}>
               <img
                 src={url}
                 alt="Selected"
                 style={{ width: '200px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
               />
-                        <textarea
-              value={caption}
-              onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
-              placeholder="Enter caption"
-              style={{ width: '100%', resize: 'none', fontSize: '12px' }}
-              onFocus={(e) => {
-                const firstIndex = caption.indexOf('*');
-                if (firstIndex !== -1) {
-                  setTimeout(() => {
-                    e.target.setSelectionRange(firstIndex, firstIndex + 1);
-                  }, 0);
-                }
-              }}
-              onKeyDown={(e) => handleTabKey(e, e.target)}
-            />
+              <textarea
+                value={caption}
+                onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
+                placeholder="Enter caption"
+                style={{ width: '100%', resize: 'none', fontSize: '12px' }}
+                onFocus={(e) => {
+                  handleFocus(uniqueId, caption);
+                  const firstIndex = caption.indexOf('*');
+                  if (firstIndex !== -1) {
+                    setTimeout(() => {
+                      e.target.setSelectionRange(firstIndex, firstIndex + 1);
+                    }, 0);
+                  }
+                }}
+                onKeyDown={(e) => handleTabKey(e, e.target)}
+              />
+              {focusedTextarea === uniqueId && renderCharacterCounter(caption, 100, 125)}
             </div>
           ))}
         </div>
       </div>
-      <div className="flex" style={{ marginLeft: '50vw' }}>
+      <div className="flex" style={{ marginLeft: '32vw', position: 'relative'}}>
         <input
-          id="fill-input"
+          id="`fill-`input"
           placeholder="Enter caption, * for wildcard"
-          style={{ width: '400px', resize: 'none', fontSize: '12px' }}
+          style={{ width: '720px', resize: 'none', fontSize: '12px' }}
+          onChange={handleFillInputChange} // Attach the change handler here
           tabIndex="-1"
         />
+        <span
+        style={{
+          zIndex: '100',
+          background: 'white',
+          padding: '5px',
+          position: 'absolute',
+          left: '680px', // Adjust as necessary to position correctly
+          bottom: '5px',
+          fontSize: '12px',
+          color: fillInputCharCount > 125 ? 'red' : 'black',
+          fontWeight: fillInputCharCount >= 100 && fillInputCharCount <= 125 ? 'bold' : 'normal',
+        }}
+      >
+        {fillInputCharCount}
+      </span>
         <Button onClick={fillCaptions} tabIndex="-1" variant="outline">
           Fill
         </Button>
