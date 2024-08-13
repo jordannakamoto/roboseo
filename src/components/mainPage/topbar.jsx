@@ -23,6 +23,7 @@ export default function TopBar() {
   const [tokens, setTokens] = useState(null);
   const [clientList, setClientList] = useState([]);
   const [showCompleted, setShowCompleted] = useState(false); // Defaults to not showing completed clients in the list
+  const [isMasterSheetVisible, setIsMasterSheetVisible] = useState(false); // State to manage visibility of master-sheet-url input
   const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
   // - Loading Modal
@@ -175,15 +176,20 @@ export default function TopBar() {
 
   // Handle client selection from the list
   const selectClient = (client) => {
+    setPages([]); // Reset pages before loading new client data
+    setAltImages([]); // Reset alt images
+    setSheetTitles([]); // Reset sheet titles
     setCurrentClient(client);
     localStorage.setItem('currentClient', JSON.stringify(client));
-    document.getElementById('active-client-url').value = client.workbookURL;
+    // document.getElementById('active-client-url').value = client.workbookURL;
   };
+  
 
   // TRIGGER API CALL TO G-SHEET CLIENT DATA
   // When currentClient changes, load the client data
   useEffect(() => {
     if (currentClient) {
+      csvParsedRef.current = false;
       handleLoadClient(currentClient);
     }
   }, [currentClient]);
@@ -208,6 +214,9 @@ export default function TopBar() {
 
     try {
       // Load data from Frog CSVs
+      console.log('Sending request to Frog API...');
+      const payload = JSON.stringify({ dir: currClientHomepage, webpages: pages });
+      console.log('Sending payload to Frog API:', payload);
       const response = await fetch('/api/load-from-frog-data-fields', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -217,11 +226,40 @@ export default function TopBar() {
       if (!response.ok) throw new Error('Error processing files');
 
       const { result } = await response.json();
-      const mergedData = pages.map(page => ({
-        ...result.find(r => r.url === page.url),
-        ...page,
-        name: page.name,
-      }));
+
+      // -- Merge the Data
+      // > Frog csv files contain the whole scrape
+      // > Call to GSheets API to get only the pages we're interested in
+      const mergedData = pages.map(page => {
+        const urlPath = page.url.replace(/https:\/\/[^/]+/, ''); // Remove the root URL
+        let pageName;
+
+        if (!urlPath || urlPath === '/') {
+          pageName = 'Home Page'; // Assign "Home Page" to the root URL
+        } else {
+          // Remove file extension if present
+          const cleanPath = urlPath.split('/').map(segment => {
+            return segment.split('.')[0]; // Remove everything after the first dot (.)
+          });
+
+          pageName = cleanPath
+            .filter(Boolean) // Remove empty strings
+            .map(word => 
+              word
+                .split('-') // Split by hyphen
+                .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1)) // Capitalize each segment
+                .join(' ') // Join segments with a space
+            )
+            .join(' '); // Join the words with a space
+        }
+
+        return {
+          ...result.find(r => r.url === page.url),
+          ...page,
+          name: pageName, // Set the name property with the formatted page name
+        };
+      });
+
       setPages(mergedData);
     } catch (error) {
       console.error('Failed to process files:', error);
@@ -313,49 +351,63 @@ export default function TopBar() {
     localStorage.setItem('clients', JSON.stringify(updatedClientList));
   };
 
+    // Toggle visibility of master-sheet-url input
+    const toggleMasterSheetVisibility = () => {
+      setIsMasterSheetVisible(!isMasterSheetVisible);
+    };
+
   // ******************************************************** //
 
   return (
     <>
+    <div style = {{position:'absolute', left:'34px', top: '20px'}}>
+      <h1 style= {{fontWeight:'bold', }}>{currentClient.name}</h1>
+    </div>
     <LoadingModal isVisible={isLoading} message={loadingMessage} />
-    <div className="fixed top-0 left-0 right-0 z-10 border-b border-gray-200" style={{ background: 'rgba(255, 255, 255, 1.0)' }}>
+    <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '30px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
       <div className="flex justify-between items-center">
         <div className="flex flex-grow items-center space-x-4">
-          <span style={{ marginLeft: "20px" }}>{currentClient.name}</span>
-          <input
-            id="active-client-url"
-            onChange={handleLoadClient}
-            className="p-2 border border-gray-300 rounded"
-            placeholder="Active Client"
-            style={{ flexGrow: 1, fontSize: "11px" }}
-          />
-          <input
+          {/* <span style={{ marginLeft: "20px" }}>{currentClient.name}</span> */}
+          {/* <input
             id="master-sheet-url"
             onChange={handleLoadSheet}
             className="p-2 border border-gray-300 rounded"
             placeholder="Master sheet URL"
             style={{ flexGrow: 1, fontSize: "11px" }}
-          />
+          /> */}
           <Button onClick={login} style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px" }}>
             {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
           </Button>
         </div>
+        <Button style={{color:'grey'}} onClick={toggleMasterSheetVisibility} className="h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+            MSheet
+          </Button>
+          
+            <input
+              id="master-sheet-url"
+              onChange={handleLoadSheet}
+              className="p-2 border border-gray-300 rounded"
+              placeholder="Master sheet URL"
+              style={{ visibility: isMasterSheetVisible ? 'visible' : 'hidden', position:'absolute', zIndex:'1000', top:'40px', right:'0px',flexGrow: 1, fontSize: "11px" }}
+            />
+        <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+          FeedFrog
+        </button>
+         {/* Right Sidebar */}
         <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ height: "70vh", width: "230px", overflow: "scroll" }}>
           <ul className="text-sm text-gray-700">
             {clientList
               .filter(client => showCompleted || !client.completed)
               .map((client, index) => (
-                <li key={index} className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  {/* <input 
-                    type="checkbox"
-                    checked={client.completed || false}
-                    onChange={() => toggleClientCompletion(index)}
-                    className="mr-2"
-                  /> */}
-                  <span
-                    onClick={() => selectClient(client)}
-                    className={`flex-grow ${client.completed ? 'line-through' : ''}`}
-                  >
+                <li
+                  key={index}
+                  onClick={() => selectClient(client)}
+                  className={`flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer ${
+                    currentClient && currentClient.name === client.name ? 'bg-gray-100' : ''
+                  }`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <span className={`flex-grow ${client.completed ? 'line-through' : ''}`}>
                     {client.name}
                   </span>
                 </li>
@@ -365,20 +417,26 @@ export default function TopBar() {
             onClick={() => setShowCompleted(prev => !prev)}
             className="absolute bottom-0 left-0 right-0 py-2 text-sm text-gray-700 bg-white"
           >
-          {/* TODO: add background */}
             {showCompleted ? 'Hide Completed' : 'Show Completed'}
           </button>
         </div>
-        <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-          FeedFrog
-        </button>
       </div>
       </div>
       {/* Bottom card for additional buttons */}
       <Card className="max-w-md mx-auto" style={{ position: 'fixed', right: '0', bottom: '0' }}>
         <CardHeader />
         <CardContent className="flex flex-col items-center space-y-2">
+                    {/* Button to open active client URL in a new tab */}
+                    <Button
+              onClick={() => window.open(currentClient?.workbookURL, '_blank')}
+              variant="outline"
+              className="p-2 border border-gray-300 rounded"
+              style={{ flexGrow: 1, fontSize: "11px" }}
+            >
+              Open Active Client Workbook
+          </Button>
           {/* <Button onClick={testCSVParse} variant="outline">Parse CSV</Button> */}
+  
           <Button onClick={() => writeToWorkbook("h1")} variant="outline">Write To Workbook h1</Button>
           <Button onClick={() => writeToWorkbook("h2")} variant="outline">Write To Workbook h2</Button>
           <Button onClick={() => writeToWorkbook("done")} variant="outline">Mark Done</Button>

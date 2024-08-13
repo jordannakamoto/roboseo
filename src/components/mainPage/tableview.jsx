@@ -34,7 +34,7 @@ const TableView = ({ webpages }) => {
           padding: '5px',
           borderLeft: 'solid 1px grey',
           zIndex: 1000,
-          width: '550px',
+          width: '580px',
         }}
         ref={modalRef}
       >
@@ -161,10 +161,10 @@ const TableView = ({ webpages }) => {
                           >
                             {page.name}
                           </div>
-                          <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.url}</div>
+                          {/* <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.url}</div> */}
                           <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.keywords.join(', ')}</div>
                         </td>
-                        <td style={{ width: '550px', paddingLeft: '50px', verticalAlign: 'top'}}>
+                        <td style={{ width: '580px', paddingLeft: '50px', verticalAlign: 'top'}}>
   {/* <div style={{ paddingBottom: '10px' }}></div> */}
   
   <textarea
@@ -173,6 +173,7 @@ const TableView = ({ webpages }) => {
       width: '100%', 
       resize: 'none', 
       height: '1.8em',
+      overflow: 'hidden',
       padding: '2px', 
       paddingLeft: '4px', 
       fontSize: '14px', 
@@ -285,6 +286,7 @@ const TableView = ({ webpages }) => {
             style={{ marginLeft: '60vw', marginBottom: '20px', fontSize: '12px', height: '20px'}}
             variant="outline"
             onClick={toggleH2}
+            tabIndex="-1"
           >
             Show H2s
           </Button>

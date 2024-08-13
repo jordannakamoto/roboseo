@@ -208,7 +208,7 @@ export async function POST(request) {
             { range: `${sheetName}!B${baseIndex}`, values: [[page.url]] },
             { range: `${sheetName}!C${baseIndex}`, values: [[page.keywords.join('\n')]] },
             { range: `${sheetName}!D${baseIndex}`, values: [[page.title]] },
-            { range: `${sheetName}!F${baseIndex}`, values: [[page.title]] }
+            { range: `${sheetName}!F${baseIndex}`, values: [[page.titleNew]] }
         );
     }));
 
@@ -217,7 +217,7 @@ export async function POST(request) {
         const baseIndex = rowIndex + 1;
         updates.push(
             { range: `${sheetName}!D${baseIndex}`, values: [[page.meta]] },
-            { range: `${sheetName}!F${baseIndex}`, values: [[page.meta]] }
+            { range: `${sheetName}!F${baseIndex}`, values: [[page.metaNew]] }
         );
     }));
 
@@ -227,12 +227,12 @@ export async function POST(request) {
         if (data.hMode === "h1") {
             updates.push(
                 { range: `${sheetName}!D${baseIndex}`, values: [[page.h1]] },
-                { range: `${sheetName}!F${baseIndex}`, values: [[page.h1]] }
+                { range: `${sheetName}!F${baseIndex}`, values: [[page.h1New]] }
             );
         } else if (data.hMode === "h2") {
             updates.push(
                 { range: `${sheetName}!D${baseIndex}`, values: [[page.h2]] },
-                { range: `${sheetName}!F${baseIndex}`, values: [[page.h2]] }
+                { range: `${sheetName}!F${baseIndex}`, values: [[page.h2New]] }
             );
         }
     }));
