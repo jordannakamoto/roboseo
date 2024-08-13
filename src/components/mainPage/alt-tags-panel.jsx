@@ -114,7 +114,6 @@ const AltTagsPanel = () => {
       if (lastSelectedRowIndex > rowIndexInSortedOrder) {
         start = rowIndexInSortedOrder;
         end = lastSelectedRowIndex;
-        console.log(start, end);
         for (let i = start; i <= end -1; i++) {
           const selectedRow = rows[i];
           selectedRow.toggleRowSelected();
@@ -130,7 +129,6 @@ const AltTagsPanel = () => {
       } else {
         start = lastSelectedRowIndex;
         end = rowIndexInSortedOrder;
-        console.log(start, end);
         for (let i = start - 1; i >= end; i--) {
           const selectedRow = rows[i];
           selectedRow.toggleRowSelected();
@@ -153,7 +151,6 @@ const AltTagsPanel = () => {
         addImageToPreview(row);
       }
       setLastSelectedRowIndex(rowIndexInSortedOrder);
-      console.log(rowIndexInSortedOrder)
     }
   };
 
@@ -187,20 +184,39 @@ const AltTagsPanel = () => {
         caption: newCaption,
       },
     }));
+  };
 
-    // Update the corresponding alt text in the table
-    // TODO
-    // setMyData(old =>
-    //   old.map(row => {
-    //     if (row.id === uniqueId) {
-    //       return {
-    //         ...row,
-    //         'Alt Text': newCaption,
-    //       };
-    //     }
-    //     return row;
-    //   })
-    // );
+  const fillCaptions = () => {
+    const fillText = document.getElementById('fill-input').value;
+    const updatedImages = { ...selectedImages };
+
+    Object.keys(updatedImages).forEach((uniqueId) => {
+      if (!updatedImages[uniqueId].caption) {
+        updatedImages[uniqueId].caption = fillText;
+      }
+    });
+
+    setSelectedImages(updatedImages);
+  };
+
+  const handleTabKey = (e, textarea) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const currentIndex = textarea.selectionStart;
+      const nextIndex = textarea.value.indexOf('*', currentIndex + 1);
+
+      if (nextIndex !== -1) {
+        setTimeout(() => {
+          textarea.setSelectionRange(nextIndex, nextIndex + 1);
+        }, 0);
+      } else {
+        // Move to the next focusable element
+        const formElements = Array.from(document.querySelectorAll('input, button, textarea')).filter(el => el.tabIndex >= 0);
+        const currentIndex = formElements.indexOf(textarea);
+        const nextElement = formElements[currentIndex + 1] || formElements[0];
+        nextElement.focus();
+      }
+    }
   };
 
   const createFinalState = () => {
@@ -209,19 +225,17 @@ const AltTagsPanel = () => {
       if (row) {
         return {
           uniqueId,
-          page: row.Source, // Use full Source URL from the row
-          url: row.Destination, // Use full Destination URL from the row
-          originalAlt: row['Alt Text'], // Use full Destination URL from the row
+          page: row.Source,
+          url: row.Destination,
+          originalAlt: row['Alt Text'],
           newAlt: caption,
         };
       }
       return null;
-    }).filter(Boolean); // Remove any null values
-    console.log("Expected output of alt tag tool:");
-    console.log(updatedRows);
+    }).filter(Boolean);
+
     setAltImagesProcessed(updatedRows);
 
-     // Set the clicked state to true for visual feedback
     setClicked(true);
 
     return updatedRows;
@@ -325,7 +339,6 @@ const AltTagsPanel = () => {
           }
         `}
       </style>
-      {/* Container for selected images and captions */}
       <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
         <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
           {Object.entries(selectedImages).map(([uniqueId, { url, caption }]) => (
@@ -335,24 +348,49 @@ const AltTagsPanel = () => {
                 alt="Selected"
                 style={{ width: '200px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
               />
-              <textarea
-                value={caption}
-                onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
-                placeholder="Enter caption"
-                style={{ width: '100%', resize: 'none', fontSize: '12px' }}
-              />
+                        <textarea
+              value={caption}
+              onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
+              placeholder="Enter caption"
+              style={{ width: '100%', resize: 'none', fontSize: '12px' }}
+              onFocus={(e) => {
+                const firstIndex = caption.indexOf('*');
+                if (firstIndex !== -1) {
+                  setTimeout(() => {
+                    e.target.setSelectionRange(firstIndex, firstIndex + 1);
+                  }, 0);
+                }
+              }}
+              onKeyDown={(e) => handleTabKey(e, e.target)}
+            />
             </div>
           ))}
         </div>
       </div>
-      <Button style={{marginLeft: '70vw', marginBottom: '20px', backgroundColor: clicked ? '#f5f5f5' : 'white', // Change color based on update status
-}} variant="outline" onClick = {(e) => {
-                createFinalState();
-              }} >
+      <div className="flex" style={{ marginLeft: '50vw' }}>
+        <input
+          id="fill-input"
+          placeholder="Enter caption, * for wildcard"
+          style={{ width: '400px', resize: 'none', fontSize: '12px' }}
+          tabIndex="-1"
+        />
+        <Button onClick={fillCaptions} tabIndex="-1" variant="outline">
+          Fill
+        </Button>
+      </div>
+      <Button
+        style={{
+          marginLeft: '60vw',
+          width: '300px',
+          marginBottom: '20px',
+          backgroundColor: clicked ? '#f5f5f5' : 'white',
+        }}
+        variant="outline"
+        onClick={createFinalState}
+      >
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button>
-
-      <table {...getTableProps()} style={{ fontSize: '12px',border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
+      <table {...getTableProps()} style={{ fontSize: '12px', border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -413,5 +451,3 @@ const AltTagsPanel = () => {
 };
 
 export default AltTagsPanel;
-
-

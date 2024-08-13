@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
+// fff2cc
+// highlight hex color
+
 async function getSheetValues(client, sheetId, sheetName) {
     const range = `${sheetName}!A:A`;
     const response = await client.spreadsheets.values.get({
@@ -199,7 +202,7 @@ export async function POST(request) {
     };
 
     // Collection of all actions to be sent to API
-    const processResults = [];
+    const processResults = [];  
 
     // 1. Title Fields
     processResults.push(await findAndProcessSheet("Title Tag", (page, rowIndex, updates, sheetName) => {

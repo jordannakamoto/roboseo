@@ -1,9 +1,10 @@
+'use client';
+
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext'; // Assuming you have this context set up
 
-// Main TableView Component
 const TableView = ({ webpages }) => {
   const [showH2, setShowH2] = useState(false);
   const [showTable, setShowTable] = useState(true);
@@ -16,6 +17,8 @@ const TableView = ({ webpages }) => {
   const { pages, setPages } = useClientWebpage(); // Accessing pages from context
 
   const refs = useRef([]); // Ref array to store all refs
+  const [focusedTextarea, setFocusedTextarea] = useState({ type: null, index: null });
+  const [charCount, setCharCount] = useState(0); // State to track character count
 
   const toggleH2 = () => setShowH2(!showH2);
   const toggleTable = () => setShowTable(!showTable);
@@ -42,10 +45,10 @@ const TableView = ({ webpages }) => {
           <tbody>
             <tr>
               <td style={{ width: '100%', paddingLeft: '10px' }}>
-                <div style={{ paddingBottom: '6px', fontSize: '14px', verticalAlign: 'top' }}>
+                <div style={{ paddingBottom: '10px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.title}</div>
                 </div>
-                <div style={{ paddingBottom: '8px', fontSize: '14px', verticalAlign: 'top' }}>
+                <div style={{ paddingBottom: '14px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.meta}</div>
                 </div>
                 <div style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}>
@@ -64,19 +67,26 @@ const TableView = ({ webpages }) => {
     );
   };
 
-  const handleFocus = (e, page, rowRef) => {
+  const handleFocus = (e, page, rowRef, textareaType, index) => {
     const rect = rowRef.current.getBoundingClientRect(); // Get the bounding rect of the entire row
     setModalPosition({
       top: rect.top + - 3, //+ window.scrollY 
-      left: rect.left + rect.width + 10 - 570,
+      left: rect.left + rect.width + 10 - 530,
     });
     setModalData(page); 
+    setFocusedTextarea({ type: textareaType, index });
+    setCharCount(e.target.value.length);
   };
 
   const handleBlur = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.relatedTarget)) {
       setModalData(null);
     }
+    setFocusedTextarea({ type: null, index: null });  // Reset both type and index
+  };
+
+  const handleChange = (e) => {
+    setCharCount(e.target.value.length);
   };
 
   // Global listener for Shift + Tab to toggle modal visibility
@@ -114,6 +124,33 @@ const TableView = ({ webpages }) => {
     console.log('Updated pages:', updatedPages);
   };
 
+  const renderCharacterCounter = (text, minCount, maxCount) => {
+    const count = text.length;
+    let color = 'black';
+    let fontWeight = 'normal';
+
+    if (count > maxCount) {
+      color = 'red';
+    } else if (count >= minCount) {
+      fontWeight = 'bold';
+    }
+
+    return (
+      <span
+        style={{
+          position: 'absolute',
+          right: '-20px',
+          bottom: '5px',
+          fontSize: '12px',
+          color,
+          fontWeight,
+        }}
+      >
+        {count}
+      </span>
+    );
+  };
+
   return (
     <>
       <div
@@ -121,7 +158,6 @@ const TableView = ({ webpages }) => {
           marginLeft: '30px',
           position: 'relative',
           minHeight: 'auto',
-          // height: showTable ? '100%' : '0',
           overflow: showTable ? 'visible' : 'hidden',
           marginTop: '60px',
           display: 'flex',
@@ -145,7 +181,7 @@ const TableView = ({ webpages }) => {
               }
 
               return (
-                <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '10px', marginTop: '10px' }}>
+                <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '10px', marginTop: '10px', position: 'relative' }}>
                   <table className="customTable" style={{ tableLayout: 'fixed',borderBottom: 'solid 1px #e5e5e5', height: '120px', width: '800px'  }}>
                     <tbody>
                       <tr style={{ width: '750px'}} key={`page-name-${pageIndex}`} className="pageNameRow">
@@ -161,116 +197,129 @@ const TableView = ({ webpages }) => {
                           >
                             {page.name}
                           </div>
-                          {/* <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.url}</div> */}
                           <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.keywords.join(', ')}</div>
                         </td>
                         <td style={{ width: '580px', paddingLeft: '50px', verticalAlign: 'top'}}>
-  {/* <div style={{ paddingBottom: '10px' }}></div> */}
   
-  <textarea
-    ref={refs.current[pageIndex].refTitle}
-    style={{ 
-      width: '100%', 
-      resize: 'none', 
-      height: '1.8em',
-      overflow: 'hidden',
-      padding: '2px', 
-      paddingLeft: '4px', 
-      fontSize: '14px', 
-      verticalAlign: 'top',
-      border: '1px solid transparent',
-    }}
-    defaultValue={page.title}
-    tabIndex={0}
-    onFocus={(e) => {
-      e.target.style.outline = '1px solid lightblue'; // Change border on focus
-      handleFocus(e, page, rowRef);
-    }}
-    onBlur={(e) => {
-      e.target.style.outline = '1px solid transparent'; // Revert border on blur
-      handleBlur(e);
-    }}
-  />
-  
-  <textarea 
-    ref={refs.current[pageIndex].refMeta}
-    style={{ 
-      width: '100%', 
-      resize: 'none', 
-      height: '3.6em',
-      padding: '2px',  
-      paddingLeft: '4px', 
-      margin: '2px 0px 0px 0px', 
-      // paddingBottom: '5px', 
-      fontSize: '14px', 
-      verticalAlign: 'top',
-      border: '1px solid transparent',
-    }}
-    defaultValue={page.meta}
-    tabIndex={0}
-    onFocus={(e) => {
-      e.target.style.outline = '1px solid lightblue';
-      handleFocus(e, page, rowRef);
-    }}
-    onBlur={(e) => {
-      e.target.style.outline = '1px solid transparent';
-      handleBlur(e);
-    }}
-  />
-  
-  <textarea
-    ref={refs.current[pageIndex].refH1}
-    style={{ 
-      width: '100%', 
-      overflow: 'hidden', 
-      resize: 'none', 
-      height: '1.8em', 
-      padding: '2px', 
-      paddingLeft: '4px', 
-      paddingBottom: '5px', 
-      fontSize: '14px', 
-      verticalAlign: 'top',
-      border: '1px solid transparent',
-    }}
-    defaultValue={page.h1}
-    tabIndex={0}
-    onFocus={(e) => {
-      e.target.style.outline = '1px solid lightblue';
-      handleFocus(e, page, rowRef);
-    }}
-    onBlur={(e) => {
-      e.target.style.outline = '1px solid transparent';
-      handleBlur(e);
-    }}
-  />
-  
-  {showH2 && (
+  <div style={{ position: 'relative' }}>
     <textarea
-      ref={refs.current[pageIndex].refH2}
+      ref={refs.current[pageIndex].refTitle}
       style={{ 
         width: '100%', 
+        resize: 'none', 
+        height: '1.8em',
         overflow: 'hidden',
-        resize: 'none',
-        height: '1.5em', 
         padding: '2px', 
-        paddingLeft: '4px',
-        paddingBottom: '5px', 
+        paddingLeft: '4px', 
         fontSize: '14px', 
-        verticalAlign: 'top', 
-        color: 'blue',
+        verticalAlign: 'top',
         border: '1px solid transparent',
       }}
-      defaultValue={page.h2}
+      defaultValue={page.title}
+      tabIndex={0}
+      onFocus={(e) => {
+        e.target.style.outline = '1px solid lightblue'; // Change border on focus
+        handleFocus(e, page, rowRef, 'title', pageIndex);
+      }}
+      onBlur={(e) => {
+        e.target.style.outline = '1px solid transparent'; // Revert border on blur
+        handleBlur(e);
+      }}
+      onChange={handleChange}
+    />
+    {focusedTextarea.type === 'title' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
+</div>
+
+  <div style={{ position: 'relative', marginTop: '5px' }}>
+    <textarea 
+      ref={refs.current[pageIndex].refMeta}
+      style={{ 
+        width: '100%', 
+        resize: 'none', 
+        height: '3.6em',
+        padding: '2px',  
+        paddingLeft: '4px', 
+        margin: '2px 0px 0px 0px', 
+        fontSize: '14px', 
+        verticalAlign: 'top',
+        border: '1px solid transparent',
+      }}
+      defaultValue={page.meta}
       tabIndex={0}
       onFocus={(e) => {
         e.target.style.outline = '1px solid lightblue';
-        handleFocus(e, page, rowRef);
+        handleFocus(e, page, rowRef, 'meta', pageIndex);
       }}
       onBlur={(e) => {
         e.target.style.outline = '1px solid transparent';
         handleBlur(e);
       }}
+      onChange={handleChange}
     />
+    {focusedTextarea.type === 'meta' && focusedTextarea.index === pageIndex &&renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
+  </div>
+  
+  <div style={{ position: 'relative', marginTop: '5px' }}>
+    <textarea
+      ref={refs.current[pageIndex].refH1}
+      style={{ 
+        width: '100%', 
+        overflow: 'hidden', 
+        resize: 'none', 
+        height: '1.8em', 
+        padding: '2px', 
+        paddingLeft: '4px', 
+        paddingBottom: '5px', 
+        fontSize: '14px', 
+        verticalAlign: 'top',
+        border: '1px solid transparent',
+      }}
+      defaultValue={page.h1}
+      tabIndex={0}
+      onFocus={(e) => {
+        e.target.style.outline = '1px solid lightblue';
+        handleFocus(e, page, rowRef, 'h1', pageIndex);
+      }}
+      onBlur={(e) => {
+        e.target.style.outline = '1px solid transparent';
+        handleBlur(e);
+      }}
+      onChange={handleChange}
+    />
+    {focusedTextarea.type === 'h1' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
+  </div>
+  
+  {showH2 && (
+    <div style={{ position: 'relative', marginTop: '5px' }}>
+      <textarea
+        ref={refs.current[pageIndex].refH2}
+        style={{ 
+          width: '100%', 
+          overflow: 'hidden',
+          resize: 'none',
+          height: '1.5em', 
+          padding: '2px', 
+          paddingLeft: '4px',
+          paddingBottom: '5px', 
+          fontSize: '14px', 
+          verticalAlign: 'top', 
+          color: 'blue',
+          border: '1px solid transparent',
+        }}
+        defaultValue={page.h2}
+        tabIndex={0}
+        onFocus={(e) => {
+          e.target.style.outline = '1px solid lightblue';
+          handleFocus(e, page, rowRef, 'h2', pageIndex);
+        }}
+        onBlur={(e) => {
+          e.target.style.outline = '1px solid transparent';
+          handleBlur(e);
+        }}
+        onChange={handleChange}
+      />
+      {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
+    </div>
   )}
 </td>
 
@@ -283,24 +332,30 @@ const TableView = ({ webpages }) => {
         </div>
       </div>
       <Button
-            style={{ marginLeft: '60vw', marginBottom: '20px', fontSize: '12px', height: '20px'}}
-            variant="outline"
-            onClick={toggleH2}
-            tabIndex="-1"
-          >
-            Show H2s
-          </Button>
-      <Button
         style={{
           marginLeft: '60vw',
+          width: '300px',
           marginBottom: '20px',
-          backgroundColor: isUpdated ? '#f5f5f5' : 'white', // Change color based on update status
-          // color: 'white',
+          fontSize: '12px',
+          height: '20px'
+        }}
+        variant="outline"
+        onClick={toggleH2}
+        tabIndex="-1"
+      >
+        Show H2s
+      </Button>
+      <Button
+        style={{
+          width: '300px',
+          marginLeft: '60vw',
+          marginBottom: '20px',
+          backgroundColor: isUpdated ? '#f5f5f5' : 'white',
         }}
         variant="outline"
         onClick={createFinalState}
       >
-        {isUpdated ? 'Changes Approved' : 'Approve Page Changes'} {/* Change text based on update status */}
+        {isUpdated ? 'Changes Approved' : 'Approve Page Changes'}
       </Button>
     </>
   );
