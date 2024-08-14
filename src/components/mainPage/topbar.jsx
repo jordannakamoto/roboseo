@@ -24,11 +24,12 @@ export default function TopBar({onPrepareData}) {
   const [clientList, setClientList] = useState([]);
   const [showCompleted, setShowCompleted] = useState(false); // Defaults to not showing completed clients in the list
   const [isMasterSheetVisible, setIsMasterSheetVisible] = useState(false); // State to manage visibility of master-sheet-url input
-  const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl } = useClientWebpage();
+  const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl, finalizationState, setFinalizationState } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
   // - Loading Modal
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [hModeTemp, setHModeTemp] = useState('h1');
 
   // Ref to track if testCSVParse has already been called for the current pages state
   const csvParsedRef = useRef(false);
@@ -38,7 +39,7 @@ export default function TopBar({onPrepareData}) {
     try {
       const storedTokens = localStorage.getItem('tokens');
       if (storedTokens) setTokens(JSON.parse(storedTokens));
-2
+
       const storedMSheet = localStorage.getItem('masterSheetURL');
       if (storedMSheet) document.getElementById('master-sheet-url').value = JSON.parse(storedMSheet);
 
@@ -282,31 +283,54 @@ export default function TopBar({onPrepareData}) {
     }
   };
 
-  // Write data to the workbook
-  const writeToWorkbook = async (mode) => {
-
-    onPrepareData(); // Prepares final state from meta tags and alt image components
-
-    try {
-      const response = await fetch('/api/write-to-workbook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sheetId: extractSheetIdFromUrl(sheetUrl),
-          sheetTitles,
-          webpages: pages,
-          tokens,
-          altTags: altImagesProcessed,
-          hMode: mode,
-        }),
+  // Trigger workbook writing
+  useEffect(() => {
+    if (finalizationState.status === "write" &&
+        finalizationState.altTagsReady &&
+        finalizationState.metaTagsReady) {
+          console.log("alt and meta tags ready for write");
+      writeToWorkbook(hModeTemp).then(() => {
+        // Reset the state after writing
+        setFinalizationState({
+          status: "idle",
+          altTagsReady: false,
+          metaTagsReady: false,
+        });
       });
-
-      if (!response.ok) throw new Error('Error writing to workbook');
-      console.log(`Changes written to workbook ${sheetUrl}`);
-    } catch (error) {
-      console.error('Failed to write to workbook:', error);
     }
-  };
+  }, [finalizationState]);
+
+  // Write data to the workbook
+const writeToWorkbook = async (mode) => {
+  try {
+
+    const response = await fetch('/api/write-to-workbook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sheetId: extractSheetIdFromUrl(sheetUrl),
+        sheetTitles,
+        webpages: pages,  // Use directly, after ensuring it's updated
+        tokens,
+        altTags: altImagesProcessed,  // Use directly, after ensuring it's updated
+        hMode: mode,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Error writing to workbook');
+    console.log(`Changes written to workbook ${sheetUrl}`);
+  } catch (error) {
+    console.error('Failed to write to workbook:', error);
+  }
+};
+
+const triggerFinalization = (mode) => {
+  setHModeTemp(mode);
+  setFinalizationState({
+    ...finalizationState,
+    status: "finalize",
+  });
+};
 
   // Load Frog scraper with client data
   const loadFrogScraper = async () => {
@@ -440,9 +464,9 @@ export default function TopBar({onPrepareData}) {
           </Button>
           {/* <Button onClick={testCSVParse} variant="outline">Parse CSV</Button> */}
   
-          <Button onClick={() => writeToWorkbook("h1")} variant="outline">Write To Workbook h1</Button>
-          <Button onClick={() => writeToWorkbook("h2")} variant="outline">Write To Workbook h2</Button>
-          <Button onClick={() => writeToWorkbook("done")} variant="outline">Mark Done</Button>
+          <Button onClick={() => triggerFinalization("h1")} variant="outline">Write To Workbook h1</Button>
+          <Button onClick={() => triggerFinalization("h2")} variant="outline">Write To Workbook h2</Button>
+          <Button onClick={() => triggerFinalization("done")} variant="outline">Mark Done</Button>
         </CardContent>
       </Card>
     </>

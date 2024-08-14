@@ -253,30 +253,30 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
         for (let page of data.webpages) {
             if (data.hMode === "h1") {
                 requests.push(
-                    { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } },
+                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } },
                 );
 
                 if (page.h1New) {
                     requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
+                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
                     );
                 } else {
                     requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } },
+                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } },
                     );
                 }
             } else if (data.hMode === "h2") {
                 requests.push(
-                    { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } },
+                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } },
                 );
 
                 if (page.h2New) {
                     requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
+                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
                     );
                 } else {
                     requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex - 1, endRowIndex: rowIndex, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } },
+                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } },
                     );
                 }
             }

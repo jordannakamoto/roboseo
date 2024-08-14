@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 
 import AltTagsPanel from "@/components/mainPage/alt-tags-panel";
-import TableView from "@/components/mainPage/tableview";
+import TableView from "@/components/mainPage/meta-tags-panel";
 import TopBar from "@/components/mainPage/topbar";
 import { useClientWebpage } from "@/contexts/ClientWebpageContext";
 
 export default function Component() {
-  const { pages, altImages } = useClientWebpage();
+  const { pages, altImages,altImagesProcessed } = useClientWebpage();
 
   const [tableViewFinalState, setTableViewFinalState] = useState(() => () => {});
   const [altTagsPanelFinalState, setAltTagsPanelFinalState] = useState(() => () => {});
@@ -24,10 +24,8 @@ export default function Component() {
       if (altTagsPanelFinalState && typeof altTagsPanelFinalState === 'function') {
         altTagsPanelFinalState();
       }
-      
-      // Ensure resolve is called after final state functions are executed
       resolve();
-    });
+  });
   };
 
   return (

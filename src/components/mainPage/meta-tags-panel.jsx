@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext'; // Assuming you have this context set up
@@ -14,7 +14,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   const [isModalVisible, setIsModalVisible] = useState(true); // State to toggle modal visibility
   const [isUpdated, setIsUpdated] = useState(false); // State to track if pages array is updated
 
-  const { pages, setPages } = useClientWebpage(); // Accessing pages from context
+  const { pages, setPages, finalizationState, setFinalizationState } = useClientWebpage(); // Accessing pages from context
 
   const refs = useRef([]); // Ref array to store all refs
   const [focusedTextarea, setFocusedTextarea] = useState({ type: null, index: null });
@@ -22,10 +22,6 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   const toggleH2 = () => setShowH2(!showH2);
   const toggleTable = () => setShowTable(!showTable);
-
-  useEffect(() => {
-    registerFinalState(createFinalState);
-  }, [registerFinalState]);
 
 
   // Modal Component
@@ -139,8 +135,19 @@ const TableView = ({ webpages, registerFinalState }) => {
     }
   };
   
+  useEffect(() => {
+    if (finalizationState.status === "finalize" && finalizationState.altTagsReady === true && finalizationState.metaTagsReady === false) {
+      createFinalState();
+      setFinalizationState({
+        ...finalizationState,
+        metaTagsReady: true,
+        altTagsReady: true,
+        status: "write", // Indicate that this part is done
+      });
+    }
+  }, [finalizationState]);
 
-  const createFinalState = () => {
+  const createFinalState = useCallback(() => {
     console.log("creating final state for meta data tableview...")
     const updatedPages = pages.map((page, pageIndex) => {
       const matchingWebpage = webpages[pageIndex];
@@ -173,7 +180,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     setPages(updatedPages); // Update the context with the new fields
     setIsUpdated(true); // Set the updated state to true
     console.log('Updated pages:', updatedPages);
-  };
+  });
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
     const count = text.length;
@@ -400,7 +407,7 @@ const TableView = ({ webpages, registerFinalState }) => {
       >
         Show H2s
       </Button>
-      <Button
+      {/* <Button
         style={{
           width: '300px',
           marginLeft: '60vw',
@@ -411,7 +418,7 @@ const TableView = ({ webpages, registerFinalState }) => {
         onClick={createFinalState}
       >
         {isUpdated ? 'Changes Approved' : 'Approve Page Changes'}
-      </Button>
+      </Button> */}
     </>
   );
 };

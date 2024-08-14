@@ -29,7 +29,11 @@ export const ClientWebpageProvider = ({ children }) => {
   const [sheetUrl, setSheetUrl] = useState('');
   const [altImages, setAltImages] = useState([]);
   const [altImagesProcessed, setAltImagesProcessed] = useState([]);
-
+  const [finalizationState, setFinalizationState] = useState({
+    status: "idle", // Can be "idle", "finalize", or "write"
+    altTagsReady: false, // Tracks if AltTagsPanel is ready
+    metaTagsReady: false, // Tracks if TableView is ready
+  });
 
   // .. Logging state changes...
   useEffect(() => {
@@ -40,6 +44,10 @@ export const ClientWebpageProvider = ({ children }) => {
     console.log('Processed Alt Images changed:', { altImagesProcessed });
   }, [altImagesProcessed]); // Dependency array
 
+  useEffect(() => {
+    console.log('Finalization State changed:', { finalizationState });
+  }, [finalizationState]); // Dependency array
+
   // Context value now includes setter functions and the pages array
   const value = {
     clientName,
@@ -48,12 +56,14 @@ export const ClientWebpageProvider = ({ children }) => {
     sheetUrl,
     altImages,
     altImagesProcessed,
+    finalizationState,
     setClientName,
     setPages,
     setSheetTitles,
     setSheetUrl,
     setAltImages,
-    setAltImagesProcessed
+    setAltImagesProcessed,
+    setFinalizationState,
   };
 
   return (

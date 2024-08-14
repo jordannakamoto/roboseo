@@ -78,7 +78,7 @@ const EditableCell = ({
 
 const AltTagsPanel = ({alts, registerFinalState}) => {
   // > State <
-  const { altImages } = useClientWebpage();
+  const { altImages, finalizationState, setFinalizationState } = useClientWebpage();
   const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
   const [myData, setMyData] = useState([]);
   const [selectedImages, setSelectedImages] = useState({});
@@ -93,10 +93,6 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
       setMyData(altImages.map((row, index) => ({ ...row, id: index.toString() })));
     }
   }, [altImages]);
-
-  useEffect(() => {
-    registerFinalState(createFinalState);
-  }, [registerFinalState]);
 
   const updateMyData = useCallback((rowIndex, columnId, value) => {
     setMyData(old =>
@@ -257,8 +253,18 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     setSelectedImages(updatedImages);
   };
   
-
-  const createFinalState = () => {
+  useEffect(() => {
+    if (finalizationState.status === "finalize" && finalizationState.altTagsReady === false) {
+      createFinalState();
+      setFinalizationState({
+        ...finalizationState,
+        altTagsReady: true,
+        status: "finalize", // Indicate that this part is done
+      });
+    }
+  }, [finalizationState]);
+  
+  const createFinalState = useCallback(() => {
     console.log("creating final state for alt images module...")
     const updatedRows = Object.entries(selectedImages).map(([uniqueId, { caption }]) => {
       const row = myData.find(row => row.id === uniqueId);
@@ -279,7 +285,9 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     setClicked(true);
 
     return updatedRows;
-  };
+  });
+
+
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
     const count = text.length;
@@ -470,7 +478,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
           Match
         </Button>
       </div>
-      <Button
+      {/* <Button
         style={{
           marginLeft: '60vw',
           width: '300px',
@@ -481,7 +489,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
         onClick={createFinalState}
       >
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
-      </Button>
+      </Button> */}
       <table {...getTableProps()} style={{ fontSize: '12px', border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
         <thead>
           {headerGroups.map(headerGroup => (
