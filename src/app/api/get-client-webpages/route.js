@@ -33,7 +33,7 @@ export async function POST(request) {
         const sheetsToAlwaysShow = ['welcome to seo'];
 
         // Base names for sheets
-        const sheetBaseNames = ['keyword', 'onpage', 'title', 'meta', 'h1', 'alt'];
+        const sheetBaseNames = ['keyword', 'on-page', 'title', 'meta', 'h1', 'alt'];
 
         // Build the requests to hide/show sheets
         const requests = allSheets.map(sheet => {

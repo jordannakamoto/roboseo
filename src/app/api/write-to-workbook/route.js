@@ -158,6 +158,8 @@ async function processTitleTagSheet(sheets, data) {
     return { sheetName, sheetId: await getSheetId(sheets, data.sheetId, sheetName), startRowIndex: pageNameRow + 1, endRowIndex: rowIndex };
 }
 
+// ** Process H1Meta Sheets *** //
+// ***
 async function processH1MetaSheets(sheets, data, titleSheetInfo) {
     const processResults = [];
 
@@ -289,6 +291,8 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
     return processResults;
 }
 
+// ** Process Alt Tags Sheet ***
+// ***
 async function processAltTagsSheet(sheets, data) {
     const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: data.sheetId,
@@ -323,6 +327,51 @@ async function processAltTagsSheet(sheets, data) {
     return { updatedCells: requests.length };
 }
 
+// ** Process On-Page Sheet
+// ***
+async function processOnPageSheet(sheets, data) {
+    const sheetMetadata = await sheets.spreadsheets.get({
+        spreadsheetId: data.sheetId,
+        fields: 'sheets(properties(title,hidden))',
+    });
+
+    const visibleSheets = sheetMetadata.data.sheets
+        .filter(sheet => !sheet.properties.hidden)
+        .map(sheet => sheet.properties.title);
+
+    const sheetName = visibleSheets.find(title => title.includes("On-Page"));
+    if (!sheetName) {
+        return { error: `No visible sheet with "On-Page" in its name found.`, status: 404 };
+    }
+
+    const rowsPerEntry = 7; // As we have 7 rows per entry
+    const requiredRows = 6 + (rowsPerEntry * data.webpages.length); // Starting at row 6
+
+    // Ensure there are enough rows
+    await ensureSufficientRows(sheets, data.sheetId, sheetName, 5, requiredRows);
+
+    const requests = [];
+    let rowIndex = 4; // Starting index based on the image provided, adjust as needed.
+
+    const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+
+    data.webpages.forEach((page) => {
+        const webpageText = `Web Page: ${page.url}`;
+        const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join(', ')}`;
+
+        requests.push(
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: webpageText } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 1, endRowIndex: rowIndex + 2, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: targetedKeywords } }] }], fields: 'userEnteredValue' } },
+            // Add more updateCells requests as needed for other rows
+        );
+
+        rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
+    });
+
+    await updateSheet(sheets, data.sheetId, requests);
+    return { sheetName, updatedCells: requests.length };
+}
+
 export async function POST(request) {
     const data = await request.json();
 
@@ -347,8 +396,10 @@ export async function POST(request) {
 
     const h1MetaResults = await processH1MetaSheets(sheets, data, titleSheetInfo);
     const altTagResults = await processAltTagsSheet(sheets, data);
+    const onPageResults = await processOnPageSheet(sheets, data);
 
-    const totalUpdatedCells = h1MetaResults.reduce((acc, { updatedCells }) => acc + updatedCells, 0)  + altTagResults.updatedCells;
+    // todo: make some kind of reporting that makes sense
+    const totalUpdatedCells = h1MetaResults.reduce((acc, { updatedCells }) => acc + updatedCells, 0)  + altTagResults.updatedCells + onPageResults.updatedCells;
     return NextResponse.json({ success: true, updatedCells: totalUpdatedCells }, { status: 200 });
 }
 

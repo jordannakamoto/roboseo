@@ -90,6 +90,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
 
   useEffect(() => {
     if (altImages) {
+      setSelectedImages({});
       setMyData(altImages.map((row, index) => ({ ...row, id: index.toString() })));
     }
   }, [altImages]);
@@ -206,7 +207,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
   };
 
   const handleTabKey = (e, textarea) => {
-    if (e.key === 'Tab' || e.key === 'Enter' && !e.shiftKey ) {
+    if (e.key === 'Tab' || e.key === 'Enter' && !e.shiftKey && !e.ctrlKey ) {
       e.preventDefault();
       const currentIndex = textarea.selectionStart;
       const nextIndex = textarea.value.indexOf('*', currentIndex + 1);
@@ -222,6 +223,14 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
         const nextElement = formElements[currentIndex + 1] || formElements[0];
         nextElement.focus();
       }
+    }
+    else if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      // Move to the previous focusable element
+      const formElements = Array.from(document.querySelectorAll('input, button, textarea')).filter(el => el.tabIndex >= 0);
+      const currentIndex = formElements.indexOf(textarea);
+      const prevElement = formElements[currentIndex - 1] || formElements[formElements.length - 1];
+      prevElement.focus();
     }
   };
 
@@ -491,61 +500,76 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button> */}
       <table {...getTableProps()} style={{ fontSize: '12px', border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
-        <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
-                <th
-                  {...column.getHeaderProps(column.getSortByToggleProps())}
-                  style={{
-                    width: column.width,
-                    maxWidth: column.maxWidth,
-                    background: 'aliceblue',
-                    color: 'black',
-                    fontWeight: 'bold',
-                  }}
-                  className={column.className}
-                >
-                  {column.render('Header')}
-                  <span>
-                    {column.isSorted
-                      ? column.isSortedDesc
-                        ? ' v'
-                        : ' ^'
-                      : ''}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {rows.map(row => {
-            prepareRow(row);
+  <thead>
+    {headerGroups.map((headerGroup, headerGroupIndex) => {
+      const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
+      return (
+        <tr key={`header-group-${headerGroupIndex}`} {...restHeaderGroupProps}>
+          {headerGroup.headers.map((column, columnIndex) => {
+            const { key, ...restColumnProps } = column.getHeaderProps(column.getSortByToggleProps());
             return (
-              <tr
-                {...row.getRowProps()}
-                className={row.isSelected ? 'selected-row' : ''}
+              <th
+                key={`header-${columnIndex}`}
+                {...restColumnProps}
+                style={{
+                  width: column.width,
+                  maxWidth: column.maxWidth,
+                  background: 'aliceblue',
+                  color: 'black',
+                  fontWeight: 'bold',
+                }}
+                className={column.className}
               >
-                {row.cells.map(cell => (
-                  <td
-                    {...cell.getCellProps()}
-                    style={{
-                      overflow: 'hidden',
-                      width: cell.column.width,
-                      maxWidth: cell.column.maxWidth,
-                      border: 'solid 1px gray',
-                    }}
-                    className={cell.column.className}
-                  >
-                    {cell.render('Cell')}
-                  </td>
-                ))}
-              </tr>
+                {column.render('Header')}
+                <span>
+                  {column.isSorted
+                    ? column.isSortedDesc
+                      ? ' v'
+                      : ' ^'
+                    : ''}
+                </span>
+              </th>
             );
           })}
-        </tbody>
-      </table>
+        </tr>
+      );
+    })}
+  </thead>
+  <tbody {...getTableBodyProps()}>
+    {rows.map((row, rowIndex) => {
+      prepareRow(row);
+      const { key, ...restRowProps } = row.getRowProps();
+      return (
+        <tr
+          key={`row-${rowIndex}`}
+          {...restRowProps}
+          className={row.isSelected ? 'selected-row' : ''}
+        >
+          {row.cells.map((cell, cellIndex) => {
+            const { key, ...restCellProps } = cell.getCellProps();
+            return (
+              <td
+                key={`cell-${cellIndex}`}
+                {...restCellProps}
+                style={{
+                  overflow: 'hidden',
+                  width: cell.column.width,
+                  maxWidth: cell.column.maxWidth,
+                  border: 'solid 1px gray',
+                }}
+                className={cell.column.className}
+              >
+                {cell.render('Cell')}
+              </td>
+            );
+          })}
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+
     </div>
   );
 };

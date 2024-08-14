@@ -105,7 +105,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   }, []);
 
   const handleKeyDown = (e, currentIndex, textareaType) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
   
       // Calculate the next textarea type within the same page
@@ -131,8 +131,32 @@ const TableView = ({ webpages, registerFinalState }) => {
       if (nextTextarea && nextTextarea.current) {
         nextTextarea.current.focus();
       }
+    } else if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+  
+      // Calculate the previous textarea type within the same page
+      let prevTextareaType;
+  
+      if (textareaType === 'title') {
+        prevTextareaType = showH2 ? 'h2' : 'h1';
+        currentIndex -= 1;  // Move to the previous page's h1 or h2 textarea
+      } else if (textareaType === 'meta') {
+        prevTextareaType = 'title';
+      } else if (textareaType === 'h1') {
+        prevTextareaType = 'meta';
+      } else if (textareaType === 'h2') {
+        prevTextareaType = 'h1';
+      }
+  
+      // Focus the previous textarea within the same page
+      const prevTextarea = refs.current[currentIndex]?.[`ref${prevTextareaType.charAt(0).toUpperCase() + prevTextareaType.slice(1)}`];
+  
+      if (prevTextarea && prevTextarea.current) {
+        prevTextarea.current.focus();
+      }
     }
   };
+  
   
   useEffect(() => {
     if (finalizationState.status === "finalize" && finalizationState.altTagsReady === true && finalizationState.metaTagsReady === false) {

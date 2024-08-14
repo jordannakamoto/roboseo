@@ -105,7 +105,7 @@ export default function TopBar({onPrepareData}) {
         setIsLoading(false);
       }
     } else {
-      console.error("Error: either URL is missing, or user is not authenticated");
+      console.log("Master sheet already loaded");
     }
   };
 
@@ -171,7 +171,12 @@ export default function TopBar({onPrepareData}) {
         setIsLoading(false);
       }
     } else {
-      console.error("Error: either URL is missing, or user is not authenticated");
+      if(!sheetId){
+
+      }
+      else{
+      console.error("Either no client sheet or user is not authenticated");
+      }
     }
   };
 
@@ -444,7 +449,7 @@ const triggerFinalization = (mode) => {
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{ position: 'fixed', right: '0', bottom: '0' }}>
+      <Card className="max-w-md mx-auto" style={{ width: '230px', position: 'fixed', right: '0', bottom: '0' }}>
         <CardHeader />
         <CardContent className="flex flex-col items-center space-y-2">
           <button
