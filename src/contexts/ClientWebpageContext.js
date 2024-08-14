@@ -36,6 +36,10 @@ export const ClientWebpageProvider = ({ children }) => {
     console.log('Client webpage data changed:', { clientName, pages });
   }, [clientName, pages]); // Dependency array
 
+  useEffect(() => {
+    console.log('Processed Alt Images changed:', { altImagesProcessed });
+  }, [altImagesProcessed]); // Dependency array
+
   // Context value now includes setter functions and the pages array
   const value = {
     clientName,

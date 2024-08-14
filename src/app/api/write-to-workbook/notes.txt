@@ -1,0 +1,60 @@
+if (newRowRange) {
+    for (let i = newRowRange.startRowIndex; i <= newRowRange.endRowIndex; i++) {
+        // Column A: Copy formula from Title Sheet's column A
+        requests.push(
+            { 
+                updateCells: { 
+                    range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 0, endColumnIndex: 1 }, 
+                    rows: [{ values: [{ userEnteredValue: { formulaValue: `='${titleSheetInfo.sheetName}'!A${rowIndex}` } }] }], 
+                    fields: 'userEnteredValue' 
+                } 
+            }
+        );
+        
+        // Column B: Copy formula from Title Sheet's column B
+        requests.push(
+            { 
+                updateCells: { 
+                    range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 1, endColumnIndex: 2 }, 
+                    rows: [{ values: [{ userEnteredValue: { formulaValue: `='${titleSheetInfo.sheetName}'!B${rowIndex}` } }] }], 
+                    fields: 'userEnteredValue' 
+                } 
+            }
+        );
+        
+        // Column C: Copy formula from Title Sheet's column C
+        requests.push(
+            { 
+                updateCells: { 
+                    range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 2, endColumnIndex: 3 }, 
+                    rows: [{ values: [{ userEnteredValue: { formulaValue: `='${titleSheetInfo.sheetName}'!C${rowIndex}` } }] }], 
+                    fields: 'userEnteredValue' 
+                } 
+            }
+        );
+
+        // Column E: Length of the value in Title Sheet's column D
+        requests.push(
+            { 
+                updateCells: { 
+                    range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 4, endColumnIndex: 5 }, // Column E
+                    rows: [{ values: [{ userEnteredValue: { formulaValue: `=LEN('${titleSheetInfo.sheetName}'!D${rowIndex})` } }] }],
+                    fields: 'userEnteredValue' 
+                } 
+            }
+        );
+
+        // Column G: Length of the value in Title Sheet's column F
+        requests.push(
+            { 
+                updateCells: { 
+                    range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 6, endColumnIndex: 7 }, // Column G
+                    rows: [{ values: [{ userEnteredValue: { formulaValue: `=LEN('${titleSheetInfo.sheetName}'!F${rowIndex})` } }] }],
+                    fields: 'userEnteredValue' 
+                } 
+            }
+        );
+        
+        rowIndex++;
+    }
+}

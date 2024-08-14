@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import AltTagsPanel from "@/components/mainPage/alt-tags-panel";
 import TableView from "@/components/mainPage/tableview";
@@ -8,21 +8,41 @@ import TopBar from "@/components/mainPage/topbar";
 import { useClientWebpage } from "@/contexts/ClientWebpageContext";
 
 export default function Component() {
-  // Using the context to get the webpages
-  const { pages, setPages, altImages } = useClientWebpage();
+  const { pages, altImages } = useClientWebpage();
 
-  // Ensure there's an array to map over, even if it's empty
-  const webpages = pages.length ? pages : [];
+  const [tableViewFinalState, setTableViewFinalState] = useState(() => () => {});
+  const [altTagsPanelFinalState, setAltTagsPanelFinalState] = useState(() => () => {});
+
+  const handlePrepareData = () => {
+    return new Promise((resolve) => {
+      console.log("finalizing data for write");
+      
+      if (tableViewFinalState && typeof tableViewFinalState === 'function') {
+        tableViewFinalState();
+      }
+      
+      if (altTagsPanelFinalState && typeof altTagsPanelFinalState === 'function') {
+        altTagsPanelFinalState();
+      }
+      
+      // Ensure resolve is called after final state functions are executed
+      resolve();
+    });
+  };
 
   return (
-    <>
-      <div className="flex h-screen w-full" style={{ marginBottom: "300px" }}>
-        <TopBar />
-        <div style={{display: "flex", flexDirection: "column"}}>
-          <TableView webpages={pages} />  
-          <AltTagsPanel alts={altImages}/>
-          </div>
+    <div className="flex h-screen w-full" style={{ marginBottom: "300px" }}>
+      <TopBar onPrepareData={handlePrepareData} />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <TableView 
+          webpages={pages} 
+          registerFinalState={(fn) => setTableViewFinalState(() => fn)} 
+        />
+        <AltTagsPanel 
+          alts={altImages} 
+          registerFinalState={(fn) => setAltTagsPanelFinalState(() => fn)} 
+        />
       </div>
-    </>
+    </div>
   );
 }

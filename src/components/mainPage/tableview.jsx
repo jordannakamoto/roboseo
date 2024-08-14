@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext'; // Assuming you have this context set up
 
-const TableView = ({ webpages }) => {
+const TableView = ({ webpages, registerFinalState }) => {
   const [showH2, setShowH2] = useState(false);
   const [showTable, setShowTable] = useState(true);
   const [modalData, setModalData] = useState(null); // State for modal data
@@ -22,6 +22,11 @@ const TableView = ({ webpages }) => {
 
   const toggleH2 = () => setShowH2(!showH2);
   const toggleTable = () => setShowTable(!showTable);
+
+  useEffect(() => {
+    registerFinalState(createFinalState);
+  }, [registerFinalState]);
+
 
   // Modal Component
   const Modal = ({ isOpen, originalData, modalPosition }) => {
@@ -104,7 +109,39 @@ const TableView = ({ webpages }) => {
     };
   }, []);
 
+  const handleKeyDown = (e, currentIndex, textareaType) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+  
+      // Calculate the next textarea type within the same page
+      let nextTextareaType;
+  
+      if (textareaType === 'title') {
+        nextTextareaType = 'meta';
+      } else if (textareaType === 'meta') {
+        nextTextareaType = 'h1';
+      } else if (textareaType === 'h1' && showH2) {
+        nextTextareaType = 'h2';
+      } else if (textareaType === 'h1' && !showH2) {
+        nextTextareaType = 'title';
+        currentIndex += 1;  // Move to the next page's title textarea
+      } else if (textareaType === 'h2') {
+        nextTextareaType = 'title';
+        currentIndex += 1;  // Move to the next page's title textarea
+      }
+  
+      // Focus the next textarea within the same page
+      const nextTextarea = refs.current[currentIndex]?.[`ref${nextTextareaType.charAt(0).toUpperCase() + nextTextareaType.slice(1)}`];
+  
+      if (nextTextarea && nextTextarea.current) {
+        nextTextarea.current.focus();
+      }
+    }
+  };
+  
+
   const createFinalState = () => {
+    console.log("creating final state for meta data tableview...")
     const updatedPages = pages.map((page, pageIndex) => {
       const matchingWebpage = webpages[pageIndex];
       if (matchingWebpage) {
@@ -240,6 +277,7 @@ const TableView = ({ webpages }) => {
         handleBlur(e);
       }}
       onChange={handleChange}
+      onKeyDown={(e) => handleKeyDown(e, pageIndex, 'title')}
     />
     {focusedTextarea.type === 'title' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
 </div>
@@ -269,6 +307,7 @@ const TableView = ({ webpages }) => {
         handleBlur(e);
       }}
       onChange={handleChange}
+      onKeyDown={(e) => handleKeyDown(e, pageIndex, 'meta')}
     />
     {focusedTextarea.type === 'meta' && focusedTextarea.index === pageIndex &&renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
   </div>
@@ -299,6 +338,7 @@ const TableView = ({ webpages }) => {
         handleBlur(e);
       }}
       onChange={handleChange}
+      onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
     />
     {focusedTextarea.type === 'h1' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
   </div>
@@ -331,6 +371,7 @@ const TableView = ({ webpages }) => {
           handleBlur(e);
         }}
         onChange={handleChange}
+        onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
       />
       {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
     </div>

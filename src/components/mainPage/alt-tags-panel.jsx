@@ -76,7 +76,7 @@ const EditableCell = ({
   );
 };
 
-const AltTagsPanel = () => {
+const AltTagsPanel = ({alts, registerFinalState}) => {
   // > State <
   const { altImages } = useClientWebpage();
   const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
@@ -93,6 +93,10 @@ const AltTagsPanel = () => {
       setMyData(altImages.map((row, index) => ({ ...row, id: index.toString() })));
     }
   }, [altImages]);
+
+  useEffect(() => {
+    registerFinalState(createFinalState);
+  }, [registerFinalState]);
 
   const updateMyData = useCallback((rowIndex, columnId, value) => {
     setMyData(old =>
@@ -206,7 +210,7 @@ const AltTagsPanel = () => {
   };
 
   const handleTabKey = (e, textarea) => {
-    if (e.key === 'Tab') {
+    if (e.key === 'Tab' || e.key === 'Enter' && !e.shiftKey ) {
       e.preventDefault();
       const currentIndex = textarea.selectionStart;
       const nextIndex = textarea.value.indexOf('*', currentIndex + 1);
@@ -233,9 +237,29 @@ const AltTagsPanel = () => {
   const handleFillInputChange = (e) => {
     setFillInputCharCount(e.target.value.length);
   };
+
+  const overwriteMatches = () => {
+    if (!focusedTextarea) return;
+
+    const currentCaption = selectedImages[focusedTextarea]?.caption;
+    const fillText = document.getElementById('fill-input').value;
+
+    if (!currentCaption) return;
+
+    const updatedImages = { ...selectedImages };
+
+    Object.keys(updatedImages).forEach((uniqueId) => {
+      if (updatedImages[uniqueId].caption === currentCaption) {
+        updatedImages[uniqueId].caption = fillText;
+      }
+    });
+
+    setSelectedImages(updatedImages);
+  };
   
 
   const createFinalState = () => {
+    console.log("creating final state for alt images module...")
     const updatedRows = Object.entries(selectedImages).map(([uniqueId, { caption }]) => {
       const row = myData.find(row => row.id === uniqueId);
       if (row) {
@@ -399,7 +423,7 @@ const AltTagsPanel = () => {
                 value={caption}
                 onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
                 placeholder="Enter caption"
-                style={{ width: '100%', resize: 'none', fontSize: '12px' }}
+                style={{width: '100%', resize: 'none', fontSize: '12px' }}
                 onFocus={(e) => {
                   handleFocus(uniqueId, caption);
                   const firstIndex = caption.indexOf('*');
@@ -416,11 +440,11 @@ const AltTagsPanel = () => {
           ))}
         </div>
       </div>
-      <div className="flex" style={{ marginLeft: '32vw', position: 'relative'}}>
+      <div className="flex" style={{ marginLeft: '27vw', position: 'relative'}}>
         <input
           id="fill-input"
           placeholder="Enter caption, * for wildcard"
-          style={{ width: '720px', resize: 'none', fontSize: '12px' }}
+          style={{ border: 'solid 1px #d5d5d5', width: '720px', resize: 'none', fontSize: '12px' }}
           onChange={handleFillInputChange} // Attach the change handler here
           tabIndex="-1"
         />
@@ -441,6 +465,9 @@ const AltTagsPanel = () => {
       </span>
         <Button onClick={fillCaptions} tabIndex="-1" variant="outline">
           Fill
+        </Button>
+        <Button onClick={overwriteMatches} tabIndex="-1" variant="outline">
+          Match
         </Button>
       </div>
       <Button

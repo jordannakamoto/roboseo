@@ -19,7 +19,7 @@ const extractSheetIdFromUrl = (url) => {
   return matches ? matches[1] : null;
 };
 
-export default function TopBar() {
+export default function TopBar({onPrepareData}) {
   const [tokens, setTokens] = useState(null);
   const [clientList, setClientList] = useState([]);
   const [showCompleted, setShowCompleted] = useState(false); // Defaults to not showing completed clients in the list
@@ -284,6 +284,9 @@ export default function TopBar() {
 
   // Write data to the workbook
   const writeToWorkbook = async (mode) => {
+
+    onPrepareData(); // Prepares final state from meta tags and alt image components
+
     try {
       const response = await fetch('/api/write-to-workbook', {
         method: 'POST',

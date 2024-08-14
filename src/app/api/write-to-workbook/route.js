@@ -187,13 +187,34 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
         const requests = [];
         let rowIndex = pageNameRow + 1;
 
-        // Insert formulas for A, B, C columns
+        // Insert formulas for A, B, C, E, G columns
         if (newRowRange) {
             for (let i = newRowRange.startRowIndex; i <= newRowRange.endRowIndex; i++) {
                 requests.push(
                     { updateCells: { range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { formulaValue: `='${titleSheetInfo.sheetName}'!A${rowIndex}` } }] }], fields: 'userEnteredValue' } },
                     { updateCells: { range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 1, endColumnIndex: 2 }, rows: [{ values: [{ userEnteredValue: { formulaValue: `='${titleSheetInfo.sheetName}'!B${rowIndex}` } }] }], fields: 'userEnteredValue' } },
                     { updateCells: { range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 2, endColumnIndex: 3 }, rows: [{ values: [{ userEnteredValue: { formulaValue: `='${titleSheetInfo.sheetName}'!C${rowIndex}` } }] }], fields: 'userEnteredValue' } },
+                );
+                // Column E: Length of the value in column D
+                requests.push(
+                    { 
+                        updateCells: { 
+                            range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 4, endColumnIndex: 5 }, // Column E
+                            rows: [{ values: [{ userEnteredValue: { formulaValue: `=LEN('${titleSheetInfo.sheetName}'!D${rowIndex})` } }] }],
+                            fields: 'userEnteredValue' 
+                        } 
+                    }
+                );
+
+                // Column G: Length of the value in column F
+                requests.push(
+                    { 
+                        updateCells: { 
+                            range: { sheetId: titleSheetInfo.sheetId, startRowIndex: i, endRowIndex: i + 1, startColumnIndex: 6, endColumnIndex: 7 }, // Column G
+                            rows: [{ values: [{ userEnteredValue: { formulaValue: `=LEN('${titleSheetInfo.sheetName}'!F${rowIndex})` } }] }],
+                            fields: 'userEnteredValue' 
+                        } 
+                    }
                 );
                 rowIndex++;
             }
@@ -266,6 +287,40 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
     return processResults;
 }
 
+async function processAltTagsSheet(sheets, data) {
+    const sheetMetadata = await sheets.spreadsheets.get({
+        spreadsheetId: data.sheetId,
+        fields: 'sheets(properties(title,hidden))',
+    });
+
+    const visibleSheets = sheetMetadata.data.sheets
+        .filter(sheet => !sheet.properties.hidden)
+        .map(sheet => sheet.properties.title);
+
+    const sheetName = visibleSheets.find(title => title.includes("Alt Tag"));
+    if (!sheetName) {
+        return { error: `No visible sheet with "Alt Tag" in its name found.`, status: 404 };
+    }
+
+    const requests = [];
+
+    const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+
+    for (let [index, item] of data.altTags.entries()) {
+        const baseIndex = index + 4;
+        requests.push(
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.page } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 1, endColumnIndex: 2 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.url } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 2, endColumnIndex: 3 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.originalAlt } }] }], fields: 'userEnteredValue' } },
+            // Highlight the new alt tag if it's different
+            { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.newAlt }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
+        );
+    }
+
+    await updateSheet(sheets, data.sheetId, requests);
+    return { updatedCells: requests.length };
+}
+
 export async function POST(request) {
     const data = await request.json();
 
@@ -285,8 +340,9 @@ export async function POST(request) {
     }
 
     const h1MetaResults = await processH1MetaSheets(sheets, data, titleSheetInfo);
+    const altTagResults = await processAltTagsSheet(sheets, data);
 
-    const totalUpdatedCells = h1MetaResults.reduce((acc, { updatedCells }) => acc + updatedCells, 0);
+    const totalUpdatedCells = h1MetaResults.reduce((acc, { updatedCells }) => acc + updatedCells, 0)  + altTagResults.updatedCells;
     return NextResponse.json({ success: true, updatedCells: totalUpdatedCells }, { status: 200 });
 }
 
