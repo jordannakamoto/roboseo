@@ -27,6 +27,7 @@ export const ClientWebpageProvider = ({ children }) => {
   const [sheetTitles, setSheetTitles] = useState([]);
   const [pages, setPages] = useState([]); // State for pages
   const [sheetUrl, setSheetUrl] = useState('');
+  const [showH2, setShowH2] = useState(false);
   const [altImages, setAltImages] = useState([]);
   const [altImagesProcessed, setAltImagesProcessed] = useState([]);
   const [finalizationState, setFinalizationState] = useState({
@@ -57,12 +58,14 @@ export const ClientWebpageProvider = ({ children }) => {
     altImages,
     altImagesProcessed,
     finalizationState,
+    showH2,
     setClientName,
     setPages,
     setSheetTitles,
     setSheetUrl,
     setAltImages,
     setAltImagesProcessed,
+    setShowH2,
     setFinalizationState,
   };
 

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext'; // Assuming you have this context set up
 
 const TableView = ({ webpages, registerFinalState }) => {
-  const [showH2, setShowH2] = useState(false);
   const [showTable, setShowTable] = useState(true);
   const [modalData, setModalData] = useState(null); // State for modal data
   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 }); // Position of the modal
@@ -14,7 +13,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   const [isModalVisible, setIsModalVisible] = useState(true); // State to toggle modal visibility
   const [isUpdated, setIsUpdated] = useState(false); // State to track if pages array is updated
 
-  const { pages, setPages, finalizationState, setFinalizationState } = useClientWebpage(); // Accessing pages from context
+  const { pages, setPages, finalizationState, setFinalizationState, showH2, setShowH2 } = useClientWebpage(); // Accessing pages from context
 
   const refs = useRef([]); // Ref array to store all refs
   const [focusedTextarea, setFocusedTextarea] = useState({ type: null, index: null });

@@ -51,7 +51,12 @@ export async function POST(request) {
 
         let keywords_groups = rows.slice(rowIndex + 1).reduce((acc, row) => {
             const keywords = row[pageIndex] || '';
-            const url = row[urlIndex] || '';
+            let url = row[urlIndex] || '';
+
+            // Remove trailing '#' if it exists
+            if (url.endsWith('#')) {
+                url = url.slice(0, -1);
+            }
 
             // set multiple keywords to array keyed by url
             if (acc[url]) {

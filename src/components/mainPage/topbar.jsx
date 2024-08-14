@@ -24,7 +24,7 @@ export default function TopBar({onPrepareData}) {
   const [clientList, setClientList] = useState([]);
   const [showCompleted, setShowCompleted] = useState(false); // Defaults to not showing completed clients in the list
   const [isMasterSheetVisible, setIsMasterSheetVisible] = useState(false); // State to manage visibility of master-sheet-url input
-  const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl, finalizationState, setFinalizationState } = useClientWebpage();
+  const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl, showH2, finalizationState, setFinalizationState } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
   // - Loading Modal
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +79,7 @@ export default function TopBar({onPrepareData}) {
     const sheetId = extractSheetIdFromUrl(url);
     const now = new Date();
     const test_date = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
-    const range = `${test_date}!C:G`;
+    const range = `${test_date}!C:J`;
 
     if (sheetId && tokens) {
       try {
@@ -94,7 +94,7 @@ export default function TopBar({onPrepareData}) {
 
         const res = await response.json();
         const data = res.response.data.values.slice(1).filter(row => row[0] && row.length > 2);
-        const clientArray = data.map(row => ({ name: row[0], workbookURL: row[4] })).filter(cl => cl.workbookURL.length >= 12);
+        const clientArray = data.map(row => ({ name: row[0], workbookURL: row[4], isRefresh: row[7] })).filter(cl => cl.workbookURL.length >= 12);
 
         setClientList(clientArray);
         localStorage.setItem('masterSheetURL', JSON.stringify(url));
@@ -148,7 +148,7 @@ export default function TopBar({onPrepareData}) {
         const webpagesResponse = await fetch('/api/get-client-webpages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens, spreadsheetId: sheetId, titleSheet: titleTagSheet, sheetName: keywordSheet }),
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId, titleSheet: titleTagSheet, sheetName: keywordSheet, currentClient: currentClient }),
         });
         if (!webpagesResponse.ok) throw new Error(`HTTP error! Status: ${webpagesResponse.status}`);
 
@@ -440,12 +440,6 @@ const triggerFinalization = (mode) => {
                 </li>
               ))}
           </ul>
-          <button
-            onClick={() => setShowCompleted(prev => !prev)}
-            className="absolute bottom-0 left-0 right-0 py-2 text-sm text-gray-700 bg-white"
-          >
-            {showCompleted ? 'Hide Completed' : 'Show Completed'}
-          </button>
         </div>
       </div>
       </div>
@@ -453,6 +447,12 @@ const triggerFinalization = (mode) => {
       <Card className="max-w-md mx-auto" style={{ position: 'fixed', right: '0', bottom: '0' }}>
         <CardHeader />
         <CardContent className="flex flex-col items-center space-y-2">
+          <button
+              onClick={() => setShowCompleted(prev => !prev)}
+              className="py-2 text-sm text-gray-700 bg-white"
+            >
+              {showCompleted ? 'Hide Completed' : 'Show Completed'}
+            </button>
                     {/* Button to open active client URL in a new tab */}
                     <Button
               onClick={() => window.open(currentClient?.workbookURL, '_blank')}
@@ -460,12 +460,16 @@ const triggerFinalization = (mode) => {
               className="p-2 border border-gray-300 rounded"
               style={{ flexGrow: 1, fontSize: "11px" }}
             >
-              Open Active Client Workbook
+              Open {currentClient.name} Workbook
           </Button>
           {/* <Button onClick={testCSVParse} variant="outline">Parse CSV</Button> */}
   
-          <Button onClick={() => triggerFinalization("h1")} variant="outline">Write To Workbook h1</Button>
-          <Button onClick={() => triggerFinalization("h2")} variant="outline">Write To Workbook h2</Button>
+          <Button 
+            onClick={() => triggerFinalization(showH2 ? "h2" : "h1")} 
+            variant="outline"
+          >
+            Write To Workbook {showH2 ? "h2" : ""}
+          </Button>
           <Button onClick={() => triggerFinalization("done")} variant="outline">Mark Done</Button>
         </CardContent>
       </Card>

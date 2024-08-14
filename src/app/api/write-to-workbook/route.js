@@ -1,3 +1,5 @@
+// write to workbook
+
 import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
@@ -324,6 +326,8 @@ async function processAltTagsSheet(sheets, data) {
 export async function POST(request) {
     const data = await request.json();
 
+    // console.log(data);
+
     const client = new OAuth2Client(
         process.env.CLIENT_ID,
         process.env.CLIENT_SECRET,
@@ -333,6 +337,8 @@ export async function POST(request) {
     client.setCredentials(data.tokens);
     const sheets = google.sheets({ version: 'v4', auth: client });
 
+    console.log("Writing to Google...");
+    
     const titleSheetInfo = await processTitleTagSheet(sheets, data);
 
     if (titleSheetInfo.error) {
