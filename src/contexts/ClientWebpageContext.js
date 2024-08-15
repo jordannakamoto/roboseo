@@ -5,12 +5,14 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 // Create the context with initial values and setter functions placeholders
 const ClientWebpageContext = createContext({
   clientName: '',
+  clientUrl: '',
   sheetTitles: [],
   pages: [], // Added pages array
   sheetUrl: '',
   altImages: [],
   altImagesProcessed: [],
   setClientName: () => {},
+  setClientUrl: () => {},
   setPages: () => {}, // Setter function for pages
   setSheetTitles: () => {},
   setSheetUrl: () => {},
@@ -24,6 +26,7 @@ export const useClientWebpage = () => useContext(ClientWebpageContext);
 // Provider component
 export const ClientWebpageProvider = ({ children }) => {
   const [clientName, setClientName] = useState('');
+  const [clientUrl, setClientUrl] = useState('');
   const [sheetTitles, setSheetTitles] = useState([]);
   const [pages, setPages] = useState([]); // State for pages
   const [sheetUrl, setSheetUrl] = useState('');
@@ -38,7 +41,7 @@ export const ClientWebpageProvider = ({ children }) => {
 
   // .. Logging state changes...
   useEffect(() => {
-    console.log('Client webpage data changed:', { clientName, pages });
+    console.log('Client webpage data changed:', { clientName, clientUrl, pages });
   }, [clientName, pages]); // Dependency array
 
   useEffect(() => {
@@ -52,6 +55,7 @@ export const ClientWebpageProvider = ({ children }) => {
   // Context value now includes setter functions and the pages array
   const value = {
     clientName,
+    clientUrl,
     pages,
     sheetTitles,
     sheetUrl,
@@ -60,6 +64,7 @@ export const ClientWebpageProvider = ({ children }) => {
     finalizationState,
     showH2,
     setClientName,
+    setClientUrl,
     setPages,
     setSheetTitles,
     setSheetUrl,

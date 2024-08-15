@@ -98,6 +98,12 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     if (altImages) {
       setSelectedImages({});
       setMyData(altImages.map((row, index) => ({ ...row, id: index.toString() })));
+      // Clear the fill-input when altImages changes
+      const fillInput = document.getElementById('fill-input');
+      if (fillInput) {
+          fillInput.value = ''; // Clear the input field
+          setFillInputCharCount(0); // Reset the character count
+      }
     }
   }, [altImages]);
 
@@ -306,7 +312,6 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     }).filter(Boolean);
 
     setAltImagesProcessed(updatedRows);
-
     setClicked(true);
 
     return updatedRows;

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 
 import AltTagsPanel from "@/components/mainPage/alt-tags-panel";
+import OnPagePanel from "@/components/mainPage/on-page-panel";
 import TableView from "@/components/mainPage/meta-tags-panel";
 import TopBar from "@/components/mainPage/topbar";
 import { useClientWebpage } from "@/contexts/ClientWebpageContext";
@@ -29,13 +30,14 @@ export default function Component() {
   };
 
   return (
-    <div className="flex h-screen w-full" style={{ marginBottom: "300px" }}>
+    <div className="flex w-full" style={{ marginBottom: "300px" }}>
       <TopBar onPrepareData={handlePrepareData} />
       <div style={{ display: "flex", flexDirection: "column" }}>
         <TableView 
           webpages={pages} 
           registerFinalState={(fn) => setTableViewFinalState(() => fn)} 
         />
+        <OnPagePanel/>
         <AltTagsPanel 
           alts={altImages} 
           registerFinalState={(fn) => setAltTagsPanelFinalState(() => fn)} 
