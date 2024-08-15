@@ -82,7 +82,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
   const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
   const [myData, setMyData] = useState([]);
   const [selectedImages, setSelectedImages] = useState({});
-  const [lastSelectedRowIndex, setLastSelectedRowIndex] = useState(1);
+  const [lastSelectedAltID, setLastSelectedAltID] = useState(null);
   const [clicked, setClicked] = useState(false);
   const [focusedTextarea, setFocusedTextarea] = useState(null);
   const [charCount, setCharCount] = useState(0);
@@ -109,54 +109,64 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     );
   }, []);
 
-  const handleRowSelection = (row, rows, rowIndexInSortedOrder, e) => {
+  const handleRowSelection = (row, rows, e) => {
     const uniqueId = row.id; // Use the generated ID as the unique identifier
     if (!uniqueId) return;
 
-    if (e.shiftKey && lastSelectedRowIndex !== null && lastSelectedRowIndex !== rowIndexInSortedOrder) {
-      let start, end;
-      if (lastSelectedRowIndex > rowIndexInSortedOrder) {
-        start = rowIndexInSortedOrder;
-        end = lastSelectedRowIndex;
-        for (let i = start; i <= end -1; i++) {
-          const selectedRow = rows[i];
-          selectedRow.toggleRowSelected();
-          const selectedId = selectedRow.id;
-          if (selectedId) {
-            if (selectedRow.isSelected) {
-              removeImageFromPreview(selectedId);
-            } else {
-              addImageToPreview(selectedRow);
+    console.log("selected alt image with id:", uniqueId)
+    console.log("lastSelectedAltID", lastSelectedAltID);
+
+    if (e.shiftKey && lastSelectedAltID !== null && lastSelectedAltID !== uniqueId) {
+      console.log("entering loop");
+      const lastID = rows.findIndex(r => r.id === lastSelectedAltID);
+      const currID = rows.findIndex(r => r.id === uniqueId);
+
+      console.log ("selection indexes at", lastID, currID);
+
+        let start, end;
+        if (lastID > currID) {
+            start = currID;
+            end = lastID;
+            for (let i = start; i <= end-1; i++) {
+                const selectedRow = rows[i];
+                const selectedId = selectedRow.id;
+                if (selectedId) {
+                    selectedRow.toggleRowSelected();
+                    if (selectedRow.isSelected) {
+                        removeImageFromPreview(selectedId);
+                    } else {
+                        addImageToPreview(selectedRow);
+                    }
+                }
             }
-          }
-        }
-      } else {
-        start = lastSelectedRowIndex;
-        end = rowIndexInSortedOrder;
-        for (let i = start - 1; i >= end; i--) {
-          const selectedRow = rows[i];
-          selectedRow.toggleRowSelected();
-          const selectedId = selectedRow.id;
-          if (selectedId) {
-            if (selectedRow.isSelected) {
-              removeImageFromPreview(selectedId);
-            } else {
-              addImageToPreview(selectedRow);
+        } else {
+            start = lastID;
+            end = currID;
+            for (let i = start+1; i <= end; i++) {
+                const selectedRow = rows[i];
+                const selectedId = selectedRow.id;
+                if (selectedId) {
+                    selectedRow.toggleRowSelected();
+                    if (selectedRow.isSelected) {
+                        removeImageFromPreview(selectedId);
+                    } else {
+                        addImageToPreview(selectedRow);
+                    }
+                }
             }
-          }
         }
-      }
-      setLastSelectedRowIndex(rowIndexInSortedOrder);
+        setLastSelectedAltID(uniqueId);
     } else {
-      row.toggleRowSelected();
-      if (row.isSelected) {
-        removeImageFromPreview(uniqueId);
-      } else {
-        addImageToPreview(row);
-      }
-      setLastSelectedRowIndex(rowIndexInSortedOrder);
+        row.toggleRowSelected();
+        if (row.isSelected) {
+            removeImageFromPreview(uniqueId);
+        } else {
+            addImageToPreview(row);
+        }
+        setLastSelectedAltID(uniqueId);
     }
-  };
+};
+
 
   const addImageToPreview = (row) => {
     const uniqueId = row.id;
@@ -373,7 +383,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
             <IndeterminateCheckbox
               {...row.getToggleRowSelectedProps()}
               onClick={(e) => {
-                handleRowSelection(row, rows, rowIndexInSortedOrder, e);
+                handleRowSelection(row, rows, e);
               }}
             />
           );
@@ -382,7 +392,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
         maxWidth: 10,
       }
     ],
-    [updateMyData, lastSelectedRowIndex]
+    [updateMyData, lastSelectedAltID]
   );
 
   const {
