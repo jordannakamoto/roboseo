@@ -3,29 +3,28 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { useClientWebpage } from '@/contexts/ClientWebpageContext'; // Assuming you have this context set up
+import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 const TableView = ({ webpages, registerFinalState }) => {
   const [showTable, setShowTable] = useState(true);
-  const [modalData, setModalData] = useState(null); // State for modal data
-  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 }); // Position of the modal
-  const modalRef = useRef(); // Ref for the modal to track its visibility
-  const [isModalVisible, setIsModalVisible] = useState(true); // State to toggle modal visibility
-  const [isUpdated, setIsUpdated] = useState(false); // State to track if pages array is updated
+  const [modalData, setModalData] = useState(null);
+  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+  const modalRef = useRef();
+  const [isModalVisible, setIsModalVisible] = useState(true);
 
-  const { pages, setPages, finalizationState, setFinalizationState, showH2, setShowH2 } = useClientWebpage(); // Accessing pages from context
+  const { pages, setPages, finalizationState, setFinalizationState, showH2, setShowH2 } = useClientWebpage();
 
-  const refs = useRef([]); // Ref array to store all refs
+  const refs = useRef([]);
   const [focusedTextarea, setFocusedTextarea] = useState({ type: null, index: null });
-  const [charCount, setCharCount] = useState(0); // State to track character count
+  const [charCount, setCharCount] = useState(0);
 
   const toggleH2 = () => setShowH2(!showH2);
-  const toggleTable = () => setShowTable(!showTable);
-
 
   // Modal Component
   const Modal = ({ isOpen, originalData, modalPosition }) => {
     if (!isOpen || !isModalVisible) return null;
+
+    console.log("Modal data:", originalData);
 
     return (
       <div
@@ -33,32 +32,46 @@ const TableView = ({ webpages, registerFinalState }) => {
           position: 'fixed',
           top: modalPosition.top,
           left: modalPosition.left,
-          backgroundColor: 'white',
+          // backgroundColor: 'white',
           padding: '5px',
-          borderLeft: 'solid 1px grey',
+          // borderLeft: 'solid 1px grey',
           zIndex: 1000,
           width: '580px',
         }}
         ref={modalRef}
       >
-        <table className="customTable" style={{ width: '100%' }}>
+        <table className="customTable" style={{ border: 'solid 1px grey', width: '100%', tableLayout: 'fixed',
+  borderCollapse: 'collapse'}}>
           <tbody>
             <tr>
               <td style={{ width: '100%', paddingLeft: '10px' }}>
                 <div style={{ paddingBottom: '10px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.title}</div>
                 </div>
-                <div style={{ paddingBottom: '14px', fontSize: '14px', verticalAlign: 'top' }}>
+                <div style={{ paddingBottom: '20px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.meta}</div>
                 </div>
-                <div style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}>
+                <div style={{ paddingBottom: '12px', fontSize: '14px', verticalAlign: 'top' }}>
                   <div>{originalData.h1}</div>
                 </div>
                 {showH2 && (
-                  <div style={{ paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top' }}>
+                  <div style={{ paddingBottom: '10px', fontSize: '14px', verticalAlign: 'top' }}>
                     <div style={{ color: 'blue' }}>{originalData.h2}</div>
                   </div>
                 )}
+                {originalData.onpage && (
+                <textarea
+                  ref={textareaRef => {
+                    if (textareaRef) {
+                      textareaRef.style.height = 'auto';
+                      textareaRef.style.height = `${textareaRef.scrollHeight}px`;
+                    }
+                  }}
+                  value={originalData.onpage || ''}
+                  readOnly
+                  style={{ width: '100%', paddingBottom: '5px', fontSize: '14px', verticalAlign: 'top', overflow: 'hidden', resize: 'none' }}
+                />
+              )}
               </td>
             </tr>
           </tbody>
@@ -67,13 +80,27 @@ const TableView = ({ webpages, registerFinalState }) => {
     );
   };
 
-  const handleFocus = (e, page, rowRef, textareaType, index) => {
-    const rect = rowRef.current.getBoundingClientRect(); // Get the bounding rect of the entire row
-    setModalPosition({
-      top: rect.top + - 3, //+ window.scrollY 
-      left: rect.left + rect.width + 10 - 530,
+  useEffect(() => {
+    pages.forEach((page, pageIndex) => {
+      if (refs.current[pageIndex]?.refOnPage?.current) {
+        const textarea = refs.current[pageIndex].refOnPage.current;
+  
+        // Update the textarea value directly when onpage changes
+        textarea.value = page.onPageNew !== undefined ? page.onPageNew : page.onpage || '';
+      }
     });
-    setModalData(page); 
+  }, [pages]); // Depend on pages, so it runs when pages state changes
+
+  const handleFocus = (e, page, rowRef, textareaType, index) => {
+    const textareaRect = e.target.getBoundingClientRect();
+    const rowRect = rowRef.current.getBoundingClientRect();
+
+    setModalPosition({
+      top: rowRect.top - 3, // Position based on the row
+      left: rowRect.left + rowRect.width + 10 - 520, // Adjust for modal width
+    });
+
+    setModalData(page);
     setFocusedTextarea({ type: textareaType, index });
     setCharCount(e.target.value.length);
   };
@@ -82,19 +109,18 @@ const TableView = ({ webpages, registerFinalState }) => {
     if (modalRef.current && !modalRef.current.contains(e.relatedTarget)) {
       setModalData(null);
     }
-    setFocusedTextarea({ type: null, index: null });  // Reset both type and index
+    setFocusedTextarea({ type: null, index: null });
   };
 
   const handleChange = (e) => {
     setCharCount(e.target.value.length);
   };
 
-  // Global listener for Shift + Tab to toggle modal visibility
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.shiftKey && e.key === 'Tab') {
-        e.preventDefault(); // Prevent default Tab action
-        setIsModalVisible((prev) => !prev); // Toggle modal visibility
+        e.preventDefault();
+        setIsModalVisible((prev) => !prev);
       }
     };
 
@@ -107,10 +133,8 @@ const TableView = ({ webpages, registerFinalState }) => {
   const handleKeyDown = (e, currentIndex, textareaType) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
-  
-      // Calculate the next textarea type within the same page
       let nextTextareaType;
-  
+
       if (textareaType === 'title') {
         nextTextareaType = 'meta';
       } else if (textareaType === 'meta') {
@@ -119,27 +143,24 @@ const TableView = ({ webpages, registerFinalState }) => {
         nextTextareaType = 'h2';
       } else if (textareaType === 'h1' && !showH2) {
         nextTextareaType = 'title';
-        currentIndex += 1;  // Move to the next page's title textarea
+        currentIndex += 1;
       } else if (textareaType === 'h2') {
         nextTextareaType = 'title';
-        currentIndex += 1;  // Move to the next page's title textarea
+        currentIndex += 1;
       }
-  
-      // Focus the next textarea within the same page
+
       const nextTextarea = refs.current[currentIndex]?.[`ref${nextTextareaType.charAt(0).toUpperCase() + nextTextareaType.slice(1)}`];
-  
+
       if (nextTextarea && nextTextarea.current) {
         nextTextarea.current.focus();
       }
     } else if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
-  
-      // Calculate the previous textarea type within the same page
       let prevTextareaType;
-  
+
       if (textareaType === 'title') {
         prevTextareaType = showH2 ? 'h2' : 'h1';
-        currentIndex -= 1;  // Move to the previous page's h1 or h2 textarea
+        currentIndex -= 1;
       } else if (textareaType === 'meta') {
         prevTextareaType = 'title';
       } else if (textareaType === 'h1') {
@@ -147,17 +168,15 @@ const TableView = ({ webpages, registerFinalState }) => {
       } else if (textareaType === 'h2') {
         prevTextareaType = 'h1';
       }
-  
-      // Focus the previous textarea within the same page
+
       const prevTextarea = refs.current[currentIndex]?.[`ref${prevTextareaType.charAt(0).toUpperCase() + prevTextareaType.slice(1)}`];
-  
+
       if (prevTextarea && prevTextarea.current) {
         prevTextarea.current.focus();
       }
     }
   };
-  
-  
+
   useEffect(() => {
     if (finalizationState.status === "finalize" && finalizationState.altTagsReady === true && finalizationState.metaTagsReady === false) {
       createFinalState();
@@ -165,22 +184,22 @@ const TableView = ({ webpages, registerFinalState }) => {
         ...finalizationState,
         metaTagsReady: true,
         altTagsReady: true,
-        status: "write", // Indicate that this part is done
+        status: "write",
       });
     }
   }, [finalizationState]);
+  
 
   const createFinalState = useCallback(() => {
-    console.log("creating final state for meta data tableview...")
     const updatedPages = pages.map((page, pageIndex) => {
       const matchingWebpage = webpages[pageIndex];
       if (matchingWebpage) {
         const updatedPage = { ...page };
-        
         const nameValue = refs.current[pageIndex].refName.current.value;
         const titleValue = refs.current[pageIndex].refTitle.current.value;
         const h1Value = refs.current[pageIndex].refH1.current.value;
         const h2Value = showH2 ? refs.current[pageIndex].refH2.current.value : null;
+        const onPageValue = refs.current[pageIndex].refOnPage.current.value;
         const metaValue = refs.current[pageIndex].refMeta.current.value;
 
         if (nameValue !== page.name) {
@@ -198,15 +217,17 @@ const TableView = ({ webpages, registerFinalState }) => {
         if (metaValue !== page.meta) {
           updatedPage.metaNew = metaValue;
         }
-  
+        if (onPageValue !== page.onpage) {
+          updatedPage.onPageNew = onPageValue;
+        }
+
         return updatedPage;
       }
       return page;
     });
 
-    setPages(updatedPages); // Update the context with the new fields
-    setIsUpdated(true); // Set the updated state to true
-    console.log('Updated pages:', updatedPages);
+    setPages(updatedPages);
+    setIsUpdated(true);
   });
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
@@ -240,7 +261,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     <>
       <div
         style={{
-          marginLeft: '30px',
+          marginLeft: '60px',
           position: 'relative',
           minHeight: 'auto',
           overflow: showTable ? 'visible' : 'hidden',
@@ -250,12 +271,11 @@ const TableView = ({ webpages, registerFinalState }) => {
         }}
       >
         <Modal isOpen={!!modalData} originalData={modalData} modalPosition={modalPosition} />
-        <div className="tableColumn" style={{ flexGrow: 1}}>
+        <div className="tableColumn" style={{ flexGrow: 1 }}>
           {showTable &&
             webpages.map((page, pageIndex) => {
-              const rowRef = React.createRef(); // Create a ref for the entire row
+              const rowRef = React.createRef();
 
-              // Create refs for each input and store them in the refs array
               if (!refs.current[pageIndex]) {
                 refs.current[pageIndex] = {
                   refName: React.createRef(),
@@ -263,26 +283,19 @@ const TableView = ({ webpages, registerFinalState }) => {
                   refH1: React.createRef(),
                   refH2: showH2 ? React.createRef() : null,
                   refMeta: React.createRef(),
+                  refOnPage: React.createRef(),
                 };
               }
 
               return (
                 <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '10px', marginTop: '10px', position: 'relative' }}>
-                  <table className="customTable" style={{ tableLayout: 'fixed',borderBottom: 'solid 1px #e5e5e5', height: '120px', width: '800px'  }}>
+                  <table className="customTable" style={{ tableLayout: 'fixed', borderBottom: 'solid 1px #e5e5e5', height: '120px', width: '780px' }}>
                     <tbody>
-                      <tr style={{ width: '750px'}} key={`page-name-${pageIndex}`} className="pageNameRow">
-                        <td style={{ verticalAlign: 'top', width: '200px',flexShrink: 0, flexGrow: 0   }}>
-                        <div
-                            style={{
-                              fontWeight: 'bold',
-                              fontSize: '14px',
-                              padding: '5px',
-                              verticalAlign: 'top',
-                              width: '100%',
-                            }}
-                          >
+                      <tr style={{ width: '750px' }} key={`page-name-${pageIndex}`} className="pageNameRow">
+                        <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ fontWeight: 'bold', fontSize: '14px', verticalAlign: 'top', width: '100%' }}>
                             <textarea
-                              ref={refs.current[pageIndex].refName} // Attach the ref
+                              ref={refs.current[pageIndex].refName}
                               style={{
                                 width: '100%',
                                 resize: 'none',
@@ -294,149 +307,193 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 verticalAlign: 'top',
                                 border: '1px solid transparent',
                               }}
-                              defaultValue={page.name} // Set the initial value to the page name
-                              tabIndex={300 + pageIndex} // Set tabIndex starting at 300
+                              defaultValue={page.name}
+                              tabIndex={300 + pageIndex}
                               onFocus={(e) => {
-                                e.target.style.outline = '1px solid lightblue'; // Change border on focus
-                                handleFocus(e, page, rowRef, 'name', pageIndex); // Handle focus
+                                e.target.style.outline = '1px solid lightblue';
+                                handleFocus(e, page, rowRef, 'name', pageIndex);
                               }}
                               onBlur={(e) => {
-                                e.target.style.outline = '1px solid transparent'; // Revert border on blur
-                                handleBlur(e); // Handle blur
+                                e.target.style.outline = '1px solid transparent';
+                                handleBlur(e);
                               }}
-                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')} // Handle key events
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
                             />
                           </div>
-                          <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.keywords.join(', ')}</div>
+                          <div style={{ overflow: 'scroll', flexGrow: 1, height: '8em', background: '#f9f9f9', paddingLeft: '5px', paddingTop: '5px',marginRight: '15px', fontSize: '13.5px', verticalAlign: 'top' }}>
+                            {page.keywords.join(', ').split(', ').map((keyword, index) => (
+                              <span key={index}>
+                                {keyword},
+                                <br />
+                              </span>
+                            ))}
+                          </div>
                         </td>
-                        <td style={{ width: '580px', paddingLeft: '50px', verticalAlign: 'top'}}>
-  
-  <div style={{ position: 'relative' }}>
-    <textarea
-      ref={refs.current[pageIndex].refTitle}
-      style={{ 
-        width: '100%', 
-        resize: 'none', 
-        height: '1.8em',
-        overflow: 'hidden',
-        padding: '2px', 
-        paddingLeft: '4px', 
-        fontSize: '14px', 
-        verticalAlign: 'top',
-        border: '1px solid transparent',
-      }}
-      defaultValue={page.title}
-      tabIndex={0}
-      onFocus={(e) => {
-        e.target.style.outline = '1px solid lightblue'; // Change border on focus
-        handleFocus(e, page, rowRef, 'title', pageIndex);
-      }}
-      onBlur={(e) => {
-        e.target.style.outline = '1px solid transparent'; // Revert border on blur
-        handleBlur(e);
-      }}
-      onChange={handleChange}
-      onKeyDown={(e) => handleKeyDown(e, pageIndex, 'title')}
-    />
-    {focusedTextarea.type === 'title' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
-</div>
+                        <td style={{ width: '570px', paddingLeft: '0px', verticalAlign: 'top', boxSizing: 'border-box' }}>
+                          <div style={{ position: 'relative' }}>
+                            <textarea
+                              ref={refs.current[pageIndex].refTitle}
+                              style={{
+                                width: '100%',
+                                resize: 'none',
+                                height: '2.2em',
+                                overflow: 'hidden',
+                                boxSizing: 'border-box',
+                                padding: '2px 4px',
+                                fontSize: '14px',
+                                verticalAlign: 'top',
+                                border: '1px solid transparent',
+                                outline: 'none',
+                              }}
+                              defaultValue={page.title}
+                              tabIndex={0}
+                              onFocus={(e) => {
+                                e.target.style.border = '1px solid lightblue';
+                                handleFocus(e, page, rowRef, 'title', pageIndex);
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.border = '1px solid transparent';
+                                handleBlur(e);
+                              }}
+                              onChange={handleChange}
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'title')}
+                            />
+                            {focusedTextarea.type === 'title' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
+                          </div>
 
-  <div style={{ position: 'relative', marginTop: '5px' }}>
-    <textarea 
-      ref={refs.current[pageIndex].refMeta}
-      style={{ 
-        width: '100%', 
-        resize: 'none', 
-        height: '3.6em',
-        padding: '2px',  
-        paddingLeft: '4px', 
-        margin: '2px 0px 0px 0px', 
-        fontSize: '14px', 
-        verticalAlign: 'top',
-        border: '1px solid transparent',
-      }}
-      defaultValue={page.meta}
-      tabIndex={0}
-      onFocus={(e) => {
-        e.target.style.outline = '1px solid lightblue';
-        handleFocus(e, page, rowRef, 'meta', pageIndex);
-      }}
-      onBlur={(e) => {
-        e.target.style.outline = '1px solid transparent';
-        handleBlur(e);
-      }}
-      onChange={handleChange}
-      onKeyDown={(e) => handleKeyDown(e, pageIndex, 'meta')}
-    />
-    {focusedTextarea.type === 'meta' && focusedTextarea.index === pageIndex &&renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
-  </div>
-  
-  <div style={{ position: 'relative', marginTop: '5px' }}>
-    <textarea
-      ref={refs.current[pageIndex].refH1}
-      style={{ 
-        width: '100%', 
-        overflow: 'hidden', 
-        resize: 'none', 
-        height: '1.8em', 
-        padding: '2px', 
-        paddingLeft: '4px', 
-        paddingBottom: '5px', 
-        fontSize: '14px', 
-        verticalAlign: 'top',
-        border: '1px solid transparent',
-      }}
-      defaultValue={page.h1}
-      tabIndex={0}
-      onFocus={(e) => {
-        e.target.style.outline = '1px solid lightblue';
-        handleFocus(e, page, rowRef, 'h1', pageIndex);
-      }}
-      onBlur={(e) => {
-        e.target.style.outline = '1px solid transparent';
-        handleBlur(e);
-      }}
-      onChange={handleChange}
-      onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
-    />
-    {focusedTextarea.type === 'h1' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
-  </div>
-  
-  {showH2 && (
-    <div style={{ position: 'relative', marginTop: '5px' }}>
-      <textarea
-        ref={refs.current[pageIndex].refH2}
-        style={{ 
-          width: '100%', 
-          overflow: 'hidden',
-          resize: 'none',
-          height: '1.5em', 
-          padding: '2px', 
-          paddingLeft: '4px',
-          paddingBottom: '5px', 
-          fontSize: '14px', 
-          verticalAlign: 'top', 
-          color: 'blue',
-          border: '1px solid transparent',
-        }}
-        defaultValue={page.h2}
-        tabIndex={0}
-        onFocus={(e) => {
-          e.target.style.outline = '1px solid lightblue';
-          handleFocus(e, page, rowRef, 'h2', pageIndex);
-        }}
-        onBlur={(e) => {
-          e.target.style.outline = '1px solid transparent';
-          handleBlur(e);
-        }}
-        onChange={handleChange}
-        onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
-      />
-      {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
-    </div>
-  )}
-</td>
+                          <div style={{ position: 'relative' }}>
+                            <textarea
+                              ref={refs.current[pageIndex].refMeta}
+                              style={{
+                                width: '100%',
+                                resize: 'none',
+                                height: '4.4em',
+                                padding: '2px 4px',
+                                boxSizing: 'border-box',
+                                fontSize: '14px',
+                                verticalAlign: 'top',
+                                border: '1px solid transparent',
+                                outline: 'none',
+                              }}
+                              defaultValue={page.meta}
+                              tabIndex={0}
+                              onFocus={(e) => {
+                                e.target.style.border = '1px solid lightblue';
+                                handleFocus(e, page, rowRef, 'meta', pageIndex);
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.border = '1px solid transparent';
+                                handleBlur(e);
+                              }}
+                              onChange={handleChange}
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'meta')}
+                            />
+                            {focusedTextarea.type === 'meta' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
+                          </div>
 
+                          <div style={{ position: 'relative' }}>
+                            <textarea
+                              ref={refs.current[pageIndex].refH1}
+                              style={{
+                                width: '100%',
+                                overflow: 'hidden',
+                                resize: 'none',
+                                height: '2.2em',
+                                boxSizing: 'border-box',
+                                padding: '2px 4px',
+                                fontSize: '14px',
+                                verticalAlign: 'top',
+                                border: '1px solid transparent',
+                                outline: 'none',
+                              }}
+                              defaultValue={page.h1}
+                              tabIndex={0}
+                              onFocus={(e) => {
+                                e.target.style.border = '1px solid lightblue';
+                                handleFocus(e, page, rowRef, 'h1', pageIndex);
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.border = '1px solid transparent';
+                                handleBlur(e);
+                              }}
+                              onChange={handleChange}
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
+                            />
+                            {focusedTextarea.type === 'h1' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
+                          </div>
+
+                          {showH2 && (
+                            <div style={{ position: 'relative' }}>
+                              <textarea
+                                ref={refs.current[pageIndex].refH2}
+                                style={{
+                                  width: '100%',
+                                  overflow: 'hidden',
+                                  resize: 'none',
+                                  height: '1.5em',
+                                  padding: '2px 4px',
+                                  fontSize: '14px',
+                                  verticalAlign: 'top',
+                                  color: 'blue',
+                                  border: '1px solid transparent',
+                                  outline: 'none',
+                                }}
+                                defaultValue={page.h2}
+                                tabIndex={0}
+                                onFocus={(e) => {
+                                  e.target.style.border = '1px solid lightblue';
+                                  handleFocus(e, page, rowRef, 'h2', pageIndex);
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.border = '1px solid transparent';
+                                  handleBlur(e);
+                                }}
+                                onChange={handleChange}
+                                onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
+                              />
+                              {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
+                            </div>
+                          )}
+                          {page.onpage && (
+                            <div style={{ position: 'relative' }}>
+                              <textarea
+                                ref={refs.current[pageIndex].refOnPage}
+                                style={{
+                                  width: '100%',
+                                  overflow: 'hidden',
+                                  resize: 'none',
+                                  height: 'auto',
+                                  padding: '8px 4px',
+                                  fontSize: '14px',
+                                  verticalAlign: 'top',
+                                  border: '1px solid transparent',
+                                  outline: 'none',
+                                }}
+                                defaultValue={page.onpage}
+                                tabIndex={0}
+                                onFocus={(e) => {
+                                  e.target.style.border = '1px solid lightblue';
+                                  handleFocus(e, page, rowRef, 'onPage', pageIndex);
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = `${e.target.scrollHeight}px`;
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.border = '1px solid transparent';
+                                  handleBlur(e);
+                                }}
+                                onChange={(e) => {
+                                  handleChange(e);
+                          
+                                  // Adjust the height dynamically as the content changes
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = `${e.target.scrollHeight}px`;
+                                }}
+                                onKeyDown={(e) => handleKeyDown(e, pageIndex, 'onPage')}
+                              />
+                              {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refOnPage.current.value, 20, 70)}
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -459,18 +516,6 @@ const TableView = ({ webpages, registerFinalState }) => {
       >
         Show H2s
       </Button>
-      {/* <Button
-        style={{
-          width: '300px',
-          marginLeft: '60vw',
-          marginBottom: '20px',
-          backgroundColor: isUpdated ? '#f5f5f5' : 'white',
-        }}
-        variant="outline"
-        onClick={createFinalState}
-      >
-        {isUpdated ? 'Changes Approved' : 'Approve Page Changes'}
-      </Button> */}
     </>
   );
 };

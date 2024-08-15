@@ -2,30 +2,28 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Button } from '@/components/ui/button'; // Import your button component
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 const OnPagePanel = () => {
-  const { pages, clientUrl } = useClientWebpage();
+  const { pages, clientUrl, setPages } = useClientWebpage(); // Assuming setPages is available in the context
   const [images, setImages] = useState([]);
-  const [showEmptyOriginals, setShowEmptyOriginals] = useState(true); // State to control visibility
   const containerRefs = useRef([]); // Array to hold refs for each image container
-  const scrollContainerRef = useRef(null); // Ref for the horizontal scroll container
-  
+  const scrollContainerRef = useRef(null);
+  const panelRef = useRef(null); // Reference for the focusable panel
+
   useEffect(() => {
     if (clientUrl && pages.length > 0) {
-      const fetchedImages = pages.map(page => {
+      const fetchedImages = pages.map((page) => {
         const formattedUrl = page.url.replace(/https?:\/\//, '').replace(/[\/#]/g, '_');
         return {
           url: page.url,
-          imgSrc: `/frog/${clientUrl}/screenshots/https_${formattedUrl}.jpg`, // Adjust the file extension if necessary
+          imgSrc: `/frog/${clientUrl}/screenshots/https_${formattedUrl}.jpg`,
           onpage: page.onpage || '',
-          name: page.name || '', // Page name
-          keywords: page.keywords.join(', ') || '', // Keywords joined by comma
+          name: page.name || '',
+          keywords: page.keywords.join(', ') || '',
           h1: page.h1,
-          originalCopy: '', // Store original copy text
-          proposedCopy: '', // Store proposed copy text
-          isVisible: true, // Track visibility of each item
+          originalCopy: '',
+          isVisible: true,
         };
       });
       setImages(fetchedImages);
@@ -40,73 +38,121 @@ const OnPagePanel = () => {
       }
     });
   }, [images]);
+  
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (panelRef.current === document.activeElement && e.key === 'Tab') {
+        const scrollAmount = e.shiftKey ? -390 : 390;
+        const scrollContainer = scrollContainerRef.current;
+  
+        if (scrollContainer) {
+          // Scroll the container
+          scrollContainer.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth',
+          });
+  
+          // Calculate new scroll position
+          const newScrollLeft = scrollContainer.scrollLeft + scrollAmount;
+  
+          // Check if we have reached the start or end of the scroll
+          const atStart = newScrollLeft <= 0;
+          const atEnd = newScrollLeft >= scrollContainer.scrollWidth - scrollContainer.clientWidth;
+  
+          if (atEnd) {
+            // Get all textarea elements inside the panel
+            const textareas = panelRef.current.querySelectorAll('textarea');
+            
+            // Focus the last textarea
+            if (textareas.length > 0) {
+              const lastTextarea = textareas[textareas.length - 1];
+              lastTextarea.focus();
+  
+              // Allow browser's native tab behavior to move to the next element
+              setTimeout(() => {
+                lastTextarea.blur(); // Blur the last textarea to allow Tab to move to the next element
+              }, 0);
+            }
+          } else {
+            e.preventDefault(); // Prevent default Tab behavior only when this component is focused
+          }
+        }
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+  
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [panelRef, scrollContainerRef]);
+  
+  
+  
 
   const handlePaste = (e, index) => {
     const pastedText = e.clipboardData.getData('text');
-    setImages(prevImages => {
-      const updatedImages = [...prevImages];
-      updatedImages[index].proposedCopy = pastedText;
-      return updatedImages;
-    });
-  };
-
-  const handleOriginalCopyChange = (e, index) => {
-    const newText = e.target.value;
-    setImages(prevImages => {
-      const updatedImages = [...prevImages];
-      updatedImages[index].originalCopy = newText;
-      return updatedImages;
-    });
-  };
-
-  const handleProposedCopyChange = (e, index) => {
-    const newText = e.target.value;
-    setImages(prevImages => {
-      const updatedImages = [...prevImages];
-      updatedImages[index].proposedCopy = newText;
-      return updatedImages;
-    });
-  };
-
-  const toggleShowEmptyOriginals = () => {
-    setShowEmptyOriginals(prev => !prev);
+    // e.target.value = pastedText;
   };
 
   const handleImageClick = (e, index) => {
     if (e.shiftKey) {
-      window.open(images[index].url, '_blank'); // Open link in new tab
+      window.open(images[index].url, '_blank');
+      const textarea = document.querySelector(`#textarea-${index}`);
+      if (textarea) {
+        textarea.focus(); // Focus the corresponding textarea
+      }
     }
   };
 
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -1180, behavior: 'smooth' });
-    }
-  };
+  const handleTextareaChange = (e, index) => {
+    const newText = e.target.value;
 
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 1180, behavior: 'smooth' });
-    }
+    // Update the corresponding page's onpage value
+    setPages(prevPages => {
+      return prevPages.map((page, i) => {
+        if (i === index) {
+          return { ...page, onpage: newText }; // Update onpage for the correct page
+        }
+        return page;
+      });
+    });
+
+    // Also update the local images state for immediate UI reflection (optional)
+    setImages(prevImages => {
+      const updatedImages = [...prevImages];
+      updatedImages[index].onpage = newText;
+      return updatedImages;
+    });
   };
 
   return (
-    <div style={{ position: 'relative' }}>
-      <Button 
-        variant="outline"
-        style={{ position: 'absolute', bottom: '20px', left: '40px', zIndex: '1000' }} 
-        onClick={toggleShowEmptyOriginals}
+    <div
+      ref={panelRef}
+      tabIndex={0} // Make the div focusable
+      style={{ position: 'relative', marginTop: '40px', outline: 'none' }} // Outline set to none to avoid focus ring
+    >
+      <div
+        ref={scrollContainerRef}
+        style={{
+          overflowX: 'scroll',
+          marginLeft: '60px',
+          height: '100%',
+          width: '70vw',
+          display: 'flex',
+          paddingTop: '30px',
+          paddingLeft: '10px',
+          scrollbarWidth: 'none', // For Firefox
+          WebkitOverflowScrolling: 'touch', // For smooth scrolling on iOS
+          paddingRight: '1100px' 
+        }}
       >
-        {showEmptyOriginals ? 'Hide' : 'Show'}
-      </Button>
-      {/* container */}
-      <div ref={scrollContainerRef} style={{ overflowX: 'scroll', marginLeft: '60px', border: 'solid 1px #d3d3d3', height: '1400px', width: '70vw', display: 'flex', padding: '30px' }}>
         {images.map((image, index) => (
-          (image.isVisible && (showEmptyOriginals || image.originalCopy.trim() !== '')) && ( // Conditionally render based on visibility and showEmptyOriginals state
-            <div key={index} style={{ flexShrink: 0, marginRight: '10px', textAlign: 'center' }}>
+          (image.isVisible) && (
+            <div key={index} style={{ flexShrink: 0, marginRight: '10px', textAlign: 'center'}}>
               <div
                 ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
-                style={{ overflowY: 'scroll', height: '400px', width: '380px', padding: '30px', maxWidth: '380px' }}
+                style={{ border:'solid 1px #d5d5d5', overflowY: 'scroll', height: '380px', width: '380px', padding: '30px', maxWidth: '380px' }}
               >
                 <img
                   src={image.imgSrc}
@@ -115,38 +161,34 @@ const OnPagePanel = () => {
                   onClick={(e) => handleImageClick(e, index)} // Handle image click or shift-click
                 />
               </div>
-              <div style={{ fontWeight: 'bold', marginTop: '10px' }}>
-                {image.name} {/* Display the page name */}
-              </div>
               <textarea
-                value={image.originalCopy}
-                placeholder="Original Copy"
-                style={{ width: '100%', height: '400px', fontSize: '13px', resize: 'none', marginTop: '10px' }}
+                id={`textarea-${index}`} // Unique ID for each textarea
+                value={image.onpage} // Bind the textarea value to the onpage value
+                placeholder={image.name}
+                style={{ width: '100%', height: '100px', border: 'solid 1px #d5d5d5', fontSize: '13px', resize: 'none', marginTop: '10px' }}
+                onChange={(e) => handleTextareaChange(e, index)} // Update onpage on change
                 onPaste={(e) => handlePaste(e, index)}
-                onChange={(e) => handleOriginalCopyChange(e, index)}
-              />
-              <div>
-                {image.h1}
-              </div>
-              <div style={{ fontSize: '12px',borderBottom: 'solid 1px #d3d3d3',borderTop: 'solid 1px #d3d3d3', height: '3em', color: 'gray', marginTop: '5px', marginBottom: '5px',maxWidth: '380px' }}>
-                {image.keywords} {/* Display the keywords */}
-              </div>
-              <textarea
-                value={image.proposedCopy}
-                placeholder="Proposed Copy"
-                style={{ width: '100%', height: '400px', fontSize: '13px', resize: 'none', marginTop: '10px' }}
-                onChange={(e) => handleProposedCopyChange(e, index)}
               />
             </div>
           )
         ))}
       </div>
-      <div style={{ position: 'absolute', right: '100px', top: '15%', transform: 'translateY(-50%)', zIndex: '1000' }}>
+      <style jsx>{`
+        /* Minimal scrollbar styling for WebKit browsers (Safari, Chrome, etc.) */
+        ::-webkit-scrollbar {
+          width: 4px;
+          height: 0px; /* Height for horizontal scrollbar */
+        }
 
-        <Button style={{height: '300px'}} variant="outline" onClick={scrollRight}>
-          {'>'} {/* Right arrow */}
-        </Button>
-      </div>
+        ::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.2); /* Darker thumb */
+          border-radius: 0px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent; /* Transparent track */
+        }
+      `}</style>
     </div>
   );
 };

@@ -242,6 +242,12 @@ export default function TopBar({onPrepareData}) {
     // Determine the next client, or loop back to the first client if at the end of the list
     const nextIndex = (currentIndex + 1) % updatedClientList.length;
     const nextClient = updatedClientList[nextIndex];
+    // selecting next client... 
+    setIsLoading(true);
+    setLoadingMessage('Loading client...');
+    setPages([]); // Reset pages before loading new client data
+    setAltImages([]); // Reset alt images
+    setSheetTitles([]); // Reset sheet titles
     setCurrentClient(nextClient); // Set the next client as the current client
     }
 

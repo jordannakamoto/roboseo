@@ -33,11 +33,11 @@ export default function Component() {
     <div className="flex w-full" style={{ marginBottom: "300px" }}>
       <TopBar onPrepareData={handlePrepareData} />
       <div style={{ display: "flex", flexDirection: "column" }}>
+      <OnPagePanel/>
         <TableView 
           webpages={pages} 
           registerFinalState={(fn) => setTableViewFinalState(() => fn)} 
         />
-        <OnPagePanel/>
         <AltTagsPanel 
           alts={altImages} 
           registerFinalState={(fn) => setAltTagsPanelFinalState(() => fn)} 
