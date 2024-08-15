@@ -78,7 +78,7 @@ const EditableCell = ({
 
 const AltTagsPanel = ({alts, registerFinalState}) => {
   // > State <
-  const { altImages, finalizationState, setFinalizationState } = useClientWebpage();
+  const { pages, altImages, finalizationState, setFinalizationState } = useClientWebpage();
   const { altImagesProcessed, setAltImagesProcessed } = useClientWebpage();
   const [myData, setMyData] = useState([]);
   const [selectedImages, setSelectedImages] = useState({});
@@ -87,6 +87,12 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
   const [focusedTextarea, setFocusedTextarea] = useState(null);
   const [charCount, setCharCount] = useState(0);
   const [fillInputCharCount, setFillInputCharCount] = useState(0); // Add this line to your state
+
+  const allKeywords = Array.from(new Set(
+    pages.flatMap(page => 
+      page.keywords.flatMap(keyword => keyword.split(' '))
+    )
+  )).join(' ');
 
   useEffect(() => {
     if (altImages) {
@@ -467,6 +473,10 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
           ))}
         </div>
       </div>
+      <div style={{fontSize:'11px', color: 'gray', width: '50%', marginLeft: '30vw'}}>
+      {allKeywords}
+      </div>
+
       <div className="flex" style={{ marginLeft: '27vw', position: 'relative'}}>
         <input
           id="fill-input"
