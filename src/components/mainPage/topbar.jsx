@@ -117,8 +117,8 @@ export default function TopBar({onPrepareData}) {
 
     if (sheetId && tokens) {
       try {
-        setIsLoading(true);
-        setLoadingMessage('Loading client...');
+        // set isLoading during select client
+
         // -- Fetch Sheet Titles
         // .. First we get all the sheet titles in the spreadsheet document so we can make calls to the right data range
 
@@ -182,6 +182,11 @@ export default function TopBar({onPrepareData}) {
 
   // Handle client selection from the list
   const selectClient = (client) => {
+    if(client == currentClient){
+      return;
+    }
+    setIsLoading(true);
+    setLoadingMessage('Loading client...');
     setPages([]); // Reset pages before loading new client data
     setAltImages([]); // Reset alt images
     setSheetTitles([]); // Reset sheet titles
@@ -270,7 +275,7 @@ export default function TopBar({onPrepareData}) {
       console.error('No current client selected.');
       return;
     }
-
+    // error sometimes gets thrown here
     let currClientHomepage = currentClient.homepage.replace(/^https?:\/\//, '');
 
     try {
@@ -363,7 +368,8 @@ export default function TopBar({onPrepareData}) {
   // Write data to the workbook
 const writeToWorkbook = async (mode) => {
   try {
-
+    setIsLoading(true);
+    setLoadingMessage("Writing " + currentClient.name + " to workbook...");
     const response = await fetch('/api/write-to-workbook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -376,6 +382,7 @@ const writeToWorkbook = async (mode) => {
         hMode: mode,
       }),
     });
+    setIsLoading(false);
 
     if (!response.ok) throw new Error('Error writing to workbook');
     console.log(`Changes written to workbook ${sheetUrl}`);
@@ -394,6 +401,12 @@ const triggerFinalization = (mode) => {
 
   // Load Frog scraper with client data
   const loadFrogScraper = async () => {
+    
+    setIsLoading(true);
+    setPages([]); // Reset pages before loading new client data
+    setAltImages([]); // Reset alt images
+    setSheetTitles([]); // Reset sheet titles
+    setLoadingMessage("Getting all clients, homepages, and workbookURLSs from master sheet.\n Check HomepageList.txt when done");
     const modifiedClientList = clientList.map(client => {
       const workbookSheetId = extractSheetIdFromUrl(client.workbookURL);
       if (!workbookSheetId) {
@@ -427,7 +440,26 @@ const triggerFinalization = (mode) => {
         console.error('Failed to process files:', error);
       }
     }
+    setIsLoading(false);
+    const response = await fetch('/api/open-homepagelist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
   };
+  
+  // execute scrape
+  const runScraper = () => {
+    fetch('/api/run-scraper-script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({  }),
+    })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error:', error));
+  }
+
 
   // *** UI ************************************************* //
   const toggleClientCompletion = (clientIndex) => {
@@ -462,11 +494,12 @@ const triggerFinalization = (mode) => {
             placeholder="Master sheet URL"
             style={{ flexGrow: 1, fontSize: "11px" }}
           /> */}
-          <Button onClick={login} style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px" }}>
-            {tokens ? 'Signed In' : <><FcGoogle size={25} /> Sign in</>}
+          {/* style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px" }} */}
+          <Button onClick={login} variant="outline">
+            <FcGoogle size={10} />
           </Button>
         </div>
-        <Button style={{color:'grey'}} onClick={toggleMasterSheetVisibility} className="h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+        <Button style={{color:'grey', backgroundColor: isMasterSheetVisible ? '#deeff5' : 'white',}} onClick={toggleMasterSheetVisibility} className="h-10 w-20 rounded-sm border border-gray-300 p-2">
             MSheet
           </Button>
           
@@ -475,11 +508,14 @@ const triggerFinalization = (mode) => {
               onChange={handleLoadSheet}
               className="p-2 border border-gray-300 rounded"
               placeholder="Master sheet URL"
-              style={{ visibility: isMasterSheetVisible ? 'visible' : 'hidden', position:'absolute', zIndex:'1000', top:'40px', right:'0px',flexGrow: 1, fontSize: "11px" }}
+              style={{ visibility: isMasterSheetVisible ? 'visible' : 'hidden', width: '300px',position:'absolute', zIndex:'1000', top:'40px', right:'-50px',flexGrow: 1, fontSize: "11px" }}
             />
-        <button onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-          FeedFrog
-        </button>
+        <Button variant="outline" style={{color:'grey'}} onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+          Init
+        </Button>
+        <Button variant="outline" style={{color:'grey'}} onClick={runScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+          Scrape
+        </Button>
          {/* Right Sidebar */}
         <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ height: "70vh", width: "230px", overflow: "scroll" }}>
           <ul className="text-sm text-gray-700">

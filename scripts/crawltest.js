@@ -1,5 +1,6 @@
 const { exec } = require("child_process");
 const fs = require("fs");
+const path = require("path");
 
 // > Output Location
 const outputLocation = "/Users/jordannakamoto/Desktop/Bryceproject/appv0/roboseo/public/frog/";
@@ -10,7 +11,6 @@ const outputLocation = "/Users/jordannakamoto/Desktop/Bryceproject/appv0/roboseo
 // > List of URLs to crawl
 // ----------------------------------------------------------------//
 
-// Read URLs from file and start crawl process
 fs.readFile("homepageList.txt", 'utf8', (err, data) => {
   if (err) {
     console.error('Failed to read file:', err);
@@ -20,34 +20,60 @@ fs.readFile("homepageList.txt", 'utf8', (err, data) => {
   // Split the content by new lines to create an array of URLs
   let urls = data.split('\n').filter(line => line.trim() !== '');
 
+  // Scan for directories that already exist
+  const toCrawl = [];
+  let skipped = 0;
+
+  urls.forEach(url => {
+    const outputFolderName = url.replace(/^https?:\/\//, '');
+    const outputPath = path.join(outputLocation, outputFolderName);
+
+    if (fs.existsSync(outputPath)) {
+      console.log(`Directory exists for ${url}, skipping crawl.`);
+      skipped++;
+    } else {
+      toCrawl.push(url);
+    }
+  });
+
+  console.log(`${skipped}/${urls.length} URLs will be skipped. ${toCrawl.length} remaining.`);
+
+  let crawled = 0;
+  let totalTime = 0;
+
   // Function to execute crawls sequentially
   async function runCrawlsSequentially() {
-    for (const url of urls) {
-      // Skip URLs that don't start with http or https
-      if (!(url.startsWith('http://') || url.startsWith('https://'))) {
-        console.log(`Skipping invalid URL: ${url}`);
-        continue;
-      }
-
+    for (const url of toCrawl) {
       console.log(`Crawling ${url}...`);
+      const startTime = Date.now();
       await runCrawl(url);
+      const endTime = Date.now();
+      const crawlTime = (endTime - startTime) / 1000; // Time in seconds
+      totalTime += crawlTime;
+      crawled++;
+
+      // Calculate average time and estimate remaining time
+      const avgTimePerCrawl = totalTime / crawled;
+      const remainingCrawls = toCrawl.length - crawled;
+      const estimatedRemainingTime = avgTimePerCrawl * remainingCrawls;
+
+      const avgMins = Math.floor(avgTimePerCrawl / 60);
+      const avgSecs = Math.floor(avgTimePerCrawl % 60);
+      const estMins = Math.floor(estimatedRemainingTime / 60);
+      const estSecs = Math.floor(estimatedRemainingTime % 60);
+
+      console.log(`Completed ${crawled}/${toCrawl.length} crawls. Avg time: ${avgMins}m ${avgSecs}s. Estimated time left: ${estMins}m ${estSecs}s.`);
     }
     console.log("All crawls completed.");
   }
- 
+
   // Start the crawling process
   runCrawlsSequentially();
 });
 
 function runCrawl(url) {
-  // Transformations and command construction remain the same
   const outputFolderName = url.replace(/^https?:\/\//, '');
-  const outputPath = outputLocation + outputFolderName;
-  
-  if (fs.existsSync(outputPath)) {
-    console.log(`Directory exists for ${url}, skipping crawl.`);
-    return Promise.resolve();
-  }
+  const outputPath = path.join(outputLocation, outputFolderName);
 
   fs.mkdirSync(outputPath, { recursive: true });
 
@@ -58,9 +84,6 @@ function runCrawl(url) {
   --save-crawl \
   --output-folder "${outputPath}" \
   --overwrite`;
-
-  // Custom Extraction:All,Internal:PDF
-  // OnPage Strategy Future... Internal:HTML
 
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {

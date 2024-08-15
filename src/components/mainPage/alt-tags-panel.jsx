@@ -473,15 +473,14 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
           ))}
         </div>
       </div>
-      <div style={{fontSize:'11px', color: 'gray', width: '60%', marginLeft: '27vw'}}>
+      <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'11px', color: 'gray', width: '60%', marginLeft: '27vw'}}>
       {allKeywords}
       </div>
-
-      <div className="flex" style={{ marginLeft: '27vw', position: 'relative'}}>
+      <div className="flex" style={{marginBottom: '40px', visibility: pages.length > 0 ? 'visible': 'hidden', marginLeft: '27vw', position: 'relative'}}>
         <input
           id="fill-input"
           placeholder="Enter caption, * for wildcard"
-          style={{ border: 'solid 1px #d5d5d5', width: '720px', resize: 'none', fontSize: '12px' }}
+          style={{border: 'solid 1px #d5d5d5', width: '720px', resize: 'none', fontSize: '12px' }}
           onChange={handleFillInputChange} // Attach the change handler here
           tabIndex="-1"
         />
@@ -519,7 +518,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
       >
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button> */}
-      <table {...getTableProps()} style={{ fontSize: '12px', border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
+      <table {...getTableProps()} style={{ fontSize: '13px', border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
   <thead>
     {headerGroups.map((headerGroup, headerGroupIndex) => {
       const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
