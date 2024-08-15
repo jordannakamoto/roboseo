@@ -10,6 +10,7 @@ const OnPagePanel = () => {
   const [images, setImages] = useState([]);
   const [showEmptyOriginals, setShowEmptyOriginals] = useState(true); // State to control visibility
   const containerRefs = useRef([]); // Array to hold refs for each image container
+  const scrollContainerRef = useRef(null); // Ref for the horizontal scroll container
   
   useEffect(() => {
     if (clientUrl && pages.length > 0) {
@@ -21,6 +22,7 @@ const OnPagePanel = () => {
           onpage: page.onpage || '',
           name: page.name || '', // Page name
           keywords: page.keywords.join(', ') || '', // Keywords joined by comma
+          h1: page.h1,
           originalCopy: '', // Store original copy text
           proposedCopy: '', // Store proposed copy text
           isVisible: true, // Track visibility of each item
@@ -76,6 +78,18 @@ const OnPagePanel = () => {
     }
   };
 
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -1180, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 1180, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       <Button 
@@ -85,13 +99,14 @@ const OnPagePanel = () => {
       >
         {showEmptyOriginals ? 'Hide' : 'Show'}
       </Button>
-      <div style={{ overflowX: 'scroll', marginLeft: '20px', border: 'solid 1px #d3d3d3', height: '1400px', width: '84vw', display: 'flex', padding: '20px' }}>
+      {/* container */}
+      <div ref={scrollContainerRef} style={{ overflowX: 'scroll', marginLeft: '60px', border: 'solid 1px #d3d3d3', height: '1400px', width: '70vw', display: 'flex', padding: '30px' }}>
         {images.map((image, index) => (
           (image.isVisible && (showEmptyOriginals || image.originalCopy.trim() !== '')) && ( // Conditionally render based on visibility and showEmptyOriginals state
             <div key={index} style={{ flexShrink: 0, marginRight: '10px', textAlign: 'center' }}>
               <div
                 ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
-                style={{ overflowY: 'scroll', height: '400px', width: '330px', maxWidth: '330px' }}
+                style={{ overflowY: 'scroll', height: '400px', width: '380px', padding: '30px', maxWidth: '380px' }}
               >
                 <img
                   src={image.imgSrc}
@@ -110,7 +125,10 @@ const OnPagePanel = () => {
                 onPaste={(e) => handlePaste(e, index)}
                 onChange={(e) => handleOriginalCopyChange(e, index)}
               />
-              <div style={{ fontSize: '12px',borderBottom: 'solid 1px #d3d3d3',borderTop: 'solid 1px #d3d3d3', height: '3em', color: 'gray', marginTop: '5px', marginBottom: '5px',maxWidth: '330px' }}>
+              <div>
+                {image.h1}
+              </div>
+              <div style={{ fontSize: '12px',borderBottom: 'solid 1px #d3d3d3',borderTop: 'solid 1px #d3d3d3', height: '3em', color: 'gray', marginTop: '5px', marginBottom: '5px',maxWidth: '380px' }}>
                 {image.keywords} {/* Display the keywords */}
               </div>
               <textarea
@@ -122,6 +140,12 @@ const OnPagePanel = () => {
             </div>
           )
         ))}
+      </div>
+      <div style={{ position: 'absolute', right: '100px', top: '15%', transform: 'translateY(-50%)', zIndex: '1000' }}>
+
+        <Button style={{height: '300px'}} variant="outline" onClick={scrollRight}>
+          {'>'} {/* Right arrow */}
+        </Button>
       </div>
     </div>
   );
