@@ -473,7 +473,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
           ))}
         </div>
       </div>
-      <div style={{fontSize:'11px', color: 'gray', width: '50%', marginLeft: '30vw'}}>
+      <div style={{fontSize:'11px', color: 'gray', width: '60%', marginLeft: '27vw'}}>
       {allKeywords}
       </div>
 

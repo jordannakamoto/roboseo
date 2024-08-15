@@ -177,11 +177,15 @@ const TableView = ({ webpages, registerFinalState }) => {
       if (matchingWebpage) {
         const updatedPage = { ...page };
         
+        const nameValue = refs.current[pageIndex].refName.current.value;
         const titleValue = refs.current[pageIndex].refTitle.current.value;
         const h1Value = refs.current[pageIndex].refH1.current.value;
         const h2Value = showH2 ? refs.current[pageIndex].refH2.current.value : null;
         const metaValue = refs.current[pageIndex].refMeta.current.value;
-  
+
+        if (nameValue !== page.name) {
+          updatedPage.name = nameValue;
+        }
         if (titleValue !== page.title) {
           updatedPage.titleNew = titleValue;
         }
@@ -254,6 +258,7 @@ const TableView = ({ webpages, registerFinalState }) => {
               // Create refs for each input and store them in the refs array
               if (!refs.current[pageIndex]) {
                 refs.current[pageIndex] = {
+                  refName: React.createRef(),
                   refTitle: React.createRef(),
                   refH1: React.createRef(),
                   refH2: showH2 ? React.createRef() : null,
@@ -267,7 +272,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                     <tbody>
                       <tr style={{ width: '750px'}} key={`page-name-${pageIndex}`} className="pageNameRow">
                         <td style={{ verticalAlign: 'top', width: '200px',flexShrink: 0, flexGrow: 0   }}>
-                          <div
+                        <div
                             style={{
                               fontWeight: 'bold',
                               fontSize: '14px',
@@ -276,7 +281,31 @@ const TableView = ({ webpages, registerFinalState }) => {
                               width: '100%',
                             }}
                           >
-                            {page.name}
+                            <textarea
+                              ref={refs.current[pageIndex].refName} // Attach the ref
+                              style={{
+                                width: '100%',
+                                resize: 'none',
+                                height: '1.8em',
+                                overflow: 'hidden',
+                                padding: '2px',
+                                paddingLeft: '4px',
+                                fontSize: '14px',
+                                verticalAlign: 'top',
+                                border: '1px solid transparent',
+                              }}
+                              defaultValue={page.name} // Set the initial value to the page name
+                              tabIndex={300 + pageIndex} // Set tabIndex starting at 300
+                              onFocus={(e) => {
+                                e.target.style.outline = '1px solid lightblue'; // Change border on focus
+                                handleFocus(e, page, rowRef, 'name', pageIndex); // Handle focus
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.outline = '1px solid transparent'; // Revert border on blur
+                                handleBlur(e); // Handle blur
+                              }}
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')} // Handle key events
+                            />
                           </div>
                           <div style={{ padding: '5px', fontSize: '12px', verticalAlign: 'top' }}>{page.keywords.join(', ')}</div>
                         </td>
