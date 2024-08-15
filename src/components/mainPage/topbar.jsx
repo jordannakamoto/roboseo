@@ -189,6 +189,61 @@ export default function TopBar({onPrepareData}) {
     localStorage.setItem('currentClient', JSON.stringify(client));
     // document.getElementById('active-client-url').value = client.workbookURL;
   };
+
+  const markClientDone = async () => {
+
+
+    // Make API call to highlight the row
+
+    const url = document.getElementById('master-sheet-url').value;
+    const sheetId = extractSheetIdFromUrl(url);
+    const now = new Date();
+    const test_date = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+    const range = `${test_date}!A:L`;
+
+    const updatedClient = { ...currentClient, completed: !currentClient.completed }; // Toggle the completed value
+    setCurrentClient({
+      ...currentClient, 
+      completed: !currentClient.completed
+    });
+
+    const response = await fetch('/api/mark-client-done', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tokens,
+        sheetId,
+        range,
+        currentClient: updatedClient,
+        sheetName: test_date,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to mark client as done. Status: ${response.status}`);
+    }
+
+    const res = await response.json();
+    console.log('Row highlighted:', res.highlightedRow);
+    const updatedClientList = clientList.map(client =>
+      client.name === updatedClient.name ? updatedClient : client
+    );
+  
+    // Find the index of the current client in the list
+    const currentIndex = updatedClientList.findIndex(client => client.name === updatedClient.name);
+  
+    // > Set next client if marking DONE, set to next client
+    if(updatedClient.completed){
+    // Determine the next client, or loop back to the first client if at the end of the list
+    const nextIndex = (currentIndex + 1) % updatedClientList.length;
+    const nextClient = updatedClientList[nextIndex];
+    setCurrentClient(nextClient); // Set the next client as the current client
+    }
+
+    setClientList(updatedClientList); // Update the state with the new list
+    localStorage.setItem('clients', JSON.stringify(updatedClientList)); // Persist the updated client list to local storage
+  };
+  
   
 
   // TRIGGER API CALL TO G-SHEET CLIENT DATA
@@ -475,7 +530,7 @@ const triggerFinalization = (mode) => {
           >
             Write To Workbook {showH2 ? "h2" : ""}
           </Button>
-          <Button onClick={() => triggerFinalization("done")} variant="outline">Mark Done</Button>
+          <Button onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
         </CardContent>
       </Card>
     </>
