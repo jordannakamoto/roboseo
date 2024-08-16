@@ -122,6 +122,14 @@ export default function TopBar({onPrepareData}) {
         // -- Fetch Sheet Titles
         // .. First we get all the sheet titles in the spreadsheet document so we can make calls to the right data range
 
+        // .. Toggle visibility first to get the right title set
+        const visibilityResponse = await fetch('/api/get-client-toggle-visibility', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId}),
+        });
+        if (!visibilityResponse.ok) throw new Error(`HTTP error! Status: ${visibilityResponse.status}`);
+
         const titlesResponse = await fetch('/api/get-sheet-titles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -135,13 +143,6 @@ export default function TopBar({onPrepareData}) {
 
         // -- GET CLIENT WEBPAGES -- //
         // -- Pulls from Keyword Research and Strategy
-
-        const visibilityResponse = await fetch('/api/get-client-toggle-visibility', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens, spreadsheetId: sheetId}),
-        });
-        if (!visibilityResponse.ok) throw new Error(`HTTP error! Status: ${visibilityResponse.status}`);
 
         // Find Title Tag sheet and fetch webpage data
         const titleTagSheet = titles.find(title => title.startsWith("Title Tag"));
