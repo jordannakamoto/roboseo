@@ -395,6 +395,7 @@ const writeToWorkbook = async (mode) => {
         tokens,
         altTags: altImagesProcessed,  // Use directly, after ensuring it's updated
         hMode: mode,
+        currentClientName: currentClient.name
       }),
     });
     setIsLoading(false);
@@ -498,7 +499,7 @@ const triggerFinalization = (mode) => {
       <h1 style= {{fontWeight:'bold', }}>{currentClient.name}</h1>
     </div>
     <LoadingModal isVisible={isLoading} message={loadingMessage} />
-    <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '0px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
+    <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '10px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
       <div className="flex justify-between items-center">
         <div className="flex flex-grow items-center space-x-4">
           {/* <span style={{ marginLeft: "20px" }}>{currentClient.name}</span> */}
@@ -532,7 +533,7 @@ const triggerFinalization = (mode) => {
           Scrape
         </Button>
          {/* Right Sidebar */}
-        <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ background: '#f9f9f9',borderRadius: '0',border: 'none',  height: "70vh", width: "200px", overflow: "scroll" }}>
+        <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ background: '#f9f9f9',borderRadius: '0',border: 'none',  height: "70vh", width: "210px", overflow: "scroll" }}>
           <ul className="text-sm text-gray-700">
             {clientList
               .filter(client => showCompleted || !client.completed)
@@ -555,7 +556,7 @@ const triggerFinalization = (mode) => {
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '200px', border: 'none', borderRadius: '0',position: 'fixed', right: '0', bottom: '0' }}>
+      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '210px', border: 'none', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
         <CardHeader />
         <CardContent className="flex flex-col items-center space-y-2">
           <button
@@ -581,7 +582,7 @@ const triggerFinalization = (mode) => {
           >
             Write To Workbook {showH2 ? "h2" : ""}
           </Button>
-          <Button onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
+          <Button style={{marginTop: '20px', height: '5.5em'}} onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
         </CardContent>
       </Card>
     </div>

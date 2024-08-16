@@ -475,7 +475,8 @@ const groupSelectedImages = useCallback(() => {
           }
         `}
       </style>
-      <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
+      {/* border: '1px solid #ccc' */}
+      <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', background: '#f5f5f5' }}>
   <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
     {Object.values(groupSelectedImages()).map(({ url, caption, count }) => (
       <div key={url} style={{ textAlign: 'center', width: '400px', position: 'relative' }}>
@@ -488,7 +489,7 @@ const groupSelectedImages = useCallback(() => {
           value={caption}
           onChange={(e) => handleCaptionChange(url, e.target.value)}
           placeholder="Enter caption"
-          style={{ width: '100%', resize: 'none', fontSize: '12px' }}
+          style={{ width: '100%', resize: 'none', fontSize: '12px', border: '1px solid #bbb' }}
           onFocus={(e) => {
             handleFocus(url, caption);
             const firstIndex = caption.indexOf('*');
@@ -514,11 +515,11 @@ const groupSelectedImages = useCallback(() => {
       <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'11px', color: 'gray', width: '60%', marginLeft: '27vw'}}>
       {allKeywords}
       </div>
-      <div className="flex" style={{marginBottom: '40px', visibility: pages.length > 0 ? 'visible': 'hidden', marginLeft: '27vw', position: 'relative'}}>
+      <div className="flex" style={{marginBottom: '40px', visibility: pages.length > 0 ? 'visible': 'hidden', marginLeft: '20vw', position: 'relative'}}>
         <input
           id="fill-input"
           placeholder="Enter caption, * for wildcard"
-          style={{border: 'solid 1px #d5d5d5', width: '720px', resize: 'none', fontSize: '12px' }}
+          style={{border: 'solid 2px #d5d5d5', width: '770px', resize: 'none', fontSize: '12px' }}
           onChange={handleFillInputChange} // Attach the change handler here
           tabIndex="-1"
         />
@@ -528,7 +529,7 @@ const groupSelectedImages = useCallback(() => {
           background: 'white',
           padding: '5px',
           position: 'absolute',
-          left: '680px', // Adjust as necessary to position correctly
+          left: '740px', // Adjust as necessary to position correctly
           bottom: '5px',
           fontSize: '12px',
           color: fillInputCharCount > 125 ? 'red' : 'black',
@@ -556,12 +557,12 @@ const groupSelectedImages = useCallback(() => {
       >
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button> */}
-      <table {...getTableProps()} style={{ fontSize: '13px', border: 'solid 1px black', marginLeft: '20px', width: '80%' }}>
+      <table {...getTableProps()} style={{ fontSize: '13px', marginLeft: '20px', width: '80%' }}>
   <thead>
     {headerGroups.map((headerGroup, headerGroupIndex) => {
       const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
       return (
-        <tr key={`header-group-${headerGroupIndex}`} {...restHeaderGroupProps}>
+        <tr style={{border: 'solid 1px #bbb', background: 'aliceblue'}}key={`header-group-${headerGroupIndex}`} {...restHeaderGroupProps}>
           {headerGroup.headers.map((column, columnIndex) => {
             const { key, ...restColumnProps } = column.getHeaderProps(column.getSortByToggleProps());
             return (
@@ -571,7 +572,6 @@ const groupSelectedImages = useCallback(() => {
                 style={{
                   width: column.width,
                   maxWidth: column.maxWidth,
-                  background: 'aliceblue',
                   color: 'black',
                   fontWeight: 'bold',
                 }}

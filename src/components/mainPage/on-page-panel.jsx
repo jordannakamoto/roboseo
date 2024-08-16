@@ -125,7 +125,7 @@ const OnPagePanel = () => {
     <div
       ref={panelRef}
       tabIndex={0} // Make the div focusable
-      style={{ position: 'relative', marginTop: '40px', outline: 'none' }} // Outline set to none to avoid focus ring
+      style={{ width: '100vw', position: 'relative', marginTop: '40px', outline: 'none', background: '#f7f7f7' }} // Outline set to none to avoid focus ring
     >
       <div
         ref={scrollContainerRef}
@@ -133,21 +133,21 @@ const OnPagePanel = () => {
           overflowX: 'scroll',
           marginLeft: '60px',
           height: '100%',
-          width: '70vw',
+          width: '80vw',
           display: 'flex',
           paddingTop: '30px',
           paddingLeft: '10px',
           scrollbarWidth: 'none', // For Firefox
           WebkitOverflowScrolling: 'touch', // For smooth scrolling on iOS
-          paddingRight: '1100px' 
+          paddingRight: '1100px',
         }}
       >
         {images.map((image, index) => (
           (image.isVisible) && (
-            <div key={index} style={{ flexShrink: 0, marginRight: '10px', textAlign: 'center'}}>
+            <div key={index} style={{ flexShrink: 0, marginRight: '5px', textAlign: 'center'}}>
               <div
                 ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
-                style={{ border:'solid 1px #d5d5d5', overflowY: 'scroll', height: '380px', width: '380px', padding: '30px', maxWidth: '380px' }}
+                style={{ border:'solid 1px #d5d5d5', overflowY: 'scroll', height: '380px', width: '245px', maxWidth: '380px' }}
               >
                 <img
                   src={image.imgSrc}
@@ -160,7 +160,7 @@ const OnPagePanel = () => {
                 id={`textarea-${index}`} // Unique ID for each textarea
                 value={image.onpage} // Bind the textarea value to the onpage value
                 placeholder={image.name}
-                style={{ width: '100%', height: '100px', border: 'solid 1px #d5d5d5', fontSize: '13px', resize: 'none', marginTop: '10px' }}
+                style={{ width: '100%', height: '100px',  fontSize: '13px', resize: 'none', marginTop: '10px' }}
                 onChange={(e) => handleTextareaChange(e, index)} // Update onpage on change
                 onPaste={(e) => handlePaste(e, index)}
               />
@@ -171,7 +171,7 @@ const OnPagePanel = () => {
       <style jsx>{`
         /* Minimal scrollbar styling for WebKit browsers (Safari, Chrome, etc.) */
         ::-webkit-scrollbar {
-          width: 4px;
+          width: 0px;
           height: 0px; /* Height for horizontal scrollbar */
         }
 

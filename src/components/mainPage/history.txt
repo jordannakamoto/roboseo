@@ -10,7 +10,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   const [modalData, setModalData] = useState(null);
   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
   const modalRef = useRef();
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(true);
 
   const { pages, setPages, finalizationState, setFinalizationState, showH2, setShowH2 } = useClientWebpage();
 
@@ -56,16 +56,15 @@ const TableView = ({ webpages, registerFinalState }) => {
                 height: '0',
                 // padding: '5px',
                 zIndex: 1000,
-                width: '570px',
-                background: '#f7f7f7',
+                width: '550px',
+                background: 'white',
             }}
             ref={modalRef}
         >
-          {/* modal style */}
-            <table className="customTable" style={{ border: 'solid 1px #d7d7d7', height: 'auto', width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
+            <table className="customTable" style={{ border: 'solid 1px grey', height: 'auto', width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
                 <tbody>
                     <tr>
-                        <td style={{ width: '100%', paddingLeft: '10px', background: '#f7f7f7' }}>
+                        <td style={{ width: '100%', paddingLeft: '10px', background: 'white' }}>
                             <textarea
                                 ref={(textareaRef) => {
                                     if (textareaRef) {
@@ -81,8 +80,9 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 }}
                                 style={{ 
                                     width: '100%',
-                                    // maxHeight: '12em',
-                                    padding: '12px 8px',
+                                    maxHeight: '12em',
+                                    paddingTop: '5px',
+                                    paddingBottom: '5px', 
                                     fontSize: '14px', 
                                     verticalAlign: 'top', 
                                     overflow: 'scroll', 
@@ -133,15 +133,14 @@ const TableView = ({ webpages, registerFinalState }) => {
     const rowRect = rowRef.current.getBoundingClientRect();
 
 
-    let topPos = window.scrollY + rowRect.top; // Adjust to consider scrolling
-    let leftPos = rowRect.left + (150);
+    let topPos = window.scrollY + rowRect.top +42; // Adjust to consider scrolling
 
     switch (textareaType) {
       case 'title':
           topPos -= 641;
           break;
       case 'meta':
-          topPos -= 629;
+          topPos -= 605;
           break;
       case 'h1':
           topPos -= 540;
@@ -151,14 +150,13 @@ const TableView = ({ webpages, registerFinalState }) => {
           break;
           break;
       case 'onPage':
-          topPos -= 459;
-          leftPos += 569;
+          topPos -= 501;
           break;
       default:
   }
     setModalPosition({
       top: topPos, // Position based on the row
-      left: leftPos, // Adjust for modal width
+      left: rowRect.left - (610), // Adjust for modal width
     });
     
 
@@ -350,52 +348,14 @@ const TableView = ({ webpages, registerFinalState }) => {
               }
 
               return (
-                <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '4px', marginTop: '4px', position: 'relative' }}>
+                <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginLeft: '30vw', marginBottom: '10px', marginTop: '10px', position: 'relative' }}>
                   <table className="customTable" style={{ borderCollapse: 'collapse',  borderBottom: 'solid 1px #e5e5e5', height: 'auto', width: '780px' }}>
                     <tbody>
                       <tr style={{ width: '750px' }} key={`page-name-${pageIndex}`} className="pageNameRow">
-                        <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ fontWeight: 'bold', fontSize: '14px', verticalAlign: 'top', width: '100%' }}>
-                            <textarea
-                              ref={refs.current[pageIndex].refName}
-                              style={{
-                                width: '93%',
-                                resize: 'none',
-                                height: '1.8em',
-                                overflow: 'hidden',
-                                padding: '2px',
-                                paddingLeft: '4px',
-                                marginRight: '10px',
-                                fontSize: '14px',
-                                verticalAlign: 'top',
-                                border: '1px solid #d3d3d3',
-                              }}
-                              defaultValue={page.name}
-                              tabIndex={300 + pageIndex}
-                              onFocus={(e) => {
-                                e.target.style.borderColor = 'lightblue';
-                                handleFocus(e, page, rowRef, 'name', pageIndex);
-                              }}
-                              onBlur={(e) => {
-                                e.target.style.border = '1px solid #d3d3d3';
-                                handleBlur(e);
-                              }}
-                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
-                            />
-                          </div>
-                          <div style={{ textAlign: 'center', overflow: 'scroll', flexGrow: 1, minHeight: '8em', maxHeight: 'auto', background: '#f9f9f9',border:'solid 1px grey', paddingLeft: '5px', paddingTop: '5px',marginRight: '15px', fontSize: '14px', verticalAlign: 'top' }}>
-                            {page.keywords.join(', ').split(', ').map((keyword, index) => (
-                              <span key={index}>
-                                {keyword},
-                                <br />
-                              </span>
-                            ))}
-                          </div>
-                        </td>
                         {/* --------
                           TD #2
                           -------- */}
-                        <td style={{ width: '570px', paddingBottom: '4px', paddingLeft: '0px', verticalAlign: 'top', boxSizing: 'border-box' }}>
+                        <td style={{ width: '570px', paddingBottom: '10px', paddingLeft: '0px', verticalAlign: 'top', boxSizing: 'border-box' }}>
                           <div style={{height: '1.5em'}}></div>
                           {/* TITLE AREA */}
                           <div style={{ position: 'relative' }}>
@@ -576,6 +536,46 @@ const TableView = ({ webpages, registerFinalState }) => {
                             </div>
                           )}
                         </td>
+                        
+                        <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ fontWeight: 'bold', fontSize: '14px', verticalAlign: 'top', width: '100%' }}>
+                            <textarea
+                              ref={refs.current[pageIndex].refName}
+                              style={{
+                                width: '93%',
+                                resize: 'none',
+                                height: '1.8em',
+                                overflow: 'hidden',
+                                padding: '2px',
+                                paddingLeft: '4px',
+                                marginRight: '10px',
+                                fontSize: '14px',
+                                verticalAlign: 'top',
+                                border: '1px solid #d3d3d3',
+                              }}
+                              defaultValue={page.name}
+                              tabIndex={300 + pageIndex}
+                              onFocus={(e) => {
+                                e.target.style.borderColor = 'lightblue';
+                                handleFocus(e, page, rowRef, 'name', pageIndex);
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.border = '1px solid #d3d3d3';
+                                handleBlur(e);
+                              }}
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
+                            />
+                          </div>
+                          <div style={{ textAlign: 'center', overflow: 'scroll', flexGrow: 1, minHeight: '8em', maxHeight: 'auto', background: '#f9f9f9', paddingLeft: '5px', paddingTop: '5px',marginRight: '15px', fontSize: '14px', verticalAlign: 'top' }}>
+                            {page.keywords.join(', ').split(', ').map((keyword, index) => (
+                              <span key={index}>
+                                {keyword},
+                                <br />
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        
                       </tr>
                     </tbody>
                   </table>

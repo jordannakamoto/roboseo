@@ -24,6 +24,88 @@ async function getSheetValues(client, sheetId, sheetName) {
     return values;
 }
 
+
+async function getSheetHeaderValues(client, sheetId, sheetName, currClientName) {
+    const range = `${sheetName}!1:1`;  // Getting only the first row
+    const response = await client.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: range,
+    });
+
+    if (response.data.values && response.data.values.length > 0) {
+        const headerRow = response.data.values[0]; // The first row
+
+        // Look for the cell with the value 'Recommendations'
+        const recommendationIndex = headerRow.findIndex(cell => cell.includes('Recommendations'));
+
+        if (recommendationIndex !== -1) {
+            const foundValue = headerRow[recommendationIndex];
+
+            // Check if the found value contains the currentClientName
+            if (foundValue.includes(currClientName)) {
+                return { found: true, index: -2, value: foundValue };
+            }
+            // Return the cell index if 'Recommendations' is found
+            return { found: true, index: recommendationIndex, value: foundValue };
+        } else {
+            // Return null if 'Recommendations' is not found
+            return { found: false, index: -1, value: null };
+        }
+    }
+
+    // Return null if the first row is empty or doesn't exist
+    return { found: false, index: -1, value: null };
+}
+
+async function updateRecommendationCell(client, sheetId, sheetName, currentClientName, padding) {
+    // Get the index of the 'Recommendations' cell in the first row
+    console.log("looking for recommendation cell for ", sheetName);
+    const headerIndex = await getSheetHeaderValues(client, sheetId, sheetName, currentClientName);
+    console.log(headerIndex);
+
+    if (headerIndex.index >= 0) {
+        // Fetch the value of the cell
+        const range = `${sheetName}!${String.fromCharCode(65 + headerIndex.index)}1`;
+        const response = await client.spreadsheets.values.get({
+            spreadsheetId: sheetId,
+            range: range,
+        });
+
+        let cellValue = response.data.values ? response.data.values[0][0] : null;
+        console.log(cellValue);
+        if (cellValue) {
+            // Use regex to replace the first match of "  <anything> -" with `currentClientName`
+            let newValue = cellValue.replace(/^.*? -/, `${currentClientName} -`);
+            if (padding) {
+                newValue = `                     ${newValue}`;
+            }
+
+            // Update the cell with the new value
+            const updateResponse = await client.spreadsheets.values.update({
+                spreadsheetId: sheetId,
+                range: range,
+                valueInputOption: 'RAW',
+                resource: {
+                    values: [[newValue]],
+                },
+            });
+
+            return updateResponse.status === 200;
+        } else {
+            console.log('Cell is empty or does not exist');
+            return false;
+        }
+    } else if (headerIndex.index == -2){
+        console.log("Recommendations header is already correct");
+        return false;
+    }
+     else {
+        console.log('Recommendations header not found');
+        return false;
+    }
+}
+
+
 async function updateSheet(client, sheetId, requests) {
     if (requests.length > 0) {
         await client.spreadsheets.batchUpdate({
@@ -103,6 +185,7 @@ async function ensureSufficientRows(sheets, sheetId, sheetName, startRow, requir
 }
 
 
+// TITLE SHEET PROCEDURE
 async function processTitleTagSheet(sheets, data) {
     const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: data.sheetId,
@@ -117,6 +200,8 @@ async function processTitleTagSheet(sheets, data) {
     if (!sheetName) {
         return { error: `No visible sheet with "Title" in its name found.`, status: 404 };
     }
+
+    updateRecommendationCell(sheets, data.sheetId, sheetName, data.currentClientName,true);
 
     const values = await getSheetValues(sheets, data.sheetId, sheetName);
     const pageNameRow = await findPageNameRow(values);
@@ -176,6 +261,13 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
         const sheetName = visibleSheets.find(title => title.includes(keyword));
         if (!sheetName) {
             return { error: `No visible sheet with "${keyword}" in its name found.`, status: 404 };
+        }
+        
+        if(keyword == "Meta"){
+            updateRecommendationCell(sheets, data.sheetId, sheetName, data.currentClientName, true);
+        }
+        else{
+            updateRecommendationCell(sheets, data.sheetId, sheetName, data.currentClientName, false);
         }
 
         const values = await getSheetValues(sheets, data.sheetId, sheetName);
@@ -291,6 +383,7 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
     return processResults;
 }
 
+
 // ** Process Alt Tags Sheet ***
 // ***
 async function processAltTagsSheet(sheets, data) {
@@ -310,7 +403,10 @@ async function processAltTagsSheet(sheets, data) {
 
     const requests = [];
 
+    updateRecommendationCell(sheets, data.sheetId, sheetName, data.currentClientName, true);
+
     const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+    
 
     for (let [index, item] of data.altTags.entries()) {
         const baseIndex = index + 4;
@@ -343,6 +439,8 @@ async function processOnPageSheet(sheets, data) {
     if (!sheetName) {
         return { error: `No visible sheet with "On-Page" in its name found.`, status: 404 };
     }
+
+    updateRecommendationCell(sheets, data.sheetId, sheetName, data.currentClientName, false);
 
     const pagesWithOnPage = data.webpages.filter(page => page.onpage);
 
