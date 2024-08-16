@@ -344,8 +344,10 @@ async function processOnPageSheet(sheets, data) {
         return { error: `No visible sheet with "On-Page" in its name found.`, status: 404 };
     }
 
+    const pagesWithOnPage = data.webpages.filter(page => page.onpage);
+
     const rowsPerEntry = 7; // As we have 7 rows per entry
-    const requiredRows = 6 + (rowsPerEntry * data.webpages.length); // Starting at row 6
+    const requiredRows = 6 + (rowsPerEntry * pagesWithOnPage.length); // Starting at row 6
 
     // Ensure there are enough rows
     await ensureSufficientRows(sheets, data.sheetId, sheetName, 5, requiredRows);
@@ -355,13 +357,16 @@ async function processOnPageSheet(sheets, data) {
 
     const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
 
-    data.webpages.forEach((page) => {
+    pagesWithOnPage.forEach((page) => {
         const webpageText = `Web Page: ${page.url}`;
         const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join(', ')}`;
 
         requests.push(
             { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: webpageText } }] }], fields: 'userEnteredValue' } },
             { updateCells: { range: { sheetId, startRowIndex: rowIndex + 1, endRowIndex: rowIndex + 2, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: targetedKeywords } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 3, endRowIndex: rowIndex + 4, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpage } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpageNew } }] }], fields: 'userEnteredValue' } },
+
             // Add more updateCells requests as needed for other rows
         );
 
@@ -371,6 +376,7 @@ async function processOnPageSheet(sheets, data) {
     await updateSheet(sheets, data.sheetId, requests);
     return { sheetName, updatedCells: requests.length };
 }
+
 
 export async function POST(request) {
     const data = await request.json();

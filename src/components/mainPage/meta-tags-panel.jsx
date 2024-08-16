@@ -80,16 +80,31 @@ const TableView = ({ webpages, registerFinalState }) => {
     );
   };
 
+  const previousOnpageValues = useRef([]);
+
   useEffect(() => {
     pages.forEach((page, pageIndex) => {
-      if (refs.current[pageIndex]?.refOnPage?.current) {
-        const textarea = refs.current[pageIndex].refOnPage.current;
-  
-        // Update the textarea value directly when onpage changes
-        textarea.value = page.onPageNew !== undefined ? page.onPageNew : page.onpage || '';
+      const textareaRef = refs.current[pageIndex]?.refOnPage?.current;
+
+      if (textareaRef) {
+        const prevOnpage = previousOnpageValues.current[pageIndex];
+        const currentOnpage = page.onpage;
+
+        if (currentOnpage !== prevOnpage) {
+          // Update the specific textarea with the new onpage value
+          textareaRef.value = currentOnpage;
+
+          // Adjust the height dynamically as the content changes
+          textareaRef.style.height = 'auto';
+          textareaRef.style.height = `${textareaRef.scrollHeight}px`;
+
+          // Update the previous value to the current one
+          previousOnpageValues.current[pageIndex] = currentOnpage;
+        }
       }
     });
   }, [pages]); // Depend on pages, so it runs when pages state changes
+  
 
   const handleFocus = (e, page, rowRef, textareaType, index) => {
     const textareaRect = e.target.getBoundingClientRect();
@@ -199,8 +214,8 @@ const TableView = ({ webpages, registerFinalState }) => {
         const titleValue = refs.current[pageIndex].refTitle.current.value;
         const h1Value = refs.current[pageIndex].refH1.current.value;
         const h2Value = showH2 ? refs.current[pageIndex].refH2.current.value : null;
-        const onPageValue = refs.current[pageIndex].refOnPage.current.value;
         const metaValue = refs.current[pageIndex].refMeta.current.value;
+        const onpageValue = page.onpage ? refs.current[pageIndex].refOnPage.current.value : null;
 
         if (nameValue !== page.name) {
           updatedPage.name = nameValue;
@@ -217,8 +232,8 @@ const TableView = ({ webpages, registerFinalState }) => {
         if (metaValue !== page.meta) {
           updatedPage.metaNew = metaValue;
         }
-        if (onPageValue !== page.onpage) {
-          updatedPage.onPageNew = onPageValue;
+        if (onpageValue !== page.onpage) {
+          updatedPage.onpageNew = onpageValue;
         }
 
         return updatedPage;
@@ -227,7 +242,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     });
 
     setPages(updatedPages);
-    setIsUpdated(true);
+    // setIsUpdated(true);
   });
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
