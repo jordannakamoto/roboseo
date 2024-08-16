@@ -126,7 +126,7 @@ export default function TopBar({onPrepareData}) {
         const visibilityResponse = await fetch('/api/get-client-toggle-visibility', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens, spreadsheetId: sheetId}),
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId, currentClient: currentClient }),
         });
         if (!visibilityResponse.ok) throw new Error(`HTTP error! Status: ${visibilityResponse.status}`);
 
