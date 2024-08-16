@@ -21,66 +21,7 @@ export async function POST(request) {
     const sheets = google.sheets({ version: 'v4', auth: client });
 
     try {
-        // Get metadata of all sheets
-        const sheetMetadata = await sheets.spreadsheets.get({
-            spreadsheetId: data.spreadsheetId,
-            fields: 'sheets.properties.title,sheets.properties.sheetId,sheets.properties.hidden'
-        });
-
-        const allSheets = sheetMetadata.data.sheets;
-
-        // Sheets to be always shown
-        const sheetsToAlwaysShow = ['welcome to seo'];
-
-        // Base names for sheets
-        const sheetBaseNames = ['keyword', 'on-page', 'title', 'meta', 'h1', 'alt'];
-
-        // Build the requests to hide/show sheets
-        const requests = allSheets.map(sheet => {
-            const sheetTitle = sheet.properties.title.toLowerCase();
-            let shouldHide = true;
-
-            // Always show the welcome sheet
-            if (sheetsToAlwaysShow.includes(sheetTitle)) {
-                shouldHide = false;
-            } else {
-                // Check if the sheet is a base name or a refresh name
-                const isBaseNameMatch = sheetBaseNames.some(baseName => sheetTitle.startsWith(baseName));
-                const isRefreshMatch = sheetBaseNames.some(baseName => 
-                    sheetTitle.startsWith(baseName) && sheetTitle.includes("refresh")
-                );
-
-                if (data.currentClient.isRefresh.toLowerCase().includes("refresh")) {
-                    // If in refresh mode, show both base and refresh versions
-                    if (isBaseNameMatch && isRefreshMatch) {
-                        shouldHide = false;
-                    }
-                } else {
-                    // Otherwise, only show base versions
-                    if (isBaseNameMatch && !isRefreshMatch) {
-                        shouldHide = false;
-                    }
-                }
-            }
-
-            return {
-                updateSheetProperties: {
-                    properties: {
-                        sheetId: sheet.properties.sheetId,
-                        hidden: shouldHide
-                    },
-                    fields: 'hidden'
-                }
-            };
-        });
-
-        // Execute the batch update to hide/show sheets
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId: data.spreadsheetId,
-            requestBody: {
-                requests: requests
-            }
-        });
+// moved first scan to get-client-toggle-visibility
 
 // > Second scan: Gathering unique URLs from column B
 // .. Assumes that all Keyword Strategy and Research pages have urls listed in column B

@@ -136,6 +136,13 @@ export default function TopBar({onPrepareData}) {
         // -- GET CLIENT WEBPAGES -- //
         // -- Pulls from Keyword Research and Strategy
 
+        const visibilityResponse = await fetch('/api/get-client-toggle-visibility', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId}),
+        });
+        if (!visibilityResponse.ok) throw new Error(`HTTP error! Status: ${visibilityResponse.status}`);
+
         // Find Title Tag sheet and fetch webpage data
         const titleTagSheet = titles.find(title => title.startsWith("Title Tag"));
         if (!titleTagSheet) throw new Error("Title Tag sheet not found.");
