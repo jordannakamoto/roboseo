@@ -320,7 +320,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 paddingLeft: '4px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
-                                border: '1px solid transparent',
+                                border: '1px solid #d3d3d3',
                               }}
                               defaultValue={page.name}
                               tabIndex={300 + pageIndex}
@@ -329,7 +329,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 handleFocus(e, page, rowRef, 'name', pageIndex);
                               }}
                               onBlur={(e) => {
-                                e.target.style.outline = '1px solid transparent';
+                                e.target.style.outline = '1px solid #d3d3d3';
                                 handleBlur(e);
                               }}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
@@ -357,7 +357,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 padding: '2px 4px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
-                                border: '1px solid transparent',
+                                border: '1px solid #d3d3d3',
                                 outline: 'none',
                               }}
                               defaultValue={page.title}
@@ -367,7 +367,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 handleFocus(e, page, rowRef, 'title', pageIndex);
                               }}
                               onBlur={(e) => {
-                                e.target.style.border = '1px solid transparent';
+                                e.target.style.border = '1px solid #d3d3d3';
                                 handleBlur(e);
                               }}
                               onChange={handleChange}
@@ -387,7 +387,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 boxSizing: 'border-box',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
-                                border: '1px solid transparent',
+                                border: '1px solid #d3d3d3',
                                 outline: 'none',
                               }}
                               defaultValue={page.meta}
@@ -397,7 +397,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 handleFocus(e, page, rowRef, 'meta', pageIndex);
                               }}
                               onBlur={(e) => {
-                                e.target.style.border = '1px solid transparent';
+                                e.target.style.border = '1px solid #d3d3d3';
                                 handleBlur(e);
                               }}
                               onChange={handleChange}
@@ -418,7 +418,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 padding: '2px 4px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
-                                border: '1px solid transparent',
+                                border: '1px solid #d3d3d3',
                                 outline: 'none',
                               }}
                               defaultValue={page.h1}
@@ -428,7 +428,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 handleFocus(e, page, rowRef, 'h1', pageIndex);
                               }}
                               onBlur={(e) => {
-                                e.target.style.border = '1px solid transparent';
+                                e.target.style.border = '1px solid #d3d3d3';
                                 handleBlur(e);
                               }}
                               onChange={handleChange}
@@ -450,7 +450,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   fontSize: '14px',
                                   verticalAlign: 'top',
                                   color: 'blue',
-                                  border: '1px solid transparent',
+                                  border: '1px solid #d3d3d3',
                                   outline: 'none',
                                 }}
                                 defaultValue={page.h2}
@@ -460,7 +460,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   handleFocus(e, page, rowRef, 'h2', pageIndex);
                                 }}
                                 onBlur={(e) => {
-                                  e.target.style.border = '1px solid transparent';
+                                  e.target.style.border = '1px solid #d3d3d3';
                                   handleBlur(e);
                                 }}
                                 onChange={handleChange}
@@ -481,7 +481,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   padding: '8px 4px',
                                   fontSize: '14px',
                                   verticalAlign: 'top',
-                                  border: '1px solid transparent',
+                                  border: '1px solid #d3d3d3',
                                   outline: 'none',
                                 }}
                                 defaultValue={page.onpage}
@@ -493,7 +493,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   e.target.style.height = `${e.target.scrollHeight}px`;
                                 }}
                                 onBlur={(e) => {
-                                  e.target.style.border = '1px solid transparent';
+                                  e.target.style.border = '1px solid #d3d3d3';
                                   handleBlur(e);
                                 }}
                                 onChange={(e) => {

@@ -524,7 +524,7 @@ const triggerFinalization = (mode) => {
           Scrape
         </Button>
          {/* Right Sidebar */}
-        <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ height: "70vh", width: "200px", overflow: "scroll" }}>
+        <div className="fixed top-10 right-0 z-10 mt-1 py-1 bg-white border border-gray-300 rounded" style={{ background: '#f9f9f9',borderRadius: '0',border: 'none',  height: "70vh", width: "200px", overflow: "scroll" }}>
           <ul className="text-sm text-gray-700">
             {clientList
               .filter(client => showCompleted || !client.completed)
@@ -547,12 +547,12 @@ const triggerFinalization = (mode) => {
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{ width: '200px', position: 'fixed', right: '0', bottom: '0' }}>
+      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '200px', border: 'none', borderRadius: '0',position: 'fixed', right: '0', bottom: '0' }}>
         <CardHeader />
         <CardContent className="flex flex-col items-center space-y-2">
           <button
               onClick={() => setShowCompleted(prev => !prev)}
-              className="py-2 text-sm text-gray-700 bg-white"
+              className="py-2 text-sm text-gray-700"
             >
               {showCompleted ? 'Hide Completed' : 'Show Completed'}
             </button>
