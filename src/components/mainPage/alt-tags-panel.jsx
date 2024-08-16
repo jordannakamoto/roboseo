@@ -107,6 +107,26 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     }
   }, [altImages]);
 
+  // Function to group selected images by URL
+const groupSelectedImages = useCallback(() => {
+  const groupedImages = {};
+  for (const [uniqueId, imageData] of Object.entries(selectedImages)) {
+    const { url, caption } = imageData;
+    if (!groupedImages[url]) {
+      groupedImages[url] = {
+        uniqueIds: [uniqueId],
+        url,
+        caption,
+        count: 1,
+      };
+    } else {
+      groupedImages[url].uniqueIds.push(uniqueId);
+      groupedImages[url].count += 1;
+    }
+  }
+  return groupedImages;
+}, [selectedImages]);
+
   const updateMyData = useCallback((rowIndex, columnId, value) => {
     setMyData(old =>
       old.map((row, index) => {
@@ -202,19 +222,26 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     });
   };
 
-  const handleCaptionChange = (uniqueId, newCaption) => {
-    setSelectedImages(prev => ({
-      ...prev,
-      [uniqueId]: {
-        ...prev[uniqueId],
-        caption: newCaption,
-      },
-    }));
-    if (focusedTextarea === uniqueId) {
+  const handleCaptionChange = (url, newCaption) => {
+    setSelectedImages(prev => {
+      const updatedImages = { ...prev };
+      const groupedImages = groupSelectedImages();
+  
+      groupedImages[url].uniqueIds.forEach(uniqueId => {
+        updatedImages[uniqueId] = {
+          ...updatedImages[uniqueId],
+          caption: newCaption,
+        };
+      });
+  
+      return updatedImages;
+    });
+  
+    if (focusedTextarea === url) {
       setCharCount(newCaption.length);
     }
   };
-
+  
   const fillCaptions = () => {
     const fillText = document.getElementById('fill-input').value;
     const updatedImages = { ...selectedImages };
@@ -449,35 +476,41 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
         `}
       </style>
       <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
-        <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
-          {Object.entries(selectedImages).map(([uniqueId, { url, caption }]) => (
-            <div key={uniqueId} style={{ textAlign: 'center', width: '400px', position: 'relative' }}>
-              <img
-                src={url}
-                alt="Selected"
-                style={{ width: '400px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
-              />
-              <textarea
-                value={caption}
-                onChange={(e) => handleCaptionChange(uniqueId, e.target.value)}
-                placeholder="Enter caption"
-                style={{width: '100%', resize: 'none', fontSize: '12px' }}
-                onFocus={(e) => {
-                  handleFocus(uniqueId, caption);
-                  const firstIndex = caption.indexOf('*');
-                  if (firstIndex !== -1) {
-                    setTimeout(() => {
-                      e.target.setSelectionRange(firstIndex, firstIndex + 1);
-                    }, 0);
-                  }
-                }}
-                onKeyDown={(e) => handleTabKey(e, e.target)}
-              />
-              {focusedTextarea === uniqueId && renderCharacterCounter(caption, 100, 125)}
-            </div>
-          ))}
-        </div>
+  <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
+    {Object.values(groupSelectedImages()).map(({ url, caption, count }) => (
+      <div key={url} style={{ textAlign: 'center', width: '400px', position: 'relative' }}>
+        <img
+          src={url}
+          alt="Selected"
+          style={{ width: '400px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
+        />
+        <textarea
+          value={caption}
+          onChange={(e) => handleCaptionChange(url, e.target.value)}
+          placeholder="Enter caption"
+          style={{ width: '100%', resize: 'none', fontSize: '12px' }}
+          onFocus={(e) => {
+            handleFocus(url, caption);
+            const firstIndex = caption.indexOf('*');
+            if (firstIndex !== -1) {
+              setTimeout(() => {
+                e.target.setSelectionRange(firstIndex, firstIndex + 1);
+              }, 0);
+            }
+          }}
+          onKeyDown={(e) => handleTabKey(e, e.target)}
+        />
+        {focusedTextarea === url && renderCharacterCounter(caption, 100, 125)}
+        {count > 1 && (
+          <div style={{ position: 'absolute', top: '5px', right: '5px', background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {count}
+          </div>
+        )}
       </div>
+    ))}
+  </div>
+</div>
+
       <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'11px', color: 'gray', width: '60%', marginLeft: '27vw'}}>
       {allKeywords}
       </div>

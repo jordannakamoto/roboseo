@@ -485,7 +485,7 @@ const triggerFinalization = (mode) => {
   // ******************************************************** //
 
   return (
-    <>
+    <div className="relative z-50">
     <div style = {{position:'absolute', left:'34px', top: '20px'}}>
       <h1 style= {{fontWeight:'bold', }}>{currentClient.name}</h1>
     </div>
@@ -576,6 +576,6 @@ const triggerFinalization = (mode) => {
           <Button onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

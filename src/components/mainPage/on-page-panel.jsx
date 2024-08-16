@@ -38,7 +38,6 @@ const OnPagePanel = () => {
       }
     });
   }, [images]);
-  
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (panelRef.current === document.activeElement && e.key === 'Tab') {
@@ -59,20 +58,17 @@ const OnPagePanel = () => {
           const atStart = newScrollLeft <= 0;
           const atEnd = newScrollLeft >= scrollContainer.scrollWidth - scrollContainer.clientWidth;
   
-          if (atEnd) {
-            // Get all textarea elements inside the panel
-            const textareas = panelRef.current.querySelectorAll('textarea');
-            
-            // Focus the last textarea
-            if (textareas.length > 0) {
-              const lastTextarea = textareas[textareas.length - 1];
-              lastTextarea.focus();
+          if (atStart || atEnd) {
+            // Remove focus from the panel to trigger native tab behavior
+            panelRef.current.blur();
   
-              // Allow browser's native tab behavior to move to the next element
-              setTimeout(() => {
-                lastTextarea.blur(); // Blur the last textarea to allow Tab to move to the next element
-              }, 0);
-            }
+            // Allow the native `Tab` key behavior to move to the next focusable element
+            setTimeout(() => {
+              const nextFocusableElement = document.activeElement.nextElementSibling;
+              if (nextFocusableElement) {
+                nextFocusableElement.focus();
+              }
+            }, 0);
           } else {
             e.preventDefault(); // Prevent default Tab behavior only when this component is focused
           }
@@ -88,7 +84,6 @@ const OnPagePanel = () => {
   }, [panelRef, scrollContainerRef]);
   
   
-  
 
   const handlePaste = (e, index) => {
     const pastedText = e.clipboardData.getData('text');
@@ -96,7 +91,7 @@ const OnPagePanel = () => {
   };
 
   const handleImageClick = (e, index) => {
-    if (e.shiftKey) {
+    if (!e.shiftKey) {
       window.open(images[index].url, '_blank');
       const textarea = document.querySelector(`#textarea-${index}`);
       if (textarea) {
