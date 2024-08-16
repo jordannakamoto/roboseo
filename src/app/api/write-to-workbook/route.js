@@ -1,4 +1,8 @@
 // write to workbook
+//----------------------------------------------------------------------//
+// TODO
+// ? Do we need to add some white cell highlighting to unchanged fields ?
+// --------------------------------------------------------------------//
 
 import { NextResponse } from "next/server";
 import { OAuth2Client } from 'google-auth-library';
@@ -7,6 +11,7 @@ import { google } from 'googleapis';
 // Highlight hex color
 const HIGHLIGHT_COLOR = { red: 1.0, green: 0.949, blue: 0.8 }; // R 255 G 242 B 204 fff2cc
 
+// Gets Column A
 async function getSheetValues(client, sheetId, sheetName) {
     const range = `${sheetName}!A:A`;
     const response = await client.spreadsheets.values.get({
@@ -24,7 +29,7 @@ async function getSheetValues(client, sheetId, sheetName) {
     return values;
 }
 
-
+// Gets Row 1 - searches for "Recommendations" to find header
 async function getSheetHeaderValues(client, sheetId, sheetName, currClientName) {
     const range = `${sheetName}!1:1`;  // Getting only the first row
     const response = await client.spreadsheets.values.get({
@@ -57,6 +62,7 @@ async function getSheetHeaderValues(client, sheetId, sheetName, currClientName) 
     return { found: false, index: -1, value: null };
 }
 
+// Update Header if current client isn't in it
 async function updateRecommendationCell(client, sheetId, sheetName, currentClientName, padding) {
     // Get the index of the 'Recommendations' cell in the first row
     console.log("looking for recommendation cell for ", sheetName);
@@ -105,6 +111,7 @@ async function updateRecommendationCell(client, sheetId, sheetName, currentClien
     }
 }
 
+// ` Utilities
 
 async function updateSheet(client, sheetId, requests) {
     if (requests.length > 0) {
@@ -115,28 +122,6 @@ async function updateSheet(client, sheetId, requests) {
             },
         });
     }
-}
-
-async function addRowsToSheet(client, sheetId, sheetName, additionalRows) {
-    const sheetIdNum = await getSheetId(client, sheetId, sheetName);
-    const requests = [
-        {
-            appendDimension: {
-                sheetId: sheetIdNum,
-                dimension: 'ROWS',
-                length: additionalRows,
-            },
-        },
-    ];
-
-    await client.spreadsheets.batchUpdate({
-        spreadsheetId: sheetId,
-        requestBody: {
-            requests,
-        },
-    });
-
-    return { startRowIndex: additionalRows - 1, endRowIndex: additionalRows + additionalRows - 1 };
 }
 
 async function getSheetId(client, sheetId, sheetName) {
@@ -184,8 +169,30 @@ async function ensureSufficientRows(sheets, sheetId, sheetName, startRow, requir
     }
 }
 
+async function addRowsToSheet(client, sheetId, sheetName, additionalRows) {
+    const sheetIdNum = await getSheetId(client, sheetId, sheetName);
+    const requests = [
+        {
+            appendDimension: {
+                sheetId: sheetIdNum,
+                dimension: 'ROWS',
+                length: additionalRows,
+            },
+        },
+    ];
 
-// TITLE SHEET PROCEDURE
+    await client.spreadsheets.batchUpdate({
+        spreadsheetId: sheetId,
+        requestBody: {
+            requests,
+        },
+    });
+
+    return { startRowIndex: additionalRows - 1, endRowIndex: additionalRows + additionalRows - 1 };
+}
+
+// Start Main Procedures
+// ` Title Procedure       
 async function processTitleTagSheet(sheets, data) {
     const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: data.sheetId,
@@ -243,8 +250,7 @@ async function processTitleTagSheet(sheets, data) {
     return { sheetName, sheetId: await getSheetId(sheets, data.sheetId, sheetName), startRowIndex: pageNameRow + 1, endRowIndex: rowIndex };
 }
 
-// ** Process H1Meta Sheets *** //
-// ***
+// ` H1/Meta Wrapper Procedure       
 async function processH1MetaSheets(sheets, data, titleSheetInfo) {
     const processResults = [];
 
@@ -316,12 +322,13 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
             }
         }
 
-        // Apply original data for meta, h1, h2
+        // Apply original data for meta, h1, h2 |
         await processRow(pageNameRow + 1, requests, sheetName);
         await updateSheet(sheets, data.sheetId, requests);
         processResults.push({ sheetName, startRowIndex: pageNameRow + 1, endRowIndex: rowIndex });
     };
 
+    // ` Meta Procedure       
     await processSheet("Meta", async (rowIndex, requests, sheetName) => {
         const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
 
@@ -342,7 +349,8 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
             rowIndex++;
         }
     });
-
+    
+    // ` H1 Procedure       
     await processSheet("H1/H2", async (rowIndex, requests, sheetName) => {
         const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
 
@@ -384,8 +392,7 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
 }
 
 
-// ** Process Alt Tags Sheet ***
-// ***
+// ` Alt Tag Procedure       
 async function processAltTagsSheet(sheets, data) {
     const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: data.sheetId,
@@ -423,8 +430,7 @@ async function processAltTagsSheet(sheets, data) {
     return { updatedCells: requests.length };
 }
 
-// ** Process On-Page Sheet
-// ***
+// ` On-Page Procedure       
 async function processOnPageSheet(sheets, data) {
     const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: data.sheetId,
@@ -475,7 +481,7 @@ async function processOnPageSheet(sheets, data) {
     return { sheetName, updatedCells: requests.length };
 }
 
-
+// ` Main POST       
 export async function POST(request) {
     const data = await request.json();
 

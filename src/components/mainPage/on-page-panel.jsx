@@ -125,7 +125,7 @@ const OnPagePanel = () => {
     <div
       ref={panelRef}
       tabIndex={0} // Make the div focusable
-      style={{ width: '100vw', position: 'relative', marginTop: '40px', outline: 'none', background: '#f7f7f7' }} // Outline set to none to avoid focus ring
+      style={{ width: '85vw',borderRadius:'0px 10px 10px 0px', position: 'relative', marginTop: '40px', outline: 'none', background: '#f7f7f7' }} // Outline set to none to avoid focus ring
     >
       <div
         ref={scrollContainerRef}
