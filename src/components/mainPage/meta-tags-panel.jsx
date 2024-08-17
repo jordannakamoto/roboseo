@@ -193,9 +193,10 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   // * Global Key Handler for Shift + Tab * //
   //` Shift + Tab
+  // ?! Changed this to `
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      if (e.shiftKey && e.key === 'Tab') {
+      if (!e.shiftKey && e.key === '`') {
         e.preventDefault();
         setIsModalVisible((prev) => !prev);
       }

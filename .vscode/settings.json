@@ -18,5 +18,6 @@
         "package-lock.json": true,
         "README.md": true,
         "src/lib": true
-    }
+    },
+    "favorites.sortDirection": "DESC"
 }
