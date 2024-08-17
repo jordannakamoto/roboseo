@@ -335,40 +335,62 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
     const count = text.length;
-    let color = 'black';
-    let fontWeight = 'normal';
-
+    let color = 'red';
+    let fontWeight = 'bold';
+    let relativeCount;
+  
     if (count > maxCount) {
+      relativeCount = count - maxCount;
       color = 'red';
-    } else if (count >= minCount) {
+    } else if (count >= minCount && count <= maxCount) {
+      relativeCount = 0; // Within range, so no relative count needed
+      color = 'grey';
       fontWeight = 'bold';
+    } else {
+      relativeCount = count - minCount;
+      color = 'red';
     }
-
+  
     return (
       <span
         style={{
           position: 'absolute',
-          right: '-20px',
-          bottom: '5px',
+          left: '-15px',
+          bottom: '8px',
           fontSize: '12px',
           color,
           fontWeight,
         }}
       >
-        {count}
+        {relativeCount === 0 ? '' : relativeCount > 0 ? `+${relativeCount}` : relativeCount}
       </span>
     );
   };
 
   return (
     <>
+    <Button
+        style={{
+          marginLeft: '60vw',
+          width: '300px',
+          marginBottom: '20px',
+          fontSize: '12px',
+          marginTop: '60px',
+
+          height: '20px'
+        }}
+        variant="outline"
+        onClick={toggleH2}
+        tabIndex="-1"
+      >
+        Show H2s
+      </Button>
       <div
         style={{
           marginLeft: '100px',
           position: 'relative',
           minHeight: 'auto',
           overflow: showTable ? 'visible' : 'hidden',
-          marginTop: '60px',
           display: 'flex',
           gap: '10px',
         }}
@@ -473,7 +495,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'title')}
                             />
-                            {focusedTextarea.type === 'title' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
+                            {renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
                           </div>
                           {/* Meta Area */}
                           <div style={{ position: 'relative' }}>
@@ -506,7 +528,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'meta')}
                             />
-                            {focusedTextarea.type === 'meta' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
+                            {renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
                           </div>
                           {/* H1 Area */}
                           <div style={{ position: 'relative' }}>
@@ -540,7 +562,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
                             />
-                            {focusedTextarea.type === 'h1' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
+                            {renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
                           </div>
                           {/* H2 Area */}
                           {showH2 && (
@@ -574,7 +596,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 onChange={handleChange}
                                 onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
                               />
-                              {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
+                              {renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
                             </div>
                           )}
                           {/* ONPAGE AREA */}
@@ -633,20 +655,6 @@ const TableView = ({ webpages, registerFinalState }) => {
         </div>
       </div>
       {/* <input placeholder="Clear Page Names" style= {{fontSize: '12px', marginLeft: '80px', width: '200px'}} /> */}
-      <Button
-        style={{
-          marginLeft: '60vw',
-          width: '300px',
-          marginBottom: '20px',
-          fontSize: '12px',
-          height: '20px'
-        }}
-        variant="outline"
-        onClick={toggleH2}
-        tabIndex="-1"
-      >
-        Show H2s
-      </Button>
     </>
   );
 };
