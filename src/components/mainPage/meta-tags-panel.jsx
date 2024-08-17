@@ -199,6 +199,8 @@ const TableView = ({ webpages, registerFinalState }) => {
     setCharCount(e.target.value.length);
   };
 
+  // ` Event Handlers
+
   const handleBlur = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.relatedTarget)) {
       setModalData(null);
@@ -206,8 +208,11 @@ const TableView = ({ webpages, registerFinalState }) => {
     setFocusedTextarea({ type: null, index: null });
   };
 
+  // textarea change handler. Set CharCount and highlight keywords
   const handleChange = (e) => {
     setCharCount(e.target.value.length);
+    // alert(pageIndex);
+    highlightKeywords(focusedTextarea.index);
   };
 
   // * Enter Key Handler for cycling through fields
@@ -280,6 +285,42 @@ const TableView = ({ webpages, registerFinalState }) => {
     }
   };
 
+  // ` Keyword Highlighting
+  useEffect(() => {
+    webpages.forEach((_, pageIndex) => {
+      highlightKeywords(pageIndex);
+    });
+  }, [pages, showH2]);
+
+  const highlightKeywords = (pageIndex) => {
+    const page = pages[pageIndex];
+    const keywordPhrases = page.keywords; // Keep phrases intact
+    const titleValue = refs.current[pageIndex]?.refTitle?.current?.value?.toLowerCase() || '';
+    const metaValue = refs.current[pageIndex]?.refMeta?.current?.value?.toLowerCase() || '';
+    const h1Value = refs.current[pageIndex]?.refH1?.current?.value?.toLowerCase() || '';
+    const h2Value = showH2 ? (refs.current[pageIndex]?.refH2?.current?.value?.toLowerCase() || '') : '';
+    const onPageValue = page.onpage ? (refs.current[pageIndex]?.refOnPage?.current?.value?.toLowerCase() || '') : '';
+  
+    keywordPhrases.forEach((keywordPhrase, phraseIndex) => {
+      const words = keywordPhrase.split(' '); // Split the phrase into individual words
+  
+      words.forEach((word, wordIndex) => {
+        const wordLower = word.toLowerCase();
+        const isFound = titleValue.includes(wordLower) ||
+                        metaValue.includes(wordLower) ||
+                        h1Value.includes(wordLower) ||
+                        h2Value.includes(wordLower) ||
+                        onPageValue.includes(wordLower);
+  
+        const keywordElement = document.getElementById(`keyword-${pageIndex}-${phraseIndex}-${wordIndex}`);
+        if (keywordElement) {
+          // HIGHLIGHT COLOR
+          keywordElement.style.backgroundColor = isFound ? '#fff49b' : 'transparent';
+        }
+      });
+    });
+  };
+  // ` Create Final State
   useEffect(() => {
     if (finalizationState.status === "finalize" && finalizationState.altTagsReady === true && finalizationState.metaTagsReady === false) {
       createFinalState();
@@ -292,7 +333,6 @@ const TableView = ({ webpages, registerFinalState }) => {
     }
   }, [finalizationState]);
   
-  // ` Create Final State
   const createFinalState = useCallback(() => {
     const updatedPages = pages.map((page, pageIndex) => {
       const matchingWebpage = webpages[pageIndex];
@@ -417,47 +457,51 @@ const TableView = ({ webpages, registerFinalState }) => {
                   <table className="customTable" style={{borderCollapse: 'collapse',  borderBottom: 'solid 1px #e5e5e5', height: 'auto', width: '780px' }}>
                     <tbody>
                       <tr style={{ width: '750px' }} key={`page-name-${pageIndex}`} className="pageNameRow">
-                        <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ fontWeight: 'bold', fontSize: '14px', verticalAlign: 'top', width: '100%' }}>
-                            <textarea
-                              ref={refs.current[pageIndex].refName}
-                              style={{
-                                 
-                                width: '93%',
-                                resize: 'none',
-                                height: '1.8em',
-                                overflow: 'hidden',
-                                padding: '2px',
-                                paddingLeft: '4px',
-                                marginRight: '10px',
-                                fontSize: '14px',
-                                verticalAlign: 'top',
-                                border: '1px solid #d3d3d3',
-                                borderBottom: 'none',
-                                outline: 'none',
-                              }}
-                              defaultValue={page.name}
-                              tabIndex={300 + pageIndex}
-                              onFocus={(e) => {
-                                e.target.style.borderColor = 'lightblue';
-                                handleFocus(e, page, rowRef, 'name', pageIndex);
-                              }}
-                              onBlur={(e) => {
-                                e.target.style.border = '1px solid #d3d3d3';
-                                handleBlur(e);
-                              }}
-                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
-                            />
-                          </div>
-                          <div style={{ textAlign: 'center', overflow: 'scroll', flexGrow: 1, minHeight: '8em', maxHeight: 'auto', background: '#f9f9f9',border:'solid 1px #ccc', paddingLeft: '5px', paddingTop: '5px',marginRight: '15px', fontSize: '14px', verticalAlign: 'top' }}>
-                            {page.keywords.join(', ').split(', ').map((keyword, index) => (
-                              <span key={index}>
-                                {keyword},
-                                <br />
+                      <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', verticalAlign: 'top', width: '100%' }}>
+                          <textarea
+                            ref={refs.current[pageIndex].refName}
+                            style={{
+                              width: '93%',
+                              resize: 'none',
+                              height: '1.8em',
+                              overflow: 'hidden',
+                              padding: '2px',
+                              paddingLeft: '4px',
+                              marginRight: '10px',
+                              fontSize: '14px',
+                              verticalAlign: 'top',
+                              border: '1px solid #d3d3d3',
+                              borderBottom: 'none',
+                              outline: 'none',
+                            }}
+                            defaultValue={page.name}
+                            tabIndex={300 + pageIndex}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = 'lightblue';
+                              handleFocus(e, page, rowRef, 'name', pageIndex);
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.border = '1px solid #d3d3d3';
+                              handleBlur(e);
+                            }}
+                            onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
+                          />
+                        </div>
+                        <div style={{ textAlign: 'center', overflow: 'scroll', flexGrow: 1, minHeight: '8em', maxHeight: 'auto', background: '#f9f9f9', border: 'solid 1px #ccc', paddingLeft: '5px', paddingTop: '5px', marginRight: '15px', fontSize: '14px', verticalAlign: 'top' }}>
+                        {page.keywords.map((keywordPhrase, phraseIndex) => (
+                          <span key={`phrase-${pageIndex}-${phraseIndex}`}>
+                            {keywordPhrase.split(' ').map((word, wordIndex) => (
+                              <span key={`word-${pageIndex}-${phraseIndex}-${wordIndex}`} id={`keyword-${pageIndex}-${phraseIndex}-${wordIndex}`}>
+                                {word}
+                                {wordIndex < keywordPhrase.split(' ').length - 1 ? ' ' : ''}
                               </span>
                             ))}
-                          </div>
-                        </td>
+                            {phraseIndex < page.keywords.length - 1 ? ', ' : ''}
+                          </span>
+                        ))}
+                      </div>
+                      </td>
                         {/* --------
                           TD #2
                           -------- */}
