@@ -7,8 +7,8 @@ import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 const TableView = ({ webpages, registerFinalState }) => {
 
+  // STATES
   const { pages, setPages, finalizationState, setFinalizationState, showH2, setShowH2 } = useClientWebpage();
-
   const [showTable, setShowTable] = useState(true); // .. Unused
   const [modalData, setModalData] = useState(null);
   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
@@ -23,8 +23,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   const refs = useRef([]);
   const previousOnpageValues = useRef([]);
   const modalRef = useRef();
-
-
+  
   // ` Modal Component
   const Modal = ({ isOpen, originalData, modalPosition }) => {
     if (!isOpen || !isModalVisible || !originalData) return null;
@@ -110,8 +109,25 @@ const TableView = ({ webpages, registerFinalState }) => {
         </div>
     );
   };
-  // .. end Modal Component
+    // * Global Key Handler for Shift + Tab * //
+  //` Show/Hide Modal
+  // ?! Changed this to `
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (!e.shiftKey && e.key === '`') {
+        e.preventDefault();
+        setIsModalVisible((prev) => !prev);
+      }
+    };
 
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, []);
+
+  // .. end Modal Component
+  
 
   // When OnPage data change from on-page-panel.jsx:
   // `UseEffect for OnPageValues
@@ -139,12 +155,15 @@ const TableView = ({ webpages, registerFinalState }) => {
   }, [pages]); // Depend on pages, so it runs when pages state changes
   
 
+
   // Set Modal information when field gets focus
   // Also, trigger CharCounter
   // `Handle Field Focus
   const handleFocus = (e, page, rowRef, textareaType, index) => {
-    const textareaRect = e.target.getBoundingClientRect();
+    const textarea = e.target;
+    const textareaRect = textarea.getBoundingClientRect();
     const rowRect = rowRef.current.getBoundingClientRect();
+
 
     // ` Modal Coordinates
     let topPos = window.scrollY + rowRect.top; // Adjust to consider scrolling
@@ -190,23 +209,6 @@ const TableView = ({ webpages, registerFinalState }) => {
   const handleChange = (e) => {
     setCharCount(e.target.value.length);
   };
-
-  // * Global Key Handler for Shift + Tab * //
-  //` Shift + Tab
-  // ?! Changed this to `
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      if (!e.shiftKey && e.key === '`') {
-        e.preventDefault();
-        setIsModalVisible((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleGlobalKeyDown);
-    };
-  }, []);
 
   // * Enter Key Handler for cycling through fields
   // ` Enter Key Handler
@@ -290,7 +292,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     }
   }, [finalizationState]);
   
-
+  // ` Create Final State
   const createFinalState = useCallback(() => {
     const updatedPages = pages.map((page, pageIndex) => {
       const matchingWebpage = webpages[pageIndex];
@@ -390,7 +392,7 @@ const TableView = ({ webpages, registerFinalState }) => {
 
               return (
                 <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '4px', marginTop: '4px', position: 'relative' }}>
-                  <table className="customTable" style={{ borderCollapse: 'collapse',  borderBottom: 'solid 1px #e5e5e5', height: 'auto', width: '780px' }}>
+                  <table className="customTable" style={{borderCollapse: 'collapse',  borderBottom: 'solid 1px #e5e5e5', height: 'auto', width: '780px' }}>
                     <tbody>
                       <tr style={{ width: '750px' }} key={`page-name-${pageIndex}`} className="pageNameRow">
                         <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
@@ -398,6 +400,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             <textarea
                               ref={refs.current[pageIndex].refName}
                               style={{
+                                 
                                 width: '93%',
                                 resize: 'none',
                                 height: '1.8em',
@@ -424,7 +427,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
                             />
                           </div>
-                          <div style={{ textAlign: 'center', overflow: 'scroll', flexGrow: 1, minHeight: '8em', maxHeight: 'auto', background: '#f9f9f9',border:'solid 1px grey', paddingLeft: '5px', paddingTop: '5px',marginRight: '15px', fontSize: '14px', verticalAlign: 'top' }}>
+                          <div style={{ textAlign: 'center', overflow: 'scroll', flexGrow: 1, minHeight: '8em', maxHeight: 'auto', background: '#f9f9f9',border:'solid 1px #ccc', paddingLeft: '5px', paddingTop: '5px',marginRight: '15px', fontSize: '14px', verticalAlign: 'top' }}>
                             {page.keywords.join(', ').split(', ').map((keyword, index) => (
                               <span key={index}>
                                 {keyword},
@@ -443,6 +446,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             <textarea
                               ref={refs.current[pageIndex].refTitle}
                               style={{
+                                 
                                 width: '100%',
                                 resize: 'none',
                                 height: '2.7em',
@@ -471,11 +475,12 @@ const TableView = ({ webpages, registerFinalState }) => {
                             />
                             {focusedTextarea.type === 'title' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
                           </div>
-
+                          {/* Meta Area */}
                           <div style={{ position: 'relative' }}>
                             <textarea
                               ref={refs.current[pageIndex].refMeta}
                               style={{
+                                 
                                 width: '100%',
                                 resize: 'none',
                                 height: '4.5em',
@@ -503,7 +508,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             />
                             {focusedTextarea.type === 'meta' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
                           </div>
-
+                          {/* H1 Area */}
                           <div style={{ position: 'relative' }}>
                             <textarea
                               ref={refs.current[pageIndex].refH1}
@@ -514,7 +519,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 // marginBottom: '-1px',
                                 height: '3em',
                                 paddingTop: '14px',
-
+                                 
                                 boxSizing: 'border-box',
                                 padding: '8px 10px',
                                 fontSize: '14px',
@@ -537,7 +542,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             />
                             {focusedTextarea.type === 'h1' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
                           </div>
-
+                          {/* H2 Area */}
                           {showH2 && (
                             <div style={{ position: 'relative' }}>
                               <textarea
@@ -546,6 +551,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   width: '100%',
                                   overflow: 'hidden',
                                   resize: 'none',
+                                   
                                   height: '2.7em',
                                   padding: '8px 10px',
                                   fontSize: '14px',
@@ -574,12 +580,13 @@ const TableView = ({ webpages, registerFinalState }) => {
                           {/* ONPAGE AREA */}
                           {page.onpage && (
                             <div style={{ position: 'relative' }}>
-                              <textarea
+                              <textarea3
                                 ref={refs.current[pageIndex].refOnPage}
                                 style={{
                                   width: '100%',
                                   overflow: 'hidden',
                                   resize: 'none',
+                                   
                                   height: 'auto',
                                   padding: '18px 10px',
                                   paddingTop: '14px',
@@ -625,6 +632,7 @@ const TableView = ({ webpages, registerFinalState }) => {
             })}
         </div>
       </div>
+      {/* <input placeholder="Clear Page Names" style= {{fontSize: '12px', marginLeft: '80px', width: '200px'}} /> */}
       <Button
         style={{
           marginLeft: '60vw',

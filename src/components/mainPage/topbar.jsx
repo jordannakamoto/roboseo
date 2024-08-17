@@ -313,31 +313,39 @@ export default function TopBar({onPrepareData}) {
       // > Call to GSheets API to get only the pages we're interested in
       const mergedData = pages.map(page => {
         const urlPath = page.url.replace(/https:\/\/[^/]+/, ''); // Remove the root URL
-        let pageName;
-
+        let pageName = ''; // Initialize an empty string to build the page name
+      
+        // ` GENERATE PAGE NAME FROM URL
         if (!urlPath || urlPath === '/') {
           pageName = 'Home Page'; // Assign "Home Page" to the root URL
         } else {
-          // Remove file extension if present
-          const cleanPath = urlPath.split('/').map(segment => {
-            return segment.split('.')[0]; // Remove everything after the first dot (.)
+          // Split the path into segments and iterate through them
+          const pathSegments = urlPath.split('/').filter(Boolean);
+          let previousPageName = ''; // To keep track of the previous valid segment
+
+          pathSegments.forEach(segment => {
+            // Build the current segment's page name
+            const formattedSegment = segment
+              .split('.')[0] // Remove file extension if present
+              .split('-') // Split by hyphen
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1)) // Capitalize each part
+              .join(' '); // Join parts with a space
+
+            // Update pageName but keep track of the previous one
+            previousPageName = pageName;
+            pageName = formattedSegment;
           });
 
-          pageName = cleanPath
-            .filter(Boolean) // Remove empty strings
-            .map(word => 
-              word
-                .split('-') // Split by hyphen
-                .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1)) // Capitalize each segment
-                .join(' ') // Join segments with a space
-            )
-            .join(' '); // Join the words with a space
+          // If the last segment results in a number, revert to the previous segment
+          if (!isNaN(pageName)) {
+            pageName = previousPageName;
+          }
         }
-
+      
         return {
           ...result.find(r => r.url === page.url),
           ...page,
-          name: pageName, // Set the name property with the formatted page name
+          name: pageName, // Set the name property with the final page name
         };
       });
 
@@ -527,7 +535,7 @@ const triggerFinalization = (mode) => {
               style={{ visibility: isMasterSheetVisible ? 'visible' : 'hidden', width: '300px',position:'absolute', zIndex:'1000', top:'40px', right:'-50px',flexGrow: 1, fontSize: "11px" }}
             />
         <Button variant="outline" style={{color:'grey'}} onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-          Prep
+          Init
         </Button>
         <Button variant="outline" style={{color:'grey'}} onClick={runScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
           Scrape
@@ -556,9 +564,9 @@ const triggerFinalization = (mode) => {
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{borderLeft:'solid 10px white', background: '#f9f9f9',width: '210px', border: 'none', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
+      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '210px', border: 'none', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
         <CardHeader />
-        <CardContent className="flex flex-col items-center space-y-2">
+        <CardContent className="flex flex-col items-center space-y-2" style={{borderLeft:'solid 10px white'}}>
           <button
               onClick={() => setShowCompleted(prev => !prev)}
               className="py-2 text-sm text-gray-700"

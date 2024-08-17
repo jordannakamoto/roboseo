@@ -21,6 +21,10 @@ const IndeterminateCheckbox = React.forwardRef(
   }
 );
 
+const handleReplaceClick = (e) => {
+  e.preventDefault(); // Prevents the button from causing the textarea to lose focus
+};
+
 const EditableCell = ({
   value: initialValue,
   row: { index },
@@ -85,6 +89,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
   const [lastSelectedAltID, setLastSelectedAltID] = useState(null);
   const [clicked, setClicked] = useState(false);
   const [focusedTextarea, setFocusedTextarea] = useState(null);
+  const [focusedTextareaElement, setFocusedTextareaElement] = useState(null);
   const [charCount, setCharCount] = useState(0);
   const [fillInputCharCount, setFillInputCharCount] = useState(0); // Add this line to your state
 
@@ -283,31 +288,47 @@ const groupSelectedImages = useCallback(() => {
     }
   };
 
-  const handleFocus = (uniqueId, caption) => {
+  const handleFocus = (uniqueId, caption, textarea) => {
     setFocusedTextarea(uniqueId);
     setCharCount(caption.length);
+    setFocusedTextareaElement(textarea); // Save the reference to the textarea
   };
-
   const handleFillInputChange = (e) => {
     setFillInputCharCount(e.target.value.length);
   };
 
+  // Replace Occourances of a selected string in all selectedIMages
   const overwriteMatches = () => {
     if (!focusedTextarea) return;
-
-    const currentCaption = selectedImages[focusedTextarea]?.caption;
+  
     const fillText = document.getElementById('fill-input').value;
-
-    if (!currentCaption) return;
-
+    const groupedImages = groupSelectedImages();
+  
+    // Get the current caption for the focused URL
+    const currentCaption = groupedImages[focusedTextarea]?.caption;
+    // if (!currentCaption || !focusedTextareaElement) return;
+  
+    // Get the selected text from the textarea
+    const selectedText = focusedTextareaElement.value.substring(
+      focusedTextareaElement.selectionStart,
+      focusedTextareaElement.selectionEnd
+    );
+  
+    if (!selectedText) return;
+    
+    // overwrite selected images
     const updatedImages = { ...selectedImages };
-
+  
+    // Iterate over all selected images and replace the selected text in their captions
     Object.keys(updatedImages).forEach((uniqueId) => {
-      if (updatedImages[uniqueId].caption === currentCaption) {
-        updatedImages[uniqueId].caption = fillText;
+      let caption = updatedImages[uniqueId].caption;
+
+      // Replace the selected text in all captions
+      if (caption.includes(selectedText)) {
+        updatedImages[uniqueId].caption = caption.replace(new RegExp(selectedText, 'g'), fillText);
       }
     });
-
+  
     setSelectedImages(updatedImages);
   };
   
@@ -491,7 +512,7 @@ const groupSelectedImages = useCallback(() => {
           placeholder="Enter caption"
           style={{ width: '100%', resize: 'none', fontSize: '12px', border: '1px solid #bbb' }}
           onFocus={(e) => {
-            handleFocus(url, caption);
+            handleFocus(url, caption, e.target);
             const firstIndex = caption.indexOf('*');
             if (firstIndex !== -1) {
               setTimeout(() => {
@@ -512,7 +533,7 @@ const groupSelectedImages = useCallback(() => {
   </div>
 </div>
 
-      <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'11px', color: 'gray', width: '60%', marginLeft: '27vw'}}>
+      <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'11px', color: 'gray', width: '60%', marginLeft: '20vw'}}>
       {allKeywords}
       </div>
       <div className="flex" style={{marginBottom: '40px', visibility: pages.length > 0 ? 'visible': 'hidden', marginLeft: '20vw', position: 'relative'}}>
@@ -541,8 +562,8 @@ const groupSelectedImages = useCallback(() => {
         <Button onClick={fillCaptions} tabIndex="-1" variant="outline">
           Fill
         </Button>
-        <Button onClick={overwriteMatches} tabIndex="-1" variant="outline">
-          Match
+        <Button onMouseDown={handleReplaceClick} onClick={overwriteMatches} tabIndex="-1" variant="outline">
+          Replace All
         </Button>
       </div>
       {/* <Button
