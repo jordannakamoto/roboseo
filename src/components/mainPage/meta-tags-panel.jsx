@@ -580,7 +580,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                           {/* ONPAGE AREA */}
                           {page.onpage && (
                             <div style={{ position: 'relative' }}>
-                              <textarea3
+                              <textarea
                                 ref={refs.current[pageIndex].refOnPage}
                                 style={{
                                   width: '100%',
