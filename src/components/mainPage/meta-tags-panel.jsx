@@ -355,8 +355,8 @@ const TableView = ({ webpages, registerFinalState }) => {
       <span
         style={{
           position: 'absolute',
-          left: '-15px',
-          bottom: '8px',
+          right: '-15px',
+          bottom: '12px',
           fontSize: '12px',
           color,
           fontWeight,
@@ -642,7 +642,6 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, pageIndex, 'onPage')}
                               />
-                              {refs.current[pageIndex].refTitle.current && renderCharacterCounter(refs.current[pageIndex].refOnPage.current.value, 20, 70)}
                             </div>
                           )}
                         </td>
