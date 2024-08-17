@@ -495,7 +495,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'title')}
                             />
-                            {renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
+                            {refs.current[pageIndex].refTitle.current && renderCharacterCounter(refs.current[pageIndex].refTitle.current.value, 55, 60)}
                           </div>
                           {/* Meta Area */}
                           <div style={{ position: 'relative' }}>
@@ -528,7 +528,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'meta')}
                             />
-                            {renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
+                            {refs.current[pageIndex].refMeta.current && renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
                           </div>
                           {/* H1 Area */}
                           <div style={{ position: 'relative' }}>
@@ -562,7 +562,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
                             />
-                            {renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
+                            {refs.current[pageIndex].refH1.current && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
                           </div>
                           {/* H2 Area */}
                           {showH2 && (
@@ -596,7 +596,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 onChange={handleChange}
                                 onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
                               />
-                              {renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
+                              {refs.current[pageIndex].refH2.current && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
                             </div>
                           )}
                           {/* ONPAGE AREA */}
@@ -642,7 +642,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, pageIndex, 'onPage')}
                               />
-                              {focusedTextarea.type === 'h2' && focusedTextarea.index === pageIndex && renderCharacterCounter(refs.current[pageIndex].refOnPage.current.value, 20, 70)}
+                              {refs.current[pageIndex].refTitle.current && renderCharacterCounter(refs.current[pageIndex].refOnPage.current.value, 20, 70)}
                             </div>
                           )}
                         </td>
