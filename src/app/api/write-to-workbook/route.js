@@ -463,17 +463,24 @@ async function processOnPageSheet(sheets, data) {
 
     pagesWithOnPage.forEach((page) => {
         const webpageText = `Web Page: ${page.url}`;
-        const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join(', ')}`;
+        const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join('\n')}`;
 
         requests.push(
             { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: webpageText } }] }], fields: 'userEnteredValue' } },
             { updateCells: { range: { sheetId, startRowIndex: rowIndex + 1, endRowIndex: rowIndex + 2, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: targetedKeywords } }] }], fields: 'userEnteredValue' } },
             { updateCells: { range: { sheetId, startRowIndex: rowIndex + 3, endRowIndex: rowIndex + 4, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpage } }] }], fields: 'userEnteredValue' } },
-            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpageNew } }] }], fields: 'userEnteredValue' } },
-
             // Add more updateCells requests as needed for other rows
         );
-
+        if(page.onPageNew){
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpageNew }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR }  }] }], fields: 'userEnteredValue' } },
+            )
+        }
+        else{
+        requests.push(          
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpageNew } }] }], fields: 'userEnteredValue' } },
+            )
+        }
         rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
     });
 
