@@ -478,7 +478,7 @@ async function processOnPageSheet(sheets, data) {
         }
         else{
         requests.push(          
-            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpageNew } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpage } }] }], fields: 'userEnteredValue' } },
             )
         }
         rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
