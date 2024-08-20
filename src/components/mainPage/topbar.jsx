@@ -581,7 +581,7 @@ const triggerFinalization = (mode) => {
               onClick={() => window.open(currentClient?.workbookURL, '_blank')}
               variant="outline"
               className="p-2 border border-gray-300 rounded"
-              style={{ height: "5em", flexGrow: 1, fontSize: "11px" }}
+              style={{ height: "3em", flexGrow: 1, fontSize: "11px" }}
             >
               🌐 Open {currentClient.name} Workbook
           </Button>
@@ -590,11 +590,11 @@ const triggerFinalization = (mode) => {
           <Button 
             onClick={() => triggerFinalization(showH2 ? "h2" : "h1")} 
             variant="outline"
-            style={{height: "5em"}}
+            style={{height: "3em"}}
           >
             ✏️ Write To Workbook {showH2 ? "h2" : ""}
           </Button>
-          <Button style={{marginTop: '10px', height: '5.5em'}} onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
+          <Button style={{marginTop: '10px', height: '3em'}} onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
         </CardContent>
       </Card>
     </div>

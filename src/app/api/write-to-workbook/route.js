@@ -463,7 +463,7 @@ async function processOnPageSheet(sheets, data) {
 
     pagesWithOnPage.forEach((page) => {
         const webpageText = `Web Page: ${page.url}`;
-        const targetedKeywords = `Targeted Keyword(s): ${page.keywords.join('\n')}`;
+        const targetedKeywords = `Targeted Keyword(s):\n${page.keywords.join('\n')}`;
 
         requests.push(
             { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: webpageText } }] }], fields: 'userEnteredValue' } },
