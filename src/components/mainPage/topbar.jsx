@@ -201,6 +201,9 @@ export default function TopBar({onPrepareData}) {
     setCurrentClient(client);
     localStorage.setItem('currentClient', JSON.stringify(client));
     // document.getElementById('active-client-url').value = client.workbookURL;
+
+    // Scroll to the top of the window
+  window.scrollTo(0, 0);
   };
 
   const markClientDone = async () => {
@@ -541,7 +544,7 @@ const triggerFinalization = (mode) => {
           Scrape
         </Button>
          {/* Right Sidebar */}
-        <div className="fixed top-10 right-0 z-10 py-2 bg-white " style={{borderLeft:'solid 10px white', background: '#f9f9f9',borderRadius: '0', height: "70vh", width: "210px", overflow: "scroll" }}>
+        <div className="fixed top-10 right-0 z-10 py-2 bg-white " style={{ borderLeft:'solid 10px white', background: '#f9f9f9',borderRadius: '0', height: "65vh", width: "210px", overflow: "scroll" }}>
           <ul className="text-sm text-gray-700">
             {clientList
               .filter(client => showCompleted || !client.completed)
@@ -564,9 +567,9 @@ const triggerFinalization = (mode) => {
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '210px', border: 'none', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
+      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '210px', border: 'none',borderLeft:'solid 10px white', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
         <CardHeader />
-        <CardContent className="flex flex-col items-center space-y-2" style={{borderLeft:'solid 10px white'}}>
+        <CardContent className="flex flex-col items-center space-y-2" style={{}}>
           <button
               onClick={() => setShowCompleted(prev => !prev)}
               className="py-2 text-sm text-gray-700"
@@ -578,19 +581,20 @@ const triggerFinalization = (mode) => {
               onClick={() => window.open(currentClient?.workbookURL, '_blank')}
               variant="outline"
               className="p-2 border border-gray-300 rounded"
-              style={{ flexGrow: 1, fontSize: "11px" }}
+              style={{ height: "5em", flexGrow: 1, fontSize: "11px" }}
             >
-              🗒️ Open {currentClient.name} Workbook
+              🌐 Open {currentClient.name} Workbook
           </Button>
           {/* <Button onClick={testCSVParse} variant="outline">Parse CSV</Button> */}
   
           <Button 
             onClick={() => triggerFinalization(showH2 ? "h2" : "h1")} 
             variant="outline"
+            style={{height: "5em"}}
           >
             ✏️ Write To Workbook {showH2 ? "h2" : ""}
           </Button>
-          <Button style={{marginTop: '20px', height: '5.5em'}} onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
+          <Button style={{marginTop: '10px', height: '5.5em'}} onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
         </CardContent>
       </Card>
     </div>

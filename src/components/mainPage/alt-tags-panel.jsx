@@ -578,7 +578,7 @@ const groupSelectedImages = useCallback(() => {
       >
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button> */}
-      <table {...getTableProps()} style={{ fontSize: '13px', marginLeft: '20px', width: '80%' }}>
+      <table {...getTableProps()} style={{ fontSize: '12px', marginLeft: '20px', width: '80%' }}>
   <thead>
     {headerGroups.map((headerGroup, headerGroupIndex) => {
       const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();

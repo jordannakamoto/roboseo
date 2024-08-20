@@ -72,15 +72,17 @@ const TableView = ({ webpages, registerFinalState }) => {
                     <tr>
                         <td style={{ 
                             width: '100%', 
-                            paddingBottom: textareaType !== 'onPage' ? '8px' : '0', 
-                            paddingLeft: textareaType === 'onPage' ? '10px' : '0',
-                            background: '#f7f7f7' }}>
+                            // paddingBottom: textareaType !== 'onPage' ? '8px' : '0', 
+                            padding: '0',
+                            // paddingLeft: textareaType === 'onPage' ? '10px' : '0',
+                             }}>
                             <textarea
                                 ref={(textareaRef) => {
                                     if (textareaRef) {
                                         if (textareaType === 'onPage') {
                                             textareaRef.style.height = 'auto';
                                             textareaRef.style.height = `${textareaRef.scrollHeight}px`;
+                                            textareaRef.style.padding = `14px 10px`;
                                         } else if (textareaType === 'meta') {
                                             textareaRef.style.height = '4.4em';
                                         } else {
@@ -92,7 +94,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                     background: 'aliceblue',
                                     width: '100%',
                                     // maxHeight: '12em',
-                                    padding: '12px 10px',
+                                    padding: '8px 10px',
                                     fontSize: '14px', 
                                     verticalAlign: 'top', 
                                     overflow: 'scroll', 
@@ -171,24 +173,25 @@ const TableView = ({ webpages, registerFinalState }) => {
 
     switch (textareaType) {
       case 'title':
-          topPos -= 647;
+          topPos -= 641;
           break;
       case 'meta':
-          topPos -= 635;
+          topPos -= 607;
           break;
       case 'h1':
-          topPos -= 546;
+          topPos -= 544;
           break;
       case 'h2':
-          topPos -= 526;
+          topPos -= 528;
           break;
           break;
       case 'onPage':
-          topPos -= 459;
-          leftPos += 569;
+          topPos -= 510; // 40 old 
+          // leftPos += 569;
           break;
       default:
   }
+  leftPos += 569;
     setModalPosition({
       top: topPos, // Position based on the row
       left: leftPos, // Adjust for modal width
@@ -315,7 +318,7 @@ const TableView = ({ webpages, registerFinalState }) => {
         const keywordElement = document.getElementById(`keyword-${pageIndex}-${phraseIndex}-${wordIndex}`);
         if (keywordElement) {
           // HIGHLIGHT COLOR
-          keywordElement.style.backgroundColor = isFound ? '#fff49b' : 'transparent';
+          keywordElement.style.backgroundColor = isFound ? '#fff2cc' : 'transparent';
         }
       });
     });
@@ -375,34 +378,35 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
     const count = text.length;
-    let color = 'red';
+    let color = '';
+    let badcolor = 'gray';
+    let goodcolor = 'green';
     let fontWeight = 'bold';
     let relativeCount;
   
     if (count > maxCount) {
       relativeCount = count - maxCount;
-      color = 'red';
+      color = badcolor;
     } else if (count >= minCount && count <= maxCount) {
       relativeCount = 0; // Within range, so no relative count needed
-      color = 'grey';
-      fontWeight = 'bold';
+      color = goodcolor;
     } else {
       relativeCount = count - minCount;
-      color = 'red';
+      color = badcolor;
     }
   
     return (
       <span
         style={{
           position: 'absolute',
-          right: '-15px',
+          left: '-20px',
           bottom: '12px',
           fontSize: '12px',
           color,
           fontWeight,
         }}
       >
-        {relativeCount === 0 ? '' : relativeCount > 0 ? `+${relativeCount}` : relativeCount}
+        {relativeCount === 0 ? count : relativeCount > 0 ? `+${relativeCount}` : relativeCount}
       </span>
     );
   };
@@ -478,7 +482,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             defaultValue={page.name}
                             tabIndex={300 + pageIndex}
                             onFocus={(e) => {
-                              e.target.style.borderColor = 'lightblue';
+                              e.target.style.borderColor = '#4fc1ff';
                               handleFocus(e, page, rowRef, 'name', pageIndex);
                             }}
                             onBlur={(e) => {
@@ -505,19 +509,19 @@ const TableView = ({ webpages, registerFinalState }) => {
                         {/* --------
                           TD #2
                           -------- */}
-                        <td style={{ width: '570px', paddingBottom: '4px', paddingLeft: '0px', verticalAlign: 'top', boxSizing: 'border-box' }}>
+                        <td style={{ width: '570px', paddingBottom: '4px', paddingLeft: '2px', verticalAlign: 'top', boxSizing: 'border-box' }}>
                           <div style={{height: '1.5em'}}></div>
                           {/* TITLE AREA */}
                           <div style={{ position: 'relative' }}>
                             <textarea
                               ref={refs.current[pageIndex].refTitle}
                               style={{
-                                 
+
                                 width: '100%',
                                 resize: 'none',
-                                height: '2.7em',
+                                height: '2.4em',
                                 overflow: 'hidden',
-                                padding: '8px 10px',
+                                padding: '6px 10px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
                                 border: '1px solid #d3d3d3',
@@ -527,8 +531,8 @@ const TableView = ({ webpages, registerFinalState }) => {
                               defaultValue={page.title}
                               tabIndex={0}
                               onFocus={(e) => {
-                                e.target.style.borderColor = 'lightblue';
-                                refs.current[pageIndex].refMeta.current.style.borderTop = '1px solid lightblue';
+                                e.target.style.borderColor = '#4fc1ff';
+                                refs.current[pageIndex].refMeta.current.style.borderTop = '1px solid #4fc1ff';
                                 handleFocus(e, page, rowRef, 'title', pageIndex);
                               }}
                               onBlur={(e) => {
@@ -560,8 +564,8 @@ const TableView = ({ webpages, registerFinalState }) => {
                               defaultValue={page.meta}
                               tabIndex={0}
                               onFocus={(e) => {
-                                e.target.style.borderColor = 'lightblue';
-                                refs.current[pageIndex].refH1.current.style.borderTop = '1px solid lightblue';
+                                e.target.style.borderColor = '#4fc1ff';
+                                refs.current[pageIndex].refH1.current.style.borderTop = '1px solid #4fc1ff';
                                 handleFocus(e, page, rowRef, 'meta', pageIndex);
                               }}
                               onBlur={(e) => {
@@ -583,11 +587,9 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 overflow: 'hidden',
                                 resize: 'none',
                                 // marginBottom: '-1px',
-                                height: '3em',
-                                paddingTop: '14px',
-                                 
+                                height: '2.5em',                                 
                                 boxSizing: 'border-box',
-                                padding: '8px 10px',
+                                padding: '6px 10px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
                                 border: '1px solid #d3d3d3',
@@ -596,7 +598,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               defaultValue={page.h1}
                               tabIndex={0}
                               onFocus={(e) => {
-                                e.target.style.borderColor = 'lightblue';
+                                e.target.style.borderColor = '#4fc1ff';
                                 handleFocus(e, page, rowRef, 'h1', pageIndex);
                               }}
                               onBlur={(e) => {
@@ -618,7 +620,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   overflow: 'hidden',
                                   resize: 'none',
                                    
-                                  height: '2.7em',
+                                  height: '2.6em',
                                   padding: '8px 10px',
                                   fontSize: '14px',
                                   boxSizing: 'border-box',
@@ -630,7 +632,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 defaultValue={page.h2}
                                 tabIndex={0}
                                 onFocus={(e) => {
-                                  e.target.style.border = '1px solid lightblue';
+                                  e.target.style.border = '1px solid #4fc1ff';
                                   handleFocus(e, page, rowRef, 'h2', pageIndex);
                                 }}
                                 onBlur={(e) => {
@@ -666,8 +668,8 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 defaultValue={page.onpage}
                                 tabIndex={0}
                                 onFocus={(e) => {
-                                  e.target.style.borderColor = 'lightblue';
-                                  refs.current[pageIndex].refH1.current.style.borderBottom = '1px solid lightblue';
+                                  e.target.style.borderColor = '#4fc1ff';
+                                  refs.current[pageIndex].refH1.current.style.borderBottom = '1px solid #4fc1ff';
                                   handleFocus(e, page, rowRef, 'onPage', pageIndex);
                                   e.target.style.height = 'auto';
                                   e.target.style.height = `${e.target.scrollHeight}px`;
