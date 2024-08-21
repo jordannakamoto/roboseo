@@ -345,7 +345,7 @@ const TableView = ({ webpages, registerFinalState }) => {
         const nameValue = refs.current[pageIndex].refName.current.value;
         const titleValue = refs.current[pageIndex].refTitle.current.value;
         const h1Value = refs.current[pageIndex].refH1.current.value;
-        const h2Value = showH2 ? refs.current[pageIndex].refH2.current.value : null;
+        const h2Value = refs.current[pageIndex].refH2.current.value;
         const metaValue = refs.current[pageIndex].refMeta.current.value;
         const onpageValue = page.onpage ? refs.current[pageIndex].refOnPage.current.value : null;
 
@@ -451,7 +451,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                   refName: React.createRef(),
                   refTitle: React.createRef(),
                   refH1: React.createRef(),
-                  refH2: showH2 ? React.createRef() : null,
+                  refH2: React.createRef(),
                   refMeta: React.createRef(),
                   refOnPage: React.createRef(),
                 };
@@ -612,8 +612,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             {refs.current[pageIndex].refH1.current && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
                           </div>
                           {/* H2 Area */}
-                          {showH2 && (
-                            <div style={{ position: 'relative' }}>
+                            <div style={{ position: 'relative', display: showH2 ? 'block' : 'none' }}>
                               <textarea
                                 ref={refs.current[pageIndex].refH2}
                                 style={{
@@ -626,7 +625,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   fontSize: '14px',
                                   boxSizing: 'border-box',
                                   verticalAlign: 'top',
-                                  color: 'blue',
+                                  backgroundColor: '#f7f7f7',
                                   border: '1px solid #d3d3d3',
                                   outline: 'none'
                                 }}
@@ -645,7 +644,6 @@ const TableView = ({ webpages, registerFinalState }) => {
                               />
                               {refs.current[pageIndex].refH2.current && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
                             </div>
-                          )}
                           {/* ONPAGE AREA */}
                           {page.onpage && (
                             <div style={{ position: 'relative' }}>

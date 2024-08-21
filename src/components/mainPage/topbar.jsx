@@ -292,10 +292,10 @@ export default function TopBar({onPrepareData}) {
       console.error('No current client selected.');
       return;
     }
-    // error sometimes gets thrown here
+  
     let currClientHomepage = currentClient.homepage.replace(/^https?:\/\//, '');
     setClientUrl(currClientHomepage.replace(/\/$/, ''));
-
+  
     try {
       // Load data from Frog CSVs
       console.log('Sending request to Frog API...');
@@ -306,40 +306,34 @@ export default function TopBar({onPrepareData}) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dir: currClientHomepage, webpages: pages }),
       });
-
+  
       if (!response.ok) throw new Error('Error processing files');
-
+  
       const { result } = await response.json();
-
-      // -- Merge the Data
-      // > Frog csv files contain the whole scrape
-      // > Call to GSheets API to get only the pages we're interested in
+  
+      // Merge the Data with the Frog API results
       const mergedData = pages.map(page => {
         const urlPath = page.url.replace(/https:\/\/[^/]+/, ''); // Remove the root URL
         let pageName = ''; // Initialize an empty string to build the page name
       
-        // ` GENERATE PAGE NAME FROM URL
+        // Generate Page Name from URL
         if (!urlPath || urlPath === '/') {
           pageName = 'Home Page'; // Assign "Home Page" to the root URL
         } else {
-          // Split the path into segments and iterate through them
           const pathSegments = urlPath.split('/').filter(Boolean);
           let previousPageName = ''; // To keep track of the previous valid segment
-
+  
           pathSegments.forEach(segment => {
-            // Build the current segment's page name
             const formattedSegment = segment
               .split('.')[0] // Remove file extension if present
               .split('-') // Split by hyphen
               .map(part => part.charAt(0).toUpperCase() + part.slice(1)) // Capitalize each part
               .join(' '); // Join parts with a space
-
-            // Update pageName but keep track of the previous one
+  
             previousPageName = pageName;
             pageName = formattedSegment;
           });
-
-          // If the last segment results in a number, revert to the previous segment
+  
           if (!isNaN(pageName)) {
             pageName = previousPageName;
           }
@@ -351,8 +345,26 @@ export default function TopBar({onPrepareData}) {
           name: pageName, // Set the name property with the final page name
         };
       });
-
-      setPages(mergedData);
+  
+      // Insert API Call to Fetch OnPage Data
+      const onPageResponse = await fetch('/api/load-from-frog-onpage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dir: currClientHomepage, pages: mergedData }), // Send the merged data
+      });
+  
+      if (!onPageResponse.ok) throw new Error('Error fetching OnPage data');
+  
+      const { processedPages } = await onPageResponse.json();
+  
+      // Merge the OnPage data back into the mergedData
+      const finalData = mergedData.map(page => {
+        const matchedOnPage = processedPages.find(p => p.url === page.url);
+        return matchedOnPage ? { ...page, onpage: matchedOnPage.onpage } : page;
+      });
+  
+      setPages(finalData);
+  
     } catch (error) {
       console.error('Failed to process files:', error);
     }
@@ -373,6 +385,8 @@ export default function TopBar({onPrepareData}) {
       console.error('Failed to load alt tags:', error);
     }
   };
+
+  // end testscvParse
 
   // Trigger workbook writing
   useEffect(() => {
