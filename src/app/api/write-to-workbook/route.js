@@ -472,6 +472,7 @@ async function processOnPageSheet(sheets, data) {
             // Add more updateCells requests as needed for other rows
         );
         if(page.onpageNew){
+            console.log("highlighting onpage");
             requests.push(
                 { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpageNew }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR }  }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
             )

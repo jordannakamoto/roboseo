@@ -18,6 +18,7 @@ export async function POST(request) {
         const h1FilePath = path.join(directoryPath, dir, 'h1_all.csv');
         const h2FilePath = path.join(directoryPath, dir, 'h2_all.csv');
         const metaDescriptionFilePath = path.join(directoryPath, dir, 'meta_description_all.csv');
+        // ! const 
         
         // Helper function to read and parse a CSV file
         const readAndParseCSV = (filePath) => {
