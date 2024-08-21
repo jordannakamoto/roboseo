@@ -143,30 +143,30 @@ const OnPagePanel = () => {
         }}
       >
         {images.map((image, index) => (
-          (image.isVisible) && (
-            <div key={index} style={{ flexShrink: 0, marginRight: '5px', textAlign: 'center'}}>
-              <div
-                ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
-                style={{ border:'solid 1px #d5d5d5', overflowY: 'scroll', height: '380px', width: '245px', maxWidth: '380px' }}
-              >
-                <img
-                  src={image.imgSrc}
-                  alt={`Screenshot of ${image.url}`}
-                  style={{ width: '100%', cursor: 'pointer' }}
-                  onClick={(e) => handleImageClick(e, index)} // Handle image click or shift-click
-                />
-              </div>
-              <textarea
-                id={`textarea-${index}`} // Unique ID for each textarea
-                value={image.onpage} // Bind the textarea value to the onpage value
-                placeholder={image.name}
-                style={{ width: '100%', height: '100px',  fontSize: '13px', resize: 'none', marginTop: '10px' }}
-                onChange={(e) => handleTextareaChange(e, index)} // Update onpage on change
-                onPaste={(e) => handlePaste(e, index)}
-              />
-            </div>
-          )
-        ))}
+  (image.isVisible) && (
+    <div key={index} style={{ display: 'flex', marginRight: '5px', textAlign: 'center' }}>
+      <div
+        ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
+        style={{ border: 'solid 1px #d5d5d5', overflowY: 'scroll', height: '380px', width: '245px', maxWidth: '245px' }}
+      >
+        <img
+          src={image.imgSrc}
+          alt={`Screenshot of ${image.url}`}
+          style={{ width: '100%', cursor: 'pointer' }}
+          onClick={(e) => handleImageClick(e, index)} // Handle image click or shift-click
+        />
+      </div>
+      <textarea
+        id={`textarea-${index}`} // Unique ID for each textarea
+        value={image.onpage} // Bind the textarea value to the onpage value
+        placeholder={image.name}
+        style={{ height: '100%', width: '250px', fontSize: '13px', resize: 'none', marginLeft: '10px' }}
+        onChange={(e) => handleTextareaChange(e, index)} // Update onpage on change
+        onPaste={(e) => handlePaste(e, index)}
+      />
+    </div>
+  )
+))}
       </div>
       <style jsx>{`
         /* Minimal scrollbar styling for WebKit browsers (Safari, Chrome, etc.) */
