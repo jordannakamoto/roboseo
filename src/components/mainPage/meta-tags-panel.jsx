@@ -169,7 +169,7 @@ const TableView = ({ webpages, registerFinalState }) => {
 
 
     // ` Modal Coordinates
-    let topPos = window.scrollY + rowRect.top - 204; // Adjust to consider scrolling
+    let topPos = window.scrollY + rowRect.top - 264; // Adjust to consider scrolling
     let leftPos = rowRect.left + (110);
 
     switch (textareaType) {
