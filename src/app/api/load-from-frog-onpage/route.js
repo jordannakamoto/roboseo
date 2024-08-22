@@ -16,11 +16,9 @@ export async function POST(request) {
             url: page.url,
             h1: page.h1,
             h2: page.h2,
-            onpage: '', // This will be filled in later
         }));
 
         // Step 2: Transform URLs into filenames
-        // Example: https://10xlivingctc.com becomes rendered_https_10xlivingctc.com_html
         const filenames = processedPages.map(page => {
             const formattedUrl = page.url.replace(/https?:\/\//, 'https_').replace(/[\/#]/g, '_');
             return `rendered_${formattedUrl}.html`;
@@ -33,45 +31,52 @@ export async function POST(request) {
         console.log("command:", command);
         execSync(command); // This will generate .md files from the HTML files
 
-// Step 4: For all .md files, open and scan for processedPages.h1
-processedPages.forEach((page) => {
-    const formattedUrl = page.url.replace(/https?:\/\//, 'https_').replace(/[\/#]/g, '_');
-    const mdFilePath = path.join(dir, `rendered_${formattedUrl}.md`);
-    
-    if (fs.existsSync(mdFilePath)) {
-        const mdContent = fs.readFileSync(mdFilePath, 'utf-8');
+        // Step 4: For all .md files, open and scan for processedPages.h1
+        processedPages.forEach((page) => {
+            const formattedUrl = page.url.replace(/https?:\/\//, 'https_').replace(/[\/#]/g, '_');
+            const mdFilePath = path.join(dir, `rendered_${formattedUrl}.md`);
+            
+            if (fs.existsSync(mdFilePath)) {
+                const mdContent = fs.readFileSync(mdFilePath, 'utf-8');
 
-        // Use a regex to find the H1 and extract the content following it, excluding any content starting with '##'
-        const h1Regex = new RegExp(`#\\s*${page.h1}\\s*\\n([^#\\[]+?)(?=\\n##|\\[|$)`);
-        let match = h1Regex.exec(mdContent);
-        let extractedContent = match ? match[1].trim() : '';
+                // Use a regex to find the H1 and extract the content following it, excluding any content starting with '##'
+                const h1Regex = new RegExp(`#\\s*${page.h1}\\s*\\n([^#\\[]+?)(?=\\n##|\\[|$)`);
+                let match = h1Regex.exec(mdContent);
+                let extractedContent = match ? match[1].trim() : '';
 
-        // Validate extracted content and further refine by breaking on '*' or '!'
-        if (extractedContent) {
-            extractedContent = extractedContent.split(/[\*\!]/)[0].trim();
-        }
+                // If the extracted content is empty, whitespace, or mistakenly includes an H2, try using H2
+                if (!extractedContent && page.h2) {
+                    const h2Regex = new RegExp(`#\\s*${page.h2}\\s*\\n([^#\\[]+?)(?=\\n##|\\[|$)`);
+                    match = h2Regex.exec(mdContent);
+                    extractedContent = match ? match[1].trim() : '';
+                }
 
-        // If the extracted content is empty, whitespace, or mistakenly includes an H2, try using H2
-        if (!extractedContent && page.h2) {
-            const h2Regex = new RegExp(`#\\s*${page.h2}\\s*\\n([^#\\[]+?)(?=\\n##|\\[|$)`);
-            match = h2Regex.exec(mdContent);
-            extractedContent = match ? match[1].trim() : '';
+                // Split the content into paragraphs and filter them
+                if (extractedContent) {
+                    const paragraphs = extractedContent.split('\n\n').filter(paragraph => {
+                        // Trim each paragraph before checking for '!' or '*' or certain words
+                        const trimmedParagraph = paragraph.trim();
+                        return !trimmedParagraph.startsWith('!') && 
+                               !trimmedParagraph.startsWith('*') && 
+                               !trimmedParagraph.toLowerCase().includes('map') && 
+                               !trimmedParagraph.toLowerCase().includes('tour') && 
+                               !trimmedParagraph.toLowerCase().includes('more');
+                    });
 
-            // Further refine by breaking on '*' or '!'
-            if (extractedContent) {
-                extractedContent = extractedContent.split(/[\*\!]/)[0].trim();
+                    // Join the remaining paragraphs back together
+                    extractedContent = paragraphs.join('\n\n').trim();
+                }
+
+                // If valid content exists, assign it to onpage; otherwise, skip adding onpage
+                if (extractedContent) {
+                    page.onpage = extractedContent;
+                } else {
+                    console.warn(`No valid content found for H1 or H2 in file: ${mdFilePath}`);
+                }
+            } else {
+                console.warn(`Markdown file not found: ${mdFilePath}`);
             }
-        }
-
-        if (extractedContent) {
-            page.onpage = extractedContent; // Set the extracted content to onpage
-        } else {
-            console.warn(`No valid content found for H1 or H2 in file: ${mdFilePath}`);
-        }
-    } else {
-        console.warn(`Markdown file not found: ${mdFilePath}`);
-    }
-});
+        });
 
         console.log("extracted onpage");
         console.log(processedPages);

@@ -34,8 +34,8 @@ const OnPagePanel = () => {
     // Set the scroll position for each image container
     containerRefs.current.forEach((container) => {
       if (container) {
-        container.scrollTop = container.scrollHeight * 0.2; // Scroll 20% down
-      }
+        container.scrollTop = container.scrollHeight * 0.1; // Scroll 10% down
+      }1
     });
   }, [images]);
   useEffect(() => {
@@ -137,6 +137,7 @@ const OnPagePanel = () => {
           display: 'flex',
           paddingTop: '30px',
           paddingLeft: '10px',
+          paddingBottom: '60px',
           scrollbarWidth: 'none', // For Firefox
           WebkitOverflowScrolling: 'touch', // For smooth scrolling on iOS
           paddingRight: '1100px',
@@ -147,7 +148,7 @@ const OnPagePanel = () => {
     <div key={index} style={{ display: 'flex', marginRight: '5px', textAlign: 'center' }}>
       <div
         ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
-        style={{ border: 'solid 1px #d5d5d5', overflowY: 'scroll', height: '380px', width: '245px', maxWidth: '245px' }}
+        style={{ border: 'solid 1px #d5d5d5', overflowY: 'scroll', height: '700px', width: '245px', maxWidth: '245px' }}
       >
         <img
           src={image.imgSrc}

@@ -347,24 +347,35 @@ export default function TopBar({onPrepareData}) {
       });
   
       // Insert API Call to Fetch OnPage Data
-      const onPageResponse = await fetch('/api/load-from-frog-onpage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dir: currClientHomepage, pages: mergedData }), // Send the merged data
-      });
-  
-      if (!onPageResponse.ok) throw new Error('Error fetching OnPage data');
-  
-      const { processedPages } = await onPageResponse.json();
-  
-      // Merge the OnPage data back into the mergedData
-      const finalData = mergedData.map(page => {
-        const matchedOnPage = processedPages.find(p => p.url === page.url);
-        return matchedOnPage ? { ...page, onpage: matchedOnPage.onpage } : page;
-      });
-  
-      setPages(finalData);
-  
+      try {
+        const onPageResponse = await fetch('/api/load-from-frog-onpage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dir: currClientHomepage, pages: mergedData }), // Send the merged data
+        });
+
+        let finalData;
+
+        if (!onPageResponse.ok) {
+          console.error('Error fetching OnPage data');
+          finalData = mergedData; // Use mergedData directly if the OnPage API call fails
+        } else {
+          const { processedPages } = await onPageResponse.json() || { processedPages: [] };
+
+          // Merge the OnPage data back into the mergedData
+          finalData = mergedData.map(page => {
+            const matchedOnPage = processedPages.find(p => p.url === page.url);
+            return matchedOnPage ? { ...page, onpage: matchedOnPage.onpage } : page;
+          });
+        }
+
+        setPages(finalData);
+
+      } catch (error) {
+        console.error('Failed to process OnPage data:', error);
+        setPages(mergedData); // Ensure that mergedData is used if there's an exception
+      }
+
     } catch (error) {
       console.error('Failed to process files:', error);
     }

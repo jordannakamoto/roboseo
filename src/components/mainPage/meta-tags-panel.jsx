@@ -68,7 +68,7 @@ const TableView = ({ webpages, registerFinalState }) => {
             ref={modalRef}
         >
           {/* modal style */}
-            <table className="customTable" style={{ border: 'solid 1px #d7d7d7',borderBottom: textareaType !== 'onPage' ? 'none': 'solid 1px #d7d7d7' ,  height: 'auto', width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
+            <table className="customTable" style={{ border: 'solid 1px #d7d7d7', height: 'auto', width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
                 <tbody>
                     <tr>
                         <td style={{ 
@@ -169,7 +169,7 @@ const TableView = ({ webpages, registerFinalState }) => {
 
 
     // ` Modal Coordinates
-    let topPos = window.scrollY + rowRect.top; // Adjust to consider scrolling
+    let topPos = window.scrollY + rowRect.top - 204; // Adjust to consider scrolling
     let leftPos = rowRect.left + (110);
 
     switch (textareaType) {
