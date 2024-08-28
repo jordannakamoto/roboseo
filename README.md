@@ -26,8 +26,7 @@ We hope to use the co-creation of this tool to build a future comprehensive tool
 ## Screenshot
 Screenshots look a bit horrendous to maintain client anonymity.
 
-
+<img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
 ![Screenshot](./-DevLog/onpagescreen.png)
 ![AltImg](./-DevLog/altimages2.png)
 ![Sheets](./-DevLog/sheets.png)
-<img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
