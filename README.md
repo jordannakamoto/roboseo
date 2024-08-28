@@ -27,4 +27,4 @@ We hope to use the co-creation of this tool to build a future comprehensive tool
 Unfortunately this screenshot isn't the prettiest to maintain client anonymity.
 ![Screenshot](./-DevLog/screenshot.jpeg)
 ![Sheets](./-DevLog/sheets.png)
-<img src="./images/scraper.png" alt="Scraper" width="50%"/>
+<img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
