@@ -1,5 +1,5 @@
 # SEO Content Refresher
-A tool designed for a friend to speed up webscraping and data entry for SEO content writing. Client websites are batch scraped and target meta data is displayed in a front end interface.
+A custom tool that provides an improved interface over a Google Sheets content writing workflow. Designed for a friend to speed up webscraping and data entry for SEO content writing. Client websites are batch scraped and target meta data is displayed in a front end interface.
 
 ## Features
 
@@ -26,3 +26,5 @@ We hope to use the co-creation of this tool to build a future comprehensive tool
 ## Screenshot
 Unfortunately this screenshot isn't the prettiest to maintain client anonymity.
 ![Screenshot](./-DevLog/screenshot.jpeg)
+![Sheets](./-DevLog/sheets.jpeg)
+![Scraper](./-DevLog/scraper.png)
