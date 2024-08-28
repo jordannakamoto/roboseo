@@ -24,7 +24,10 @@ We hope to use the co-creation of this tool to build a future comprehensive tool
 ![FlowChart](./-DevLog/flow-diagram.png)
 
 ## Screenshot
-Unfortunately this screenshot isn't the prettiest to maintain client anonymity.
+Screenshots look a bit horrendous to maintain client anonymity.
+
+
 ![Screenshot](./-DevLog/screenshot.jpeg)
+![AltImg](./-DevLog/altimages.png)
 ![Sheets](./-DevLog/sheets.png)
 <img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
