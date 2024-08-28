@@ -28,6 +28,6 @@ Screenshots look a bit horrendous to maintain client anonymity.
 
 
 ![Screenshot](./-DevLog/screenshot.jpeg)
-![AltImg](./-DevLog/altimages.png)
+![AltImg](./-DevLog/altimages2.png)
 ![Sheets](./-DevLog/sheets.png)
 <img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
