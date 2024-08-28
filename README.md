@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# SEO Content Refresher
+A tool designed for a friend to speed up webscraping and data entry for SEO content writing. Client websites are batch scraped and target meta data is displayed in a front end interface.
 
-## Getting Started
+## Features
 
-First, run the development server:
+### On Page copy
+On-Page copy can exist in many different forms so the best guess is extracted and presented next to a screenshot of the page. Screenshots can be clicked to visit the page if the estimated on-page copy needs to be replaced.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Metadata
+Page metadata: Title, H1, and Meta Description are displayed in a UI that allows for re-writing with target keywords. Target keywords are highlighted after they have been detected and a character counter is displayed so that we can hit the right content length for each particular field. Initial metadata display can be toggled as fields are meant to be overwritten with new keywords.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Image Alt-Tags
+Image alt urls can be selected in groups to edit. Same image source urls are displayed as one unit which an alt caption can be supplied for. Tool allows for filling, finding and replacing, text from selected images to allow for easy integration of target keywords.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Google Sheets Output
+Google sheets document is automatically formatted into the expected output as we receive our worksheets in various states from the assignment dispatcher. This includes showing/hiding the correct sub sheets and editing titles and rows into the proper structure.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Then, we fill the target sheet with our proposed SEO recommendations and apply a highlight to indicate changes. Automating what was previously a manual data entry task.
 
-## Learn More
+## Future Goals
+We hope to use the co-creation of this tool to build a future comprehensive tool for seasonal SEO Updates.
 
-To learn more about Next.js, take a look at the following resources:
+## Data Flow
+![FlowChart](./-DevLog/flow-diagram.png)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Screenshot
+Unfortunately this screenshot isn't the prettiest to maintain client anonymity.
+![Screenshot](./-DevLog/screenshot.jpeg)
