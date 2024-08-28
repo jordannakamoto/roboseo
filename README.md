@@ -26,5 +26,5 @@ We hope to use the co-creation of this tool to build a future comprehensive tool
 ## Screenshot
 Unfortunately this screenshot isn't the prettiest to maintain client anonymity.
 ![Screenshot](./-DevLog/screenshot.jpeg)
-![Sheets](./-DevLog/sheets.jpeg)
-![Scraper](./-DevLog/scraper.png)
+![Sheets](./-DevLog/sheets.png)
+![Scraper](./-DevLog/scraper.png){width=200px}
