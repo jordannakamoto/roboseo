@@ -242,10 +242,15 @@ const groupSelectedImages = useCallback(() => {
     const newCaption = textarea.value;
     setSelectedImages(prev => {
       const updatedImages = { ...prev };
-      updatedImages[url] = {
-        ...updatedImages[url],
-        caption: newCaption, // Commit changes to selectedImages
-      };
+      const groupedImages = groupSelectedImages();
+  
+      groupedImages[url].uniqueIds.forEach(uniqueId => {
+        updatedImages[uniqueId] = {
+          ...updatedImages[uniqueId],
+          caption: newCaption,
+        };
+      });
+  
       return updatedImages;
     });
   
