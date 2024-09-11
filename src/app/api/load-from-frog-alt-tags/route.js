@@ -1,5 +1,3 @@
-// Load Alt Tag File into program
-
 import { NextResponse } from "next/server";
 import fs from 'fs';
 import { parse } from 'csv-parse/sync'; // A more robust CSV parsing
@@ -9,7 +7,6 @@ export async function POST(request) {
     try {
         const data = await request.json();
         const dir = data.dir;
-        // const validUrlsSet = new Set(data.webpages.map(webpage => webpage.url));
         console.log("reading alt tag data from screaming frog: " + dir)
         const directoryPath = path.join(process.cwd(), 'public', 'frog');
         
@@ -23,14 +20,13 @@ export async function POST(request) {
                 columns: true,
                 skip_empty_lines: true,
                 bom: true
-            });when
+            });
         };
 
         // Read and parse the CSV file
         const altTagsData = readAndParseCSV(altTagsFilePath);
 
-        // Filter out entries with an image URL that contains "recaptcha"
-        // Filtered out Alt Tag rows
+        // Filter out entries with an image URL that contains unwanted keywords
         let filteredData = altTagsData.filter(item => !item.Destination.includes('recaptcha'));
         filteredData = filteredData.filter(item => !item.Destination.includes('loading'));
         filteredData = filteredData.filter(item => !item.Destination.includes('loader'));
@@ -43,8 +39,11 @@ export async function POST(request) {
         filteredData = filteredData.filter(item => !item.Destination.includes('transparent'));
         filteredData = filteredData.filter(item => !item['Alt Text'].includes('Logo'));
 
-
-
+        // Remove duplicates based on the 'Source' and 'Destination' pair
+        const uniqueData = Array.from(new Map(filteredData.map(item => {
+            const uniqueKey = `${item.Source}-${item.Destination}`;
+            return [uniqueKey, item];
+        })).values());
 
         // Function to exclude specific properties from an object
         const excludeProperties = (obj, propsToRemove) => {
@@ -66,8 +65,7 @@ export async function POST(request) {
         ];
 
         // Remove specified fields from each entry
-        const result = filteredData.map(obj => excludeProperties(obj, columnsToRemove));
-        // console.log(result);
+        const result = uniqueData.map(obj => excludeProperties(obj, columnsToRemove));
 
         return NextResponse.json({ result }, { status: 200 });
     } catch (error) {

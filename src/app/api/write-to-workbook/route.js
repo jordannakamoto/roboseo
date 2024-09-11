@@ -10,6 +10,7 @@ import { google } from 'googleapis';
 
 // Highlight hex color
 const HIGHLIGHT_COLOR = { red: 1.0, green: 0.949, blue: 0.8 }; // R 255 G 242 B 204 fff2cc
+const WHITE_COLOR = {red: 1.0, green: 1.0, blue: 1.0}
 
 // Gets Column A
 async function getSheetValues(client, sheetId, sheetName) {
@@ -238,7 +239,7 @@ async function processTitleTagSheet(sheets, data) {
             );
         } else {
             requests.push(
-                { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.title } }] }], fields: 'userEnteredValue' } },
+                { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.title } , userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
             );
         }
 
@@ -343,7 +344,7 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
                 );
             } else {
                 requests.push(
-                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.meta } }] }], fields: 'userEnteredValue' } },
+                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.meta }, userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
                 );
             }
             rowIndex++;
@@ -366,7 +367,7 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
                     );
                 } else {
                     requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } },
+                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } , userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
                     );
                 }
             } else if (data.hMode === "h2") {
@@ -380,7 +381,7 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
                     );
                 } else {
                     requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } },
+                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } , userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
                     );
                 }
             }
@@ -396,24 +397,45 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
 async function processAltTagsSheet(sheets, data) {
     const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: data.sheetId,
-        fields: 'sheets(properties(title,hidden))',
+        fields: 'sheets(properties(title,gridProperties))', // Added gridProperties to get rowCount
     });
 
     const visibleSheets = sheetMetadata.data.sheets
         .filter(sheet => !sheet.properties.hidden)
-        .map(sheet => sheet.properties.title);
+        .map(sheet => ({
+            title: sheet.properties.title,
+            rowCount: sheet.properties.gridProperties.rowCount  // Get current row count
+        }));
 
-    const sheetName = visibleSheets.find(title => title.includes("Alt Tag"));
-    if (!sheetName) {
+    const sheet = visibleSheets.find(sheet => sheet.title.includes("Alt Tag"));
+    if (!sheet) {
         return { error: `No visible sheet with "Alt Tag" in its name found.`, status: 404 };
+    }
+
+    const sheetName = sheet.title;
+    const currentRowCount = sheet.rowCount;
+
+    const rowsNeeded = data.altTags.length + 3;  // Alt tags length + 4 extra rows
+
+    const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
+
+    // # We're using sheetId from the request for the spreadsheet ID and then sheetID is for the actual sheet
+    // # whoops... 
+    
+    // Step 1: Ensure there are enough rows
+    if (rowsNeeded > currentRowCount - 1) { // Preserve the last row
+        await insertRows(sheets, data.sheetId, sheetId, currentRowCount - 1, rowsNeeded - (currentRowCount - 1)); // Insert rows before the last row
+        await applyBordersAndFormulas(sheets, data.sheetId, sheetId, currentRowCount - 1, rowsNeeded); // Apply black borders and insert formulas in column E
+    }
+
+    // Step 2: If there are too many rows, delete the extra rows but keep the last one
+    if (rowsNeeded < currentRowCount - 1) { // Ignore the last row during trimming
+        await trimRows(sheets, data.sheetId, sheetId, rowsNeeded, currentRowCount - 1); // Keep the last row intact
     }
 
     const requests = [];
 
     updateRecommendationCell(sheets, data.sheetId, sheetName, data.currentClientName, true);
-
-    const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
-    
 
     for (let [index, item] of data.altTags.entries()) {
         const baseIndex = index + 4;
@@ -423,11 +445,102 @@ async function processAltTagsSheet(sheets, data) {
             { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 2, endColumnIndex: 3 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.originalAlt } }] }], fields: 'userEnteredValue' } },
             // Highlight the new alt tag if it's different
             { updateCells: { range: { sheetId, startRowIndex: baseIndex - 1, endRowIndex: baseIndex, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: item.newAlt }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } }
+            // For alt tags, we're not leaving any old ones in the sheet. We clear them all out first.
         );
     }
 
     await updateSheet(sheets, data.sheetId, requests);
     return { updatedCells: requests.length };
+}
+
+// Function to insert rows above the last row (to preserve the last row)
+async function insertRows(sheets, spreadsheetId, sheetId, beforeLastRowIndex, rowsToAdd) {
+    const requests = [
+        {
+            insertDimension: {
+                range: {
+                    sheetId: sheetId,
+                    dimension: 'ROWS',
+                    startIndex: beforeLastRowIndex, // Insert above the last row
+                    endIndex: beforeLastRowIndex + rowsToAdd
+                },
+                inheritFromBefore: true // Ensure styles from above row are inherited
+            }
+        }
+    ];
+    await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: spreadsheetId,
+        resource: { requests }
+    });
+}
+
+// Function to trim excess rows but preserve the last row
+async function trimRows(sheets, spreadsheetId, sheetId, rowsNeeded, currentRowCount) {
+    const requests = [
+        {
+            deleteDimension: {
+                range: {
+                    sheetId: sheetId,
+                    dimension: 'ROWS',
+                    startIndex: rowsNeeded,  // Start from where the data ends
+                    endIndex: currentRowCount  // Trim until one row before the last row
+                }
+            }
+        }
+    ];
+    await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: spreadsheetId,
+        resource: { requests }
+    });
+}
+
+// Function to apply black borders and insert formulas in column E
+async function applyBordersAndFormulas(sheets, spreadsheetId, sheetId, startRow, endRow) {
+    const requests = [];
+
+    for (let row = startRow; row < endRow; row++) {
+        // Apply black border to the row
+        requests.push({
+            updateBorders: {
+                range: {
+                    sheetId: sheetId,
+                    startRowIndex: startRow,
+                    endRowIndex: endRow, // Apply borders for all rows between startRow and endRow
+                    startColumnIndex: 0, // Column A (0-based index)
+                    endColumnIndex: 5 // Column E (0-based index, non-inclusive)
+                },
+                top: { style: 'SOLID', width: 1, color: { red: 0, green: 0, blue: 0 } },
+                bottom: { style: 'SOLID', width: 1, color: { red: 0, green: 0, blue: 0 } },
+                left: { style: 'SOLID', width: 1, color: { red: 0, green: 0, blue: 0 } },
+                right: { style: 'SOLID', width: 1, color: { red: 0, green: 0, blue: 0 } },
+                innerHorizontal: { style: 'SOLID', width: 1, color: { red: 0, green: 0, blue: 0 } }, // Inner horizontal borders
+                innerVertical: { style: 'SOLID', width: 1, color: { red: 0, green: 0, blue: 0 } }  // Inner vertical borders
+            }
+        });
+
+        // Insert the formula into column E of the row
+        const formula = `=LEN(D${row + 1})`;
+        requests.push({
+            updateCells: {
+                range: {
+                    sheetId: sheetId,
+                    startRowIndex: row,
+                    endRowIndex: row + 1,
+                    startColumnIndex: 4, // Column E (index 4)
+                    endColumnIndex: 5
+                },
+                rows: [{
+                    values: [{ userEnteredValue: { formulaValue: formula } }]
+                }],
+                fields: 'userEnteredValue'
+            }
+        });
+    }
+
+    await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: spreadsheetId,
+        resource: { requests }
+    });
 }
 
 // ` On-Page Procedure       
@@ -479,7 +592,7 @@ async function processOnPageSheet(sheets, data) {
         }
         else{
         requests.push(          
-            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpage } }] }], fields: 'userEnteredValue' } },
+            { updateCells: { range: { sheetId, startRowIndex: rowIndex + 5, endRowIndex: rowIndex + 6, startColumnIndex: 0, endColumnIndex: 1 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.onpage } , userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
             )
         }
         rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
