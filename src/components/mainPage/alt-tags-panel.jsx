@@ -90,6 +90,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
   const [clicked, setClicked] = useState(false);
   const [focusedTextarea, setFocusedTextarea] = useState(null);
   const [focusedTextareaElement, setFocusedTextareaElement] = useState(null);
+  const [focusedCaption, setFocusedCaption] = useState(''); // State to store the current focused caption
   const [charCount, setCharCount] = useState(0);
   const [fillInputCharCount, setFillInputCharCount] = useState(0); // Add this line to your state
 
@@ -227,26 +228,37 @@ const groupSelectedImages = useCallback(() => {
     });
   };
 
-  const handleCaptionChange = (url, newCaption) => {
+  const handleCaptionChange = (e, url) => {
+    const newCaption = e.target.value;
+    
+    setFocusedCaption(newCaption); // Update central caption state
+    // Do not commit the value to state until blur
+  };
+  
+  const handleCaptionBlur = (e, url, captionLength) => {
+    const textarea = e.target;
+    
+    // Now commit the changes to the actual data on blur
+    const newCaption = textarea.value;
     setSelectedImages(prev => {
       const updatedImages = { ...prev };
-      const groupedImages = groupSelectedImages();
-  
-      groupedImages[url].uniqueIds.forEach(uniqueId => {
-        updatedImages[uniqueId] = {
-          ...updatedImages[uniqueId],
-          caption: newCaption,
-        };
-      });
-  
+      updatedImages[url] = {
+        ...updatedImages[url],
+        caption: newCaption, // Commit changes to selectedImages
+      };
       return updatedImages;
     });
   
-    if (focusedTextarea === url) {
-      setCharCount(newCaption.length);
+    // Apply visual feedback on the background color based on caption length
+    if (captionLength >= 100 && captionLength <= 125) {
+      textarea.style.backgroundColor = '#eef6ec'; // Light green if within limits
+    } else if (captionLength > 125) {
+      textarea.style.backgroundColor = '#fbeeed'; // Light red if over the limit
+    } else {
+      textarea.style.backgroundColor = '#fbeeed'; // Light red if under the minimum limit
     }
   };
-  
+
   const fillCaptions = () => {
     const fillText = document.getElementById('fill-input').value;
     const updatedImages = { ...selectedImages };
@@ -261,36 +273,31 @@ const groupSelectedImages = useCallback(() => {
   };
 
   const handleTabKey = (e, textarea) => {
-    if (e.key === 'Tab' || e.key === 'Enter' && !e.shiftKey && !e.ctrlKey ) {
+    const formElements = Array.from(document.querySelectorAll('input, button, textarea')).filter(el => el.tabIndex >= 0);
+    const currentIndex = formElements.indexOf(textarea);
+  
+    if (e.key === 'Tab' && !e.shiftKey) {
+      // Forward cycling on 'Tab'
       e.preventDefault();
-      const currentIndex = textarea.selectionStart;
-      const nextIndex = textarea.value.indexOf('*', currentIndex + 1);
-
-      if (nextIndex !== -1) {
-        setTimeout(() => {
-          textarea.setSelectionRange(nextIndex, nextIndex + 1);
-        }, 0);
-      } else {
-        // Move to the next focusable element
-        const formElements = Array.from(document.querySelectorAll('input, button, textarea')).filter(el => el.tabIndex >= 0);
-        const currentIndex = formElements.indexOf(textarea);
-        const nextElement = formElements[currentIndex + 1] || formElements[0];
-        nextElement.focus();
-      }
-    }
-    else if (e.key === 'Enter' && e.ctrlKey) {
+      const nextElement = formElements[currentIndex + 1] || formElements[0]; // Go to the next element or loop to the first
+      nextElement.focus();
+    } else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+      // Forward cycling on 'Enter'
       e.preventDefault();
-      // Move to the previous focusable element
-      const formElements = Array.from(document.querySelectorAll('input, button, textarea')).filter(el => el.tabIndex >= 0);
-      const currentIndex = formElements.indexOf(textarea);
-      const prevElement = formElements[currentIndex - 1] || formElements[formElements.length - 1];
+      const nextElement = formElements[currentIndex + 1] || formElements[0]; // Go to the next element or loop to the first
+      nextElement.focus();
+    } else if ((e.key === 'Tab' && e.shiftKey) || (e.key === 'Enter' && e.shiftKey)) {
+      // Backward cycling on 'Shift + Tab' or 'Shift + Enter'
+      e.preventDefault();
+      const prevElement = formElements[currentIndex - 1] || formElements[formElements.length - 1]; // Go to the previous element or loop to the last
       prevElement.focus();
     }
   };
 
   const handleFocus = (uniqueId, caption, textarea) => {
     setFocusedTextarea(uniqueId);
-    setCharCount(caption.length);
+    setFocusedCaption(textarea.value); // Set the focused caption from the current textarea value
+    setCharCount(textarea.value.length); // Set the charCount based on the length of the current value
     setFocusedTextareaElement(textarea); // Save the reference to the textarea
   };
   const handleFillInputChange = (e) => {
@@ -369,15 +376,21 @@ const groupSelectedImages = useCallback(() => {
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
     const count = text.length;
-    let color = 'black';
-    let fontWeight = 'normal';
-
+    let relativeCount = 0;
+    let color = '';
+    let fontWeight = 'bold';
+  
     if (count > maxCount) {
+      relativeCount = count - maxCount; // Characters over the limit
       color = 'red';
-    } else if (count >= minCount) {
-      fontWeight = 'bold';
+    } else if (count >= minCount && count <= maxCount) {
+      relativeCount = 0; // Within range
+      color = 'green';
+    } else {
+      relativeCount = count - minCount; // Characters below the minimum
+      color = 'grey';
     }
-
+  
     return (
       <span
         style={{
@@ -386,14 +399,14 @@ const groupSelectedImages = useCallback(() => {
           paddingRight: '5px',
           zIndex: '100',
           position: 'absolute',
-          right: '0px',
+          left: '0px',
           bottom: '45px',
           fontSize: '12px',
           color,
           fontWeight,
         }}
       >
-        {count}
+        {relativeCount === 0 ? count : relativeCount > 0 ? `+${relativeCount}` : `${relativeCount}`}
       </span>
     );
   };
@@ -507,8 +520,8 @@ const groupSelectedImages = useCallback(() => {
           style={{ width: '400px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
         />
         <textarea
-          value={caption}
-          onChange={(e) => handleCaptionChange(url, e.target.value)}
+          defaultValue={caption}
+          onChange={(e) => handleCaptionChange(e, url)}
           placeholder="Enter caption"
           style={{ width: '100%', resize: 'none', fontSize: '12px', border: '1px solid #bbb' }}
           onFocus={(e) => {
@@ -520,11 +533,12 @@ const groupSelectedImages = useCallback(() => {
               }, 0);
             }
           }}
+          onBlur={(e) => handleCaptionBlur(e, url, focusedCaption.length)}  // Apply background color on blur
           onKeyDown={(e) => handleTabKey(e, e.target)}
         />
-        {focusedTextarea === url && renderCharacterCounter(caption, 100, 125)}
-        {count > 1 && (
-          <div style={{ position: 'absolute', top: '5px', right: '5px', background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+         {focusedTextarea === url && renderCharacterCounter(focusedCaption, 100, 125)}
+         {count > 1 && (
+          <div style={{ position: 'absolute', top: '5px', right: '5px', background: 'grey', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             {count}
           </div>
         )}
@@ -533,14 +547,14 @@ const groupSelectedImages = useCallback(() => {
   </div>
 </div>
 
-      <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'11px', color: 'gray', width: '60%', marginLeft: '20vw'}}>
+      <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'13px', color: 'gray', width: '60%', marginLeft: '20vw'}}>
       {allKeywords}
       </div>
       <div className="flex" style={{marginBottom: '40px', visibility: pages.length > 0 ? 'visible': 'hidden', marginLeft: '20vw', position: 'relative'}}>
         <input
           id="fill-input"
           placeholder="Enter caption, * for wildcard"
-          style={{border: 'solid 2px #d5d5d5', width: '770px', resize: 'none', fontSize: '12px' }}
+          style={{border: 'solid 2px #d5d5d5', width: '770px', resize: 'none', fontSize: '13px' }}
           onChange={handleFillInputChange} // Attach the change handler here
           tabIndex="-1"
         />

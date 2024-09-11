@@ -205,10 +205,65 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   // ` Event Handlers
 
-  const handleBlur = (e) => {
+  const charLimits = {
+    title: { min: 55, max: 60 },
+    meta: { min: 155, max: 160 },
+    h1: { min: 20, max: 70 },
+    h2: { min: 20, max: 70 },
+    onPage: { min: 50, max: 200 }, // example range for onPage
+  };
+  
+  const handleBlur = (e, page, textareaType) => {
+    const textarea = e.target;
+    let originalValue = '';
+    let currentValue = textarea.value;
+    const charCount = currentValue.length;
+  
+    // Determine which field is being blurred and get its original value
+    switch (textareaType) {
+      case 'name':
+        originalValue = page.name;
+        break;
+      case 'title':
+        originalValue = page.title;
+        break;
+      case 'meta':
+        originalValue = page.meta;
+        break;
+      case 'h1':
+        originalValue = page.h1;
+        break;
+      case 'h2':
+        originalValue = page.h2;
+        break;
+      case 'onPage':
+        originalValue = page.onpage;
+        break;
+      default:
+        originalValue = ''; // Fallback
+    }
+  
+    // Check if the value has changed
+    const hasValueChanged = currentValue !== originalValue;
+
+    // Check the character count and apply color if it's out of range
+    const limits = charLimits[textareaType] || { min: 0, max: Infinity };
+    const isCharCountOutOfRange = charCount < limits.min || charCount > limits.max;
+
+    // Determine the background color based on both conditions
+    if (isCharCountOutOfRange) {
+      textarea.style.backgroundColor = '#fbeeed'; // Highlight the field red if out of bounds
+    } else if (hasValueChanged) {
+      textarea.style.backgroundColor = '#eef6ec'; // Green if the value has changed
+    } else {
+      textarea.style.backgroundColor = 'white'; // Set to white if value hasn't changed and within character limits
+    }
+  
+    // Hide modal if applicable
     if (modalRef.current && !modalRef.current.contains(e.relatedTarget)) {
       setModalData(null);
     }
+  
     setFocusedTextarea({ type: null, index: null });
   };
 
@@ -488,7 +543,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                             }}
                             onBlur={(e) => {
                               e.target.style.border = '1px solid #d3d3d3';
-                              handleBlur(e);
+                              handleBlur(e, page, 'name');
                             }}
                             onKeyDown={(e) => handleKeyDown(e, pageIndex, 'name')}
                           />
@@ -539,7 +594,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onBlur={(e) => {
                                 e.target.style.borderColor = '#d3d3d3';
                                 refs.current[pageIndex].refMeta.current.style.borderTop = '1px solid #d3d3d3';
-                                handleBlur(e);
+                                handleBlur(e, page, 'title');
                               }}
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'title')}
@@ -572,7 +627,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               onBlur={(e) => {
                                 e.target.style.borderColor= '#d3d3d3';
                                 refs.current[pageIndex].refH1.current.style.borderTop = '1px solid #d3d3d3';
-                                handleBlur(e);
+                                handleBlur(e,page,'meta');
                               }}
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'meta')}
@@ -604,7 +659,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                               }}
                               onBlur={(e) => {
                                 e.target.style.borderColor = '#d3d3d3';
-                                handleBlur(e);
+                                handleBlur(e, page, 'h1');
                               }}
                               onChange={handleChange}
                               onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
@@ -637,7 +692,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 }}
                                 onBlur={(e) => {
                                   e.target.style.border = '1px solid #d3d3d3';
-                                  handleBlur(e);
+                                  handleBlur(e, page, 'h2');
                                 }}
                                 onChange={handleChange}
                                 onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
@@ -676,7 +731,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 onBlur={(e) => {
                                   e.target.style.borderColor = '#d3d3d3';
                                   refs.current[pageIndex].refH1.current.style.borderBottom = '1px solid #d3d3d3';
-                                  handleBlur(e);
+                                  handleBlur(e, page, 'onPage');
                                 }}
                                 onChange={(e) => {
                                   handleChange(e);
