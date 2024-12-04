@@ -10,9 +10,9 @@ Sorry these screenshots look a bit horrendous to maintain client anonymity.
 <img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
 Client websites are batch scraped.
 
-![Screenshot](./-DevLog/onpagescreen.png)
+<img src="./-DevLog/onpagescreen.png" alt="onPage" width="50%"/>
 Target meta data is displayed in a front end interface for editing.
-![AltImg](./-DevLog/altimages2.png)
+<img src="./-DevLog/altimages2.png" alt="aImages" width="50%"/>
 Images can be selected for alt-tag editing.
-![Sheets](./-DevLog/sheets.png)
-Output to Google Sheets
+<img src="./-DevLog/sheets.png" alt="Sheets" width="50%"/>
+Output to Google Sheets for delivery to client
