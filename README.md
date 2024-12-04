@@ -4,6 +4,16 @@ Designed for a friend to speed up webscraping and data entry for SEO content wri
 ## Data Flow
 ![FlowChart](./-DevLog/flow-diagram.png)
 
+## Screenshot
+Screenshots look a bit horrendous to maintain client anonymity.
+
+<img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
+
+![Screenshot](./-DevLog/onpagescreen.png)
+![AltImg](./-DevLog/altimages2.png)
+![Sheets](./-DevLog/sheets.png)
+
+
 ## Features
 
 ### On Page copy
@@ -22,12 +32,3 @@ Then, we fill the target sheet with our proposed SEO recommendations and apply a
 
 ## Future Goals
 We hope to use the co-creation of this tool to build a future comprehensive tool for seasonal SEO Updates.
-
-## Screenshot
-Screenshots look a bit horrendous to maintain client anonymity.
-
-<img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
-
-![Screenshot](./-DevLog/onpagescreen.png)
-![AltImg](./-DevLog/altimages2.png)
-![Sheets](./-DevLog/sheets.png)
