@@ -2,9 +2,6 @@
 Designed for a friend to speed up webscraping and data entry for SEO content writing.  
 For monthly batches of ~100 client sites
 
-## Data Flow
-![FlowChart](./-DevLog/flow-diagram.png)
-
 ## Screenshot
 Sorry these screenshots look a bit horrendous to maintain client anonymity.
 
