@@ -8,7 +8,7 @@ Sorry these screenshots look a bit horrendous to maintain client anonymity.
 <img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
 Backend grabbing existing website content.
 <img src="./-DevLog/onpagescreen.png" alt="onPage" width="50%"/>
-Editing meta data.
+Validate pages with screenshots and edit meta data.
 <img src="./-DevLog/altimages2.png" alt="aImages" width="50%"/>
 Viewing images and editing alt tags.
 <img src="./-DevLog/sheets.png" alt="Sheets" width="50%"/>
