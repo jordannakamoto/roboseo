@@ -8,8 +8,8 @@ Sorry these screenshots look a bit horrendous to maintain client anonymity.
 <img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
 Backend grabbing existing website content.
 <img src="./-DevLog/onpagescreen.png" alt="onPage" width="50%"/>
-Validate pages with screenshots and edit meta data.
+Validate pages with screenshots and make metadata edits.
 <img src="./-DevLog/altimages2.png" alt="aImages" width="50%"/>
-Viewing images and editing alt tags.
+View images and edit alt tags.
 <img src="./-DevLog/sheets.png" alt="Sheets" width="50%"/>
 Output to Google Sheets report for delivery.
