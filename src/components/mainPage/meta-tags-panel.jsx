@@ -250,14 +250,14 @@ const TableView = ({ webpages, registerFinalState }) => {
     const limits = charLimits[textareaType] || { min: 0, max: Infinity };
     const isCharCountOutOfRange = charCount < limits.min || charCount > limits.max;
 
-    // Determine the background color based on both conditions
-    if (isCharCountOutOfRange) {
-      textarea.style.backgroundColor = '#fbeeed'; // Highlight the field red if out of bounds
-    } else if (hasValueChanged) {
-      textarea.style.backgroundColor = '#eef6ec'; // Green if the value has changed
-    } else {
-      textarea.style.backgroundColor = 'white'; // Set to white if value hasn't changed and within character limits
-    }
+    // // Determine the background color based on both conditions
+    // if (isCharCountOutOfRange) {
+    //   textarea.style.backgroundColor = '#fbeeed'; // Highlight the field red if out of bounds
+    // } else if (hasValueChanged) {
+    //   textarea.style.backgroundColor = '#eef6ec'; // Green if the value has changed
+    // } else {
+    //   textarea.style.backgroundColor = 'white'; // Set to white if value hasn't changed and within character limits
+    // }html
   
     // Hide modal if applicable
     if (modalRef.current && !modalRef.current.contains(e.relatedTarget)) {

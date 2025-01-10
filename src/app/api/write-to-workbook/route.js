@@ -18,13 +18,13 @@ async function getSheetValues(client, sheetId, sheetName) {
     const response = await client.spreadsheets.values.get({
         spreadsheetId: sheetId,
         range: range,
-    });
+    });`    
 
     const rowCount = response.data.values ? response.data.values.length : 0;
     const values = Array(rowCount).fill(null);
 
     response.data.values.forEach((row, index) => {
-        values[index] = row[0];  // Assuming single column (A)
+        values[index] = row[0];  // Assuming single column (A) rk   `
     });
 
     return values;
@@ -524,7 +524,7 @@ async function applyBordersAndFormulas(sheets, spreadsheetId, sheetId, startRow,
             updateCells: {
                 range: {
                     sheetId: sheetId,
-                    startRowIndex: row,
+                    startRowIndex: row, 
                     endRowIndex: row + 1,
                     startColumnIndex: 4, // Column E (index 4)
                     endColumnIndex: 5
@@ -598,7 +598,7 @@ async function processOnPageSheet(sheets, data) {
         rowIndex += rowsPerEntry; // Move to the next set of rows for the next page.
     });
 
-    await updateSheet(sheets, data.sheetId, requests);
+    await updateSheet(sheets, data.sheetId, requests);  
     return { sheetName, updatedCells: requests.length };
 }
 

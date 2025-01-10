@@ -105,7 +105,7 @@ export default function TopBar({onPrepareData}) {
         setIsLoading(false);
       }
     } else {
-      console.log("Master sheet already loaded");
+      console.log("Master sheet already loaded or wrong url");
     }
   };
 

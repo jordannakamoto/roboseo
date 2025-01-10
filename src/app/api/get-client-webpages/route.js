@@ -37,6 +37,7 @@ export async function POST(request) {
         let headerRow;
         let linkIndex;
 
+        // * first we're collecting rows
         let rowIndex = 0;
         while (rowIndex < rows.length) { 
             const row = rows[rowIndex].map(header => header.toLowerCase());

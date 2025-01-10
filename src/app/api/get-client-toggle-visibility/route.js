@@ -44,6 +44,7 @@ export async function POST(request) {
                     sheetTitle.startsWith(baseName) && sheetTitle.includes("refresh")
                 );
 
+                // if refresh is anywhere in the description column
                 if (data.currentClient.isRefresh.toLowerCase().includes("refresh")) {
                     // If in refresh mode, show both base and refresh versions
                     if (isBaseNameMatch && isRefreshMatch) {
