@@ -1,33 +1,42 @@
-# For converting html to markdown before extracting on page data
-
 import os
 import sys
-import html2text
+from bs4 import BeautifulSoup
 
-def convert_html_to_markdown(directory, filename):
-    # Generate the full path to the HTML file and the expected markdown output filename
+def extract_headers_and_text(directory, filename):
+    # Generate the full path to the HTML file
     html_file_path = os.path.join(directory, filename)
-    md_file_path = html_file_path.replace('.html', '.md')
-    print("running convert.py")
-    print(html_file_path)
-    print(md_file_path)
-    
-    # Check if the markdown file already exists
-    if not os.path.exists(md_file_path):
-        # Read the HTML content
-        with open(html_file_path, 'r', encoding='utf-8') as f:
-            html_content = f.read()
-        
-        # Convert HTML to Markdown
-        markdown_content = html2text.html2text(html_content)
-        
-        # Write the Markdown content to a new .md file
-        with open(md_file_path, 'w', encoding='utf-8') as f:
-            f.write(markdown_content)
+    print("Processing:", html_file_path)
 
-        print(f"Converted {filename} to {md_file_path}.")
-    else:
-        print(f"{md_file_path} already exists, skipping {filename}.")
+    # Check if the file exists
+    if not os.path.exists(html_file_path):
+        print(f"File {html_file_path} does not exist.")
+        return
+    
+    # Read the HTML content
+    with open(html_file_path, 'r', encoding='utf-8') as f:
+        html_content = f.read()
+    
+    # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Extract headers (h1, h2, h3) and their next valid text
+    results = []
+    for header in soup.find_all(['h1', 'h2', 'h3']):
+        next_sibling = header.find_next_sibling()
+        while next_sibling:
+            if next_sibling.name:  # Ignore non-tag elements like comments or whitespace
+                text = next_sibling.get_text(strip=True)
+                if len(text) > 50:  # Adjust the length threshold as needed
+                    results.append((header.name, header.get_text(strip=True), text))
+                    break
+            next_sibling = next_sibling.find_next_sibling()
+    
+    # Print or save the results
+    for header_tag, header_text, text in results:
+        print(f"{header_tag.upper()}: {header_text}")
+        print(f"Text: {text}\n")
+    
+    return results
 
 def main():
     if len(sys.argv) < 3:
@@ -35,11 +44,11 @@ def main():
         sys.exit(1)
 
     directory = sys.argv[1]
-    html_files = sys.argv[2:]
+    html_files = sys.argv[2:]       
 
     for html_file in html_files:
         if html_file.endswith('.html'):
-            convert_html_to_markdown(directory, html_file)
+            extract_headers_and_text(directory, html_file)
         else:
             print(f"Skipping {html_file} (not an HTML file)")
 

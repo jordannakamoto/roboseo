@@ -24,12 +24,13 @@ export async function POST(request) {
             return `rendered_${formattedUrl}.html`;
         });
 
-        // Step 3: Supply filenames as arguments to convert.py
-        const scriptPath = path.join('scripts', 'convert.py'); // Path to convert.py
+        // Step 3: Supply filenames as arguments to convert.js
+        const scriptPath = path.join('scripts', 'convert.js'); // Path to convert.py
         console.log("script path:", scriptPath);
-        const command = `python ${scriptPath} ${dir} ${filenames.join(' ')}`; // Pass the directory and filenames as arguments
+        const command = `node ${scriptPath} ${dir} ${filenames.join(' ')}`; // Pass the directory and filenames as arguments
         console.log("command:", command);
         execSync(command); // This will generate .md files from the HTML files
+        // ? What is the output here
 
         // Step 4: For all .md files, open and scan for processedPages.h1
         processedPages.forEach((page) => {

@@ -3,6 +3,7 @@
 #
 scripts/crawltest.js
 scripts/homepageList.txt
+links.txt
 
 # screaming frog files
 public/frog/*/
