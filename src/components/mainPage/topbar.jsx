@@ -365,7 +365,7 @@ export default function TopBar({onPrepareData}) {
           // Merge the OnPage data back into the mergedData
           finalData = mergedData.map(page => {
             const matchedOnPage = processedPages.find(p => p.url === page.url);
-            return matchedOnPage ? { ...page, onpage: matchedOnPage.onpage } : page;
+            return matchedOnPage ? { ...page, ...matchedOnPage } : page;
           });
         }
 

@@ -25,7 +25,6 @@ async function getSheetValues(client, sheetId, sheetName) {
 
     response.data.values.forEach((row, index) => {
         values[index] = row[0];  // Assuming single column (A) rk   `
-    });
 
     return values;
 }

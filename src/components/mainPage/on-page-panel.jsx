@@ -1,5 +1,9 @@
 'use client';
 
+// The text area should toggle with which one is selected...
+// Display a list of on page options
+// Display a list of h1, h2, h3 for selecting
+
 import React, { useEffect, useRef, useState } from 'react';
 
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
@@ -165,6 +169,8 @@ const OnPagePanel = () => {
         onChange={(e) => handleTextareaChange(e, index)} // Update onpage on change
         onPaste={(e) => handlePaste(e, index)}
       />
+      // Add some buttons for h1,h2,h3
+      // Add some buttons filled with options
     </div>
   )
 ))}
