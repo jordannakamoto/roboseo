@@ -4,7 +4,7 @@
 // Display a list of on page options
 // Display a list of h1, h2, h3 for selecting
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
@@ -26,6 +26,8 @@ const OnPagePanel = () => {
           name: page.name || '',
           keywords: page.keywords.join(', ') || '',
           h1: page.h1,
+          h2: page.h2,
+          h3: page.h3,
           originalCopy: '',
           isVisible: true,
         };
@@ -34,14 +36,14 @@ const OnPagePanel = () => {
     }
   }, [clientUrl, pages]);
 
-  useEffect(() => {
-    // Set the scroll position for each image container
-    containerRefs.current.forEach((container) => {
-      if (container) {
-        container.scrollTop = container.scrollHeight * 0.1; // Scroll 10% down
-      }1
-    });
-  }, [images]);
+  // useLayoutEffect(() => {
+  //   containerRefs.current.forEach((container) => {
+  //     if (container) {
+  //       container.scrollTop = container.scrollHeight * 0.1;
+  //     }
+  //   });
+  // }, [images.map(img => img.imgSrc).join(',')]); // ← Only rerun if screenshot path changes
+  
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (panelRef.current === document.activeElement && e.key === 'Tab') {
@@ -129,7 +131,7 @@ const OnPagePanel = () => {
     <div
       ref={panelRef}
       tabIndex={0} // Make the div focusable
-      style={{ width: '85vw',borderRadius:'0px 10px 10px 0px', position: 'relative', marginTop: '40px', outline: 'none', background: '#f7f7f7' }} // Outline set to none to avoid focus ring
+      style={{ width: '85vw',borderRadius:'0px 10px 10px 0px', position: 'relative', marginTop: '100px', outline: 'none', background: '#f7f7f7' }} // Outline set to none to avoid focus ring
     >
       <div
         ref={scrollContainerRef}
@@ -147,30 +149,97 @@ const OnPagePanel = () => {
           paddingRight: '1100px',
         }}
       >
-        {images.map((image, index) => (
-  (image.isVisible) && (
-    <div key={index} style={{ display: 'flex', marginRight: '5px', textAlign: 'center' }}>
+{images.map((image, index) => (
+  image.isVisible && (
+    <div key={index} style={{ display: 'flex', flexDirection: 'row', marginRight: '10px', gap: '10px' }}>
+      
+      {/* Screenshot */}
       <div
-        ref={el => containerRefs.current[index] = el} // Assign each container ref to the corresponding element
-        style={{ border: 'solid 1px #d5d5d5', overflowY: 'scroll', height: '700px', width: '245px', maxWidth: '245px' }}
-      >
-        <img
-          src={image.imgSrc}
-          alt={`Screenshot of ${image.url}`}
-          style={{ width: '100%', cursor: 'pointer' }}
-          onClick={(e) => handleImageClick(e, index)} // Handle image click or shift-click
+ref={el => {
+  if (el && !containerRefs.current[index]) {
+    containerRefs.current[index] = el;
+  }
+}}  style={{ 
+    border: 'solid 1px #d5d5d5', 
+    overflowY: 'scroll', 
+    height: '520px', // ← stretched down
+    width: '245px' 
+  }}
+>
+<button
+  onClick={(e) => handleImageClick(e, index)}
+  style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+>
+  <img
+    src={image.imgSrc}
+    alt={`Screenshot of ${image.url}`}
+    style={{ width: '100%' }}
+  />
+</button>
+</div>
+
+      {/* Right Side: Textarea + Header Buttons */}
+      <div style={{ display: 'flex', flexDirection: 'column', width: '350px' }}>
+        <textarea
+          id={`textarea-${index}`}
+          value={image.onpage}
+          placeholder={image.name}
+          style={{ height: '420px', width: '100%', fontSize: '13px', resize: 'none', padding: '15px', zIndex:'100' }}
+          onChange={(e) => handleTextareaChange(e, index)}
+          onPaste={(e) => handlePaste(e, index)}
         />
+
+        {/* Header selector buttons (under textarea) */}
+        <div style={{ marginTop: '10px' }}>
+          {['h1', 'h2', 'h3'].map(level => {
+            const val = image[level];
+            if (!val) return null;
+
+            const isSelected = (pages[index]?.header || '') === val;
+
+            return (
+              <button
+                key={level}
+                onClick={(e) => {
+                  const levelToUse = level;
+                
+                  setPages(prev => prev.map((p, i) => {
+                    const valForPage = images[i]?.[levelToUse];
+                    if (!valForPage) return p;
+                
+                    if (e.shiftKey) {
+                      // Apply to all remaining pages
+                      return i >= index ? { ...p, header: valForPage } : p;
+                    } else {
+                      // Only apply to the one clicked
+                      return i === index ? { ...p, header: valForPage } : p;
+                    }
+                  }));
+                }}
+                style={{
+                  display: 'block',
+                  marginBottom: '4px',
+                  background: isSelected ? '#dbeafe' : '#f0f0f0', // soft Tailwind blue-100
+                  color: isSelected ? 'black' : 'black',        // deep blue text
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  textAlign: 'left',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  width: '100%',
+                }}
+                title={val}
+              >
+                {level.toUpperCase()}: {val}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <textarea
-        id={`textarea-${index}`} // Unique ID for each textarea
-        value={image.onpage} // Bind the textarea value to the onpage value
-        placeholder={image.name}
-        style={{ height: '100%', width: '250px', fontSize: '13px', resize: 'none', marginLeft: '10px' }}
-        onChange={(e) => handleTextareaChange(e, index)} // Update onpage on change
-        onPaste={(e) => handlePaste(e, index)}
-      />
-      // Add some buttons for h1,h2,h3
-      // Add some buttons filled with options
     </div>
   )
 ))}

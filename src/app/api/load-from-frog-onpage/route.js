@@ -52,12 +52,14 @@ export async function POST(request) {
                 h2 = result.headerResults.find((h) => h.headerTag === "h2")?.headerText;
                 h3 = result.headerResults.find((h) => h.headerTag === "h3")?.headerText;
             }
+            const header = h1
 
             return {
                 url: page.url,
                 h1,
                 h2,
                 h3,
+                header,
             };
         });
 

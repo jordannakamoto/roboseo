@@ -26,6 +26,7 @@ export default function TopBar({onPrepareData}) {
   const [isMasterSheetVisible, setIsMasterSheetVisible] = useState(false); // State to manage visibility of master-sheet-url input
   const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl, setClientUrl, showH2, finalizationState, setFinalizationState } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
+  const [masterSheetURL, setMasterSheetURL] = useState('');
   // - Loading Modal
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -42,6 +43,7 @@ export default function TopBar({onPrepareData}) {
 
       const storedMSheet = localStorage.getItem('masterSheetURL');
       if (storedMSheet) document.getElementById('master-sheet-url').value = JSON.parse(storedMSheet);
+      if (storedMSheet) setMasterSheetURL(JSON.parse(storedMSheet));
 
       const storedClients = localStorage.getItem('clients');
       if (storedClients) {
@@ -75,8 +77,7 @@ export default function TopBar({onPrepareData}) {
 
   // Load client list from the master sheet
   const handleLoadSheet = async () => {
-    const url = document.getElementById('master-sheet-url').value;
-    const sheetId = extractSheetIdFromUrl(url);
+    const sheetId = extractSheetIdFromUrl(masterSheetURL);
     const now = new Date();
     const test_date = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
     const range = `${test_date}!C:J`;
@@ -97,9 +98,10 @@ export default function TopBar({onPrepareData}) {
         const clientArray = data.map(row => ({ name: row[0], workbookURL: row[4], isRefresh: row[7] })).filter(cl => cl.workbookURL.length >= 12);
 
         setClientList(clientArray);
-        localStorage.setItem('masterSheetURL', JSON.stringify(url));
+        localStorage.setItem('masterSheetURL', JSON.stringify(masterSheetURL));
         localStorage.setItem('clients', JSON.stringify(clientArray));
         setIsLoading(false);
+        await loadFrogScraper(clientArray);
       } catch (error) {
         console.error('Failed to load sheet:', error);
         setIsLoading(false);
@@ -452,24 +454,24 @@ const triggerFinalization = (mode) => {
 };
 
   // Load Frog scraper with client data
-  const loadFrogScraper = async () => {
-    
+  const loadFrogScraper = async (clients) => {
     setIsLoading(true);
-    setPages([]); // Reset pages before loading new client data
-    setAltImages([]); // Reset alt images
-    setSheetTitles([]); // Reset sheet titles
-    setLoadingMessage("Getting all clients, homepages, and workbookURLSs from master sheet.\n Check HomepageList.txt when done");
-    const modifiedClientList = clientList.map(client => {
+    setPages([]);
+    setAltImages([]);
+    setSheetTitles([]);
+    setLoadingMessage("Getting all clients, homepages, and workbookURLs from master sheet.\nCheck HomepageList.txt when done");
+  
+    const modifiedClientList = clients.map(client => {
       const workbookSheetId = extractSheetIdFromUrl(client.workbookURL);
       if (!workbookSheetId) {
         alert(`Error loading sheetID for client, ${client.name}`);
         return null;
       }
       return { ...client, workbookSheetId };
-    }).filter(client => client !== null);
-
+    }).filter(Boolean);
+  
     setClientList(modifiedClientList);
-
+  
     if (tokens) {
       try {
         const response = await fetch('/api/get-all-client-urls', {
@@ -477,23 +479,25 @@ const triggerFinalization = (mode) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tokens, clients: modifiedClientList }),
         });
-
+  
         const res = await response.json();
         const resultArray = res.responseList;
-
-        if (res.failedClients.length > 0) console.log(res.failedClients);
-
+  
+        if (res.failedClients.length > 0) {
+          console.log("Failed clients:", res.failedClients);
+        }
+  
         setClientList(resultArray);
-        localStorage.setItem('clients', JSON.stringify(resultArray));
         setAllClients(resultArray);
-
+        localStorage.setItem('clients', JSON.stringify(resultArray));
         console.log("Clients loaded into screaming frog for scraping");
       } catch (error) {
         console.error('Failed to process files:', error);
       }
     }
+  
     setIsLoading(false);
-    const response = await fetch('/api/open-homepagelist', {
+    await fetch('/api/open-homepagelist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -531,12 +535,12 @@ const triggerFinalization = (mode) => {
 
   return (
     <div className="relative z-50">
-    <div style = {{position:'absolute', left:'34px', top: '20px'}}>
+    <div style = {{position:'absolute', left:'34px', top: '20px', width:'500px'}}>
       <h1 style= {{fontWeight:'bold', }}>{currentClient.name}</h1>
     </div>
     <LoadingModal isVisible={isLoading} message={loadingMessage} />
-    <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '10px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
-      <div style= {{borderLeft:'solid 10px white',}} className="flex justify-between items-center" >
+    <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '-20px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
+      <div style= {{borderLeft:'solid 1px rgb(231, 231, 231)', width: '180px',}} className="flex justify-between items-center" >
         <div className="flex flex-grow items-center space-x-4">
           {/* <span style={{ marginLeft: "20px" }}>{currentClient.name}</span> */}
           {/* <input
@@ -547,80 +551,117 @@ const triggerFinalization = (mode) => {
             style={{ flexGrow: 1, fontSize: "11px" }}
           /> */}
           {/* style={{ opacity: tokens ? 0.5 : 1, fontSize: "11px" }} */}
-          <Button onClick={login} variant="outline">
-            <FcGoogle size={10} />
+          <Button onClick={login} className="bg-white border-right border-gray-300 hover:bg-gray-100 rounded-none">
+            <FcGoogle size={15} />
           </Button>
         </div>
-        <Button style={{color:'grey', backgroundColor: isMasterSheetVisible ? '#deeff5' : 'white',}} onClick={toggleMasterSheetVisibility} className="h-10 w-20 rounded-sm border border-gray-300 p-2">
-            M 📖
-          </Button>
-          
-            <input
-              id="master-sheet-url"
-              onChange={handleLoadSheet}
-              className="p-2 border border-gray-300 rounded"
-              placeholder="Master sheet URL"
-              style={{ visibility: isMasterSheetVisible ? 'visible' : 'hidden', width: '300px',position:'absolute', zIndex:'1000', top:'40px', right:'-50px',flexGrow: 1, fontSize: "11px" }}
-            />
-        <Button variant="outline" style={{color:'grey'}} onClick={loadFrogScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
-          Init
-        </Button>
-        <Button variant="outline" style={{color:'grey'}} onClick={runScraper} className="block h-10 w-20 rounded-sm border border-gray-300 bg-white p-2">
+        {/* Toggle Master Sheet Input */}
+<Button
+  style={{
+    color: 'grey',
+    backgroundColor: isMasterSheetVisible ? '#deeff5' : 'white',
+  }}
+  onClick={toggleMasterSheetVisibility}
+  className="bg-white border-r border-gray-300 hover:bg-gray-100 rounded-none"
+>
+  M 📖
+</Button>
+
+{/* Conditionally rendered input + load button */}
+<div
+  className="absolute z-50 flex gap-1"
+  style={{
+    top: '40px',
+    right: '0px',
+    opacity: isMasterSheetVisible ? 1 : 0,
+    visibility: isMasterSheetVisible ? 'visible' : 'hidden',
+    pointerEvents: isMasterSheetVisible ? 'auto' : 'none',
+    transition: 'opacity 0.2s ease'
+  }}
+>
+  <input
+    id="master-sheet-url"
+    value={masterSheetURL}
+    className="p-2 rounded text-xs"
+    onChange={(e) => setMasterSheetURL(e.target.value)}
+    placeholder="Master sheet URL"
+    style={{ width: '180px' }}
+  />
+  <Button
+    onClick={handleLoadSheet}
+    className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs px-3 py-2"
+  >
+    Load
+  </Button>
+</div>
+        <Button style={{color:'grey'}} onClick={runScraper} className="bg-white border-right border-gray-300 hover:bg-gray-100 rounded-none">
           Scrape
         </Button>
          {/* Right Sidebar */}
-        <div className="fixed top-10 right-0 z-10 py-2 bg-white " style={{ borderLeft:'solid 10px white', background: '#f9f9f9',borderRadius: '0', height: "65vh", width: "210px", overflow: "scroll" }}>
+        <div className="fixed top-10 right-0 z-10 bg-white " style={{ paddingTop: '20px', paddingBottom: '20px', borderLeft:'solid 1px rgb(231, 231, 231)', background: '#f9f9f9',borderRadius: '0', height: "70vh", width: "180px", overflow: "scroll" }}>
           <ul className="text-sm text-gray-700">
             {clientList
               .filter(client => showCompleted || !client.completed)
               .map((client, index) => (
-                <li
-                  key={index}
-                  onClick={() => selectClient(client)}
-                  className={`flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer ${
-                    currentClient && currentClient.name === client.name ? 'bg-gray-100' : ''
-                  }`}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className={`flex-grow ${client.completed ? 'line-through' : ''}`}>
-                    {client.name}
-                  </span>
-                </li>
+<li
+  key={index}
+  onClick={() => selectClient(client)}
+  className={`flex items-center mx-2 my-1 px-4 py-2 cursor-pointer rounded-md hover:bg-gray-200 ${
+    currentClient && currentClient.name === client.name
+      ? 'bg-gray-200 rounded-md'
+      : ''
+  }`}
+>
+  <span className={`flex-grow ${client.completed ? 'line-through' : ''}`}>
+    {client.name}
+  </span>
+</li>
               ))}
           </ul>
         </div>
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '210px', border: 'none',borderLeft:'solid 10px white', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
+      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '180px', border: 'none',borderLeft:'solid 1px rgb(231, 231, 231)', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
         <CardHeader />
-        <CardContent className="flex flex-col items-center space-y-2" style={{}}>
-          <button
-              onClick={() => setShowCompleted(prev => !prev)}
-              className="py-2 text-sm text-gray-700"
-            >
-              {showCompleted ? 'Hide Completed' : 'Show Completed'}
-            </button>
-                    {/* Button to open active client URL in a new tab */}
-                    <Button
-              onClick={() => window.open(currentClient?.workbookURL, '_blank')}
-              variant="outline"
-              className="p-2 border border-gray-300 rounded"
-              style={{ height: "3em", flexGrow: 1, fontSize: "11px" }}
-            >
-              🌐 Open {currentClient.name} Workbook
-          </Button>
-          {/* <Button onClick={testCSVParse} variant="outline">Parse CSV</Button> */}
-  
-          <Button 
-            onClick={() => triggerFinalization(showH2 ? "h2" : "h1")} 
-            variant="outline"
-            style={{height: "3em"}}
-          >
-            ✏️ Write To Workbook {showH2 ? "h2" : ""}
-          </Button>
-          <Button style={{marginTop: '10px', height: '3em'}} onClick={() => markClientDone()} variant="outline">{currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}</Button>
-        </CardContent>
+        <CardContent className="flex p-2 flex-col items-center gap-1 text-xs">
+  {/* Toggle completed clients */}
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={() => setShowCompleted(prev => !prev)}
+    className="w-full text-gray-700"
+  >
+    {showCompleted ? 'Hide Completed' : 'Show Completed'}
+  </Button>
+
+  {/* Open workbook */}
+  <Button
+    onClick={() => window.open(currentClient?.workbookURL, '_blank')}
+    variant="outline"
+    className="w-full h-10 text-s"
+  >
+    🌐 Open Workbook
+  </Button>
+
+  {/* Finalize button */}
+  <Button
+    onClick={() => triggerFinalization(showH2 ? "h2" : "h1")}
+    variant="outline"
+    className="w-full h-10 text-s"
+  >
+    ✏️ Write To Workbook {showH2 ? "h2" : ""}
+  </Button>
+
+  {/* Mark done / undone */}
+  <Button
+    onClick={() => markClientDone()}
+    variant="outline"
+    className="w-full h-10 text-s"
+  >
+    {currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}
+  </Button>
+</CardContent>
       </Card>
     </div>
   );
