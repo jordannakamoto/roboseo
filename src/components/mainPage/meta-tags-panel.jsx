@@ -22,7 +22,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   const previousOnpageValues = useRef([]);
   const previousHeaderValues = useRef([]);
   const modalRef = useRef();
-  
+    
   // ` Modal Component
   const Modal = ({ isOpen, originalData, modalPosition }) => {
     if (!isOpen || !isModalVisible || !originalData) return null;
@@ -56,7 +56,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                 height: '0',
                 // padding: '5px',
                 zIndex: 1000,
-                width: '569px',
+                width: '430px',
                 background: '#f7f7f7',
                 borderSize: 'border-box',
             }}
@@ -77,10 +77,10 @@ const TableView = ({ webpages, registerFinalState }) => {
                                     if (textareaRef) {
                                         if (textareaType === 'onPage') {
                                             textareaRef.style.height = 'auto';
-                                            textareaRef.style.height = `${textareaRef.scrollHeight}px`;
+                                            textareaRef.style.height = `${textareaRef.scrollHeight * 1.2}px`;
                                             textareaRef.style.padding = `18px 12px`;
                                         } else if (textareaType === 'meta') {
-                                            textareaRef.style.height = '4.4em';
+                                            textareaRef.style.height = '5.6em';
                                         } else {
                                             textareaRef.style.height = '2.6em';
                                         }
@@ -125,7 +125,6 @@ const TableView = ({ webpages, registerFinalState }) => {
   }, []);
 
   // .. end Modal Component
-  
 
   // When OnPage data change from on-page-panel.jsx:
   // `UseEffect for OnPageValues and HeaderValues
@@ -172,8 +171,8 @@ const TableView = ({ webpages, registerFinalState }) => {
 
 
     // ` Modal Coordinates
-    let topPos = window.scrollY + rowRect.top - 52; // Adjust to consider scrolling
-    let leftPos = rowRect.left + (110);
+    let topPos = window.scrollY + rowRect.top - 42; // Adjust to consider scrolling
+    let leftPos = rowRect.left;
 
     switch (textareaType) {
       case 'title':
@@ -191,7 +190,7 @@ const TableView = ({ webpages, registerFinalState }) => {
           break;
       default:
   }
-  leftPos += 569;
+  leftPos -= 420;
     setModalPosition({
       top: topPos, // Position based on the row
       left: leftPos, // Adjust for modal width
@@ -421,8 +420,8 @@ const TableView = ({ webpages, registerFinalState }) => {
       <span
         style={{
           position: 'absolute',
-          left: '-20px',
-          bottom: '12px',
+          right: '5px',
+          top: '4px',
           fontSize: '12px',
           color,
           fontWeight,
@@ -437,7 +436,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     <>
     <div
         style={{
-          marginLeft: '100px',
+          marginLeft: '220px',
           position: 'relative',
           minHeight: 'auto',
           overflow: showTable ? 'visible' : 'hidden',
@@ -463,10 +462,10 @@ const TableView = ({ webpages, registerFinalState }) => {
 
               return (
                 <div key={`page-${pageIndex}`} ref={rowRef} style={{ marginBottom: '4px', marginTop: '4px', position: 'relative' }}>
-                  <table className="customTable" style={{borderCollapse: 'collapse',  borderBottom: 'solid 1px #e5e5e5', height: 'auto', width: '780px' }}>
+                  <table className="customTable" style={{borderCollapse: 'collapse',  borderBottom: 'solid 1px #e5e5e5', height: 'auto', width: '820px' }}>
                     <tbody>
-                      <tr style={{ width: '750px' }} key={`page-name-${pageIndex}`} className="pageNameRow">
-                      <td style={{ verticalAlign: 'top', width: '210px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
+                      <tr style={{ width: '850px' }} key={`page-name-${pageIndex}`} className="pageNameRow">
+                      <td style={{ verticalAlign: 'top', width: '230px', flexShrink: 0, flexGrow: 0, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontWeight: 'bold', fontSize: '14px', verticalAlign: 'top', width: '100%' }}>
                           <textarea
                             ref={refs.current[pageIndex].refName}
@@ -514,14 +513,13 @@ const TableView = ({ webpages, registerFinalState }) => {
                         {/* --------
                           TD #2
                           -------- */}
-                        <td style={{ width: '570px', paddingBottom: '4px', paddingLeft: '2px', verticalAlign: 'top', boxSizing: 'border-box' }}>
+                        <td style={{ width: '640px', paddingBottom: '4px', paddingLeft: '2px', verticalAlign: 'top', boxSizing: 'border-box' }}>
                           <div style={{height: '1.5em'}}></div>
                           {/* TITLE AREA */}
                           <div style={{ position: 'relative' }}>
                             <textarea
                               ref={refs.current[pageIndex].refTitle}
                               style={{
-
                                 width: '100%',
                                 resize: 'none',
                                 height: '2.4em',
@@ -558,7 +556,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                  
                                 width: '100%',
                                 resize: 'none',
-                                height: '4.5em',
+                                height: '5.5em',
                                 padding: '8px 22px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
