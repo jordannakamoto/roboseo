@@ -7,7 +7,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { FcGoogle } from 'react-icons/fc';
-import LoadingModal from '@/components/loader';
 import axios from 'axios';
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 import { useClientsContext } from '@/contexts/ClientsContext';
@@ -534,11 +533,18 @@ const triggerFinalization = (mode) => {
   // ******************************************************** //
 
   return (
-    <div className="relative z-50">
+    <div className="relative" style={{zIndex:'500'}}>
+      {isLoading && loadingMessage && (
+  <div
+    className="fixed top-1.5 left-4 text-xs text-gray-700 bg-white bg-opacity-80 px-2 py-1 rounded shadow"
+    style={{ zIndex: 1000 }}
+  >
+    {loadingMessage}
+  </div>
+)}
     <div style = {{position:'absolute', left:'34px', top: '20px', width:'500px'}}>
       <h1 style= {{fontWeight:'bold', }}>{currentClient.name}</h1>
     </div>
-    <LoadingModal isVisible={isLoading} message={loadingMessage} />
     <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '-20px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
       <div style= {{borderLeft:'solid 1px rgb(231, 231, 231)', width: '180px',}} className="flex justify-between items-center" >
         <div className="flex flex-grow items-center space-x-4">
