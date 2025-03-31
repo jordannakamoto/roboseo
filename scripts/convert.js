@@ -24,30 +24,45 @@ function extractHeadersAndText(directory, filename) {
         return -1;
     };
 
+    const headerResults = [];
+    const headerTexts = new Set();
+    ['h1', 'h2', 'h3'].forEach(tag => {
+        const headers = document.querySelectorAll(tag);
+        headers.forEach(header => {
+            const text = header.textContent.trim();
+            if (text.length > 0) {
+                headerResults.push({
+                    headerTag: tag,
+                    headerText: text,
+                    headerLineNumber: getLineNumber(header),
+                });
+                headerTexts.add(text);
+            }
+        });
+    });
+
+    if (/contact/i.test(filename)) {
+        return { headerResults: [], contentResults: [] };
+      }
+
     const contentResults = [];
     document.querySelectorAll('*').forEach(element => {
+        if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(element.tagName)) return;
+
         const textContent = element.textContent.trim();
-        if (textContent.length > 50) {
+
+        
+        if (
+            textContent.length > 50 &&
+            textContent.length <= 3000 && // filter out large blocks
+            
+            !headerTexts.has(textContent) // remove repeated headers
+        ) {
             contentResults.push({
                 text: textContent,
                 lineNumber: getLineNumber(element),
             });
         }
-    });
-
-    contentResults.sort((a, b) => a.lineNumber - b.lineNumber);
-
-    const headerResults = [];
-    ['h1', 'h2', 'h3'].forEach(tag => {
-        const headers = document.querySelectorAll(tag);
-        // console.error(`${tag}: found ${headers.length}`);
-        headers.forEach(header => {
-            headerResults.push({
-                headerTag: tag,
-                headerText: header.textContent.trim(),
-                headerLineNumber: getLineNumber(header),
-            });
-        });
     });
 
     return { headerResults, contentResults };

@@ -1,0 +1,16 @@
+You are an SEO assistant. Write a header for the following page trying to incorporate our updated keywords:
+Current Header:
+{currentValue}
+
+Keywords to include:
+{keywords}
+
+Guidelines:
+- LIMIT OUTPUT to between 20-70 characters.
+- Do not include quotes or labels. Output ONLY the alt text string.
+- Retain tone and format of original.
+
+Generate 3 variations of the response, structured as follows:
+1. {response1}
+2. {response2}
+3. {response3}

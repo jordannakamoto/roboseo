@@ -126,6 +126,52 @@ const OnPagePanel = () => {
       return updatedImages;
     });
   };
+  // Add this function to your component, outside of any other functions
+const preventScrollPropagation = (container) => {
+  const handleWheel = (e) => {
+    const { deltaY, currentTarget } = e;
+    const { scrollTop, scrollHeight, clientHeight } = currentTarget;
+
+    // Check if scrolling down at the bottom
+    if (deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Check if scrolling up at the top
+    if (deltaY < 0 && scrollTop <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  // Add the event listener with passive: false to allow preventDefault
+  container.addEventListener('wheel', handleWheel, { passive: false });
+  
+  // Return a cleanup function
+  return () => {
+    container.removeEventListener('wheel', handleWheel);
+  };
+};
+
+// Then update your useEffect to call this function for each container ref
+useEffect(() => {
+  // Clean up array for cleanup functions
+  const cleanupFunctions = [];
+  
+  // Apply scroll prevention to each container
+  containerRefs.current.forEach((container) => {
+    if (container) {
+      const cleanup = preventScrollPropagation(container);
+      cleanupFunctions.push(cleanup);
+    }
+  });
+  
+  // Clean up on unmount
+  return () => {
+    cleanupFunctions.forEach(cleanup => cleanup());
+  };
+}, [images]); // Re-apply when images change
 
   return (
     <div
@@ -151,7 +197,7 @@ const OnPagePanel = () => {
       >
 {images.map((image, index) => (
   image.isVisible && (
-    <div key={index} style={{ display: 'flex', flexDirection: 'row', marginRight: '10px', gap: '10px' }}>
+    <div key={index} style={{ display: 'flex', flexDirection: 'row',marginLeft:'5px'}}>
       
       {/* Screenshot */}
       <div
@@ -163,7 +209,7 @@ ref={el => {
     border: 'solid 1px #d5d5d5', 
     overflowY: 'scroll', 
     height: '520px', // ← stretched down
-    width: '245px' 
+    width: '265px' 
   }}
 >
 <button

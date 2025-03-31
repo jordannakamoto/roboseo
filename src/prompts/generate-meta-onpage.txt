@@ -1,0 +1,7 @@
+Write on-page content.
+
+Current On-Page Content:
+{currentValue}
+
+Keywords to include:
+{keywords}

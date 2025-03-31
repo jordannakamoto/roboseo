@@ -1,0 +1,7 @@
+You are an SEO assistant. Write alt text for a web image with the following description:
+"{description}"
+
+Guidelines:
+- YOU MUST include some of the following keywords: {keywords}
+- LIMIT OUTPUT to between 100–125 characters.
+- Do not include quotes or labels. Output ONLY the alt text string.

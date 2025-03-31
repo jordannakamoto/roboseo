@@ -4,6 +4,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import axios from 'axios'; // Add this import for making API requests
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 const TableView = ({ webpages, registerFinalState }) => {
@@ -22,6 +23,13 @@ const TableView = ({ webpages, registerFinalState }) => {
   const previousOnpageValues = useRef([]);
   const previousHeaderValues = useRef([]);
   const modalRef = useRef();
+  const [autocompleteOptions, setAutocompleteOptions] = useState([]);
+  const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
+  const [isAutocompleteVisible, setIsAutocompleteVisible] = useState(true);
+  const [prefetchedData, setPrefetchedData] = useState({}); // Container for preloaded data
+  const [progress, setProgress] = useState({ current: 0, total: 0 }); // Progress bar state
+  const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
+  const [previousValues, setPreviousValues] = useState({}); // Track previous values for each field
     
   // ` Modal Component
   const Modal = ({ isOpen, originalData, modalPosition }) => {
@@ -80,7 +88,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                             textareaRef.style.height = `${textareaRef.scrollHeight * 1.2}px`;
                                             textareaRef.style.padding = `18px 12px`;
                                         } else if (textareaType === 'meta') {
-                                            textareaRef.style.height = '5.6em';
+                                            textareaRef.style.height = '5.0em';
                                         } else {
                                             textareaRef.style.height = '2.6em';
                                         }
@@ -107,6 +115,53 @@ const TableView = ({ webpages, registerFinalState }) => {
         </div>
     );
   };
+
+  const AutocompleteDropdown = ({ options, position, onSelect, isVisible }) => {
+    if (!isVisible || options.length === 0) return null;
+  
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          top: position.top - 5,
+          left: position.left,
+          background: 'white',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          fontSize: '12px',
+          width: '586px',
+          maxHeight: '250px', // Limit height
+          overflowY: 'auto', // Add scroll if needed
+        }}
+      >
+        {options.map((option, index) => (
+          <div
+            key={index}
+            style={{
+              padding: '8px 12px',
+              cursor: 'pointer',
+              borderBottom: index < options.length - 1 ? '1px solid #eee' : 'none',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent blur event from firing before click
+              onSelect(option);
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#f5f5f5';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            {option}
+          </div>
+        ))}
+      </div>
+    );
+  };
     // * Global Key Handler for Shift + Tab * //
   //` Show/Hide Modal
   // ?! Changed this to `
@@ -114,7 +169,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     const handleGlobalKeyDown = (e) => {
       if (!e.shiftKey && e.key === '`') {
         e.preventDefault();
-        setIsModalVisible((prev) => !prev);
+        setIsModalVisible((prev) => !(prev));
       }
     };
 
@@ -199,6 +254,20 @@ const TableView = ({ webpages, registerFinalState }) => {
     setModalData({page, textareaType});
     setFocusedTextarea({ type: textareaType, index });
     setCharCount(e.target.value.length);
+
+    // Show autocomplete dropdown using preloaded data
+    if (['title', 'meta', 'header'].includes(textareaType)) {
+      const options = prefetchedData[index]?.[textareaType] || [];
+      if (options.length > 0) {
+        setAutocompleteOptions(options);
+
+        setAutocompletePosition({
+          top: window.scrollY + textareaRect.bottom + 5,
+          left: window.scrollX + textareaRect.left,
+        });
+        setIsAutocompleteVisible(true);
+      }
+    }
   };
 
   // ` Event Handlers
@@ -259,6 +328,7 @@ const TableView = ({ webpages, registerFinalState }) => {
     }
   
     setFocusedTextarea({ type: null, index: null });
+    setIsAutocompleteVisible(false);
   };
 
   // textarea change handler. Set CharCount and highlight keywords
@@ -270,50 +340,121 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   // * Enter Key Handler for cycling through fields
   // ` Enter Key Handler
-  const handleKeyDown = (e, currentIndex, textareaType) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
-      e.preventDefault();
-      let nextTextareaType;
-
-      if (textareaType === 'title') {
-        nextTextareaType = 'meta';
-      } else if (textareaType === 'meta') {
-        nextTextareaType = 'header';
-      } else if (textareaType === 'header') {
-        nextTextareaType = 'onPage';
-        currentIndex += 1;
-      } else if (textareaType === 'onPage') {
-        nextTextareaType = 'title';
-        currentIndex += 1;
+  const generateMetaField = async (textareaType, pageIndex) => {
+    const optionMap = {
+      title: 'generate-meta-title',
+      meta: 'generate-meta-description',
+      header: 'generate-meta-header',
+    };
+  
+    const option = optionMap[textareaType];
+    if (!option) return;
+  
+    const currentValue = refs.current[pageIndex][`ref${textareaType.charAt(0).toUpperCase() + textareaType.slice(1)}`]?.current?.value || '';
+    const keywords = pages[pageIndex]?.keywords || [];
+  
+    try {
+      const response = await axios.post('/api/openai', {
+        option,
+        currentValue,
+        keywords,
+      });
+  
+      const generatedOptions = response.data.generatedOptions || [];
+      if (generatedOptions.length > 0) {
+        setAutocompleteOptions(generatedOptions);
+  
+        const textarea = refs.current[pageIndex][`ref${textareaType.charAt(0).toUpperCase() + textareaType.slice(1)}`]?.current;
+        if (textarea) {
+          const rect = textarea.getBoundingClientRect();
+          setAutocompletePosition({
+            top: window.scrollY + rect.bottom + 5,
+            left: window.scrollX + rect.left,
+          });
+          setIsAutocompleteVisible(true);
+        }
       }
-
-      const nextTextarea = refs.current[currentIndex]?.[`ref${nextTextareaType.charAt(0).toUpperCase() + nextTextareaType.slice(1)}`];
-
-      if (nextTextarea && nextTextarea.current) {
-        nextTextarea.current.focus();
-      }
-    } else if (e.key === 'Enter' && e.shiftKey) {
-      e.preventDefault();
-      let prevTextareaType;
-
-      if (textareaType === 'title') {
-        prevTextareaType = 'onPage';
-        currentIndex -= 1;
-      } else if (textareaType === 'meta') {
-        prevTextareaType = 'title';
-      } else if (textareaType === 'header') {
-        prevTextareaType = 'meta';
-      } else if (textareaType === 'onPage') {
-        prevTextareaType = 'header';
-      }
-
-      const prevTextarea = refs.current[currentIndex]?.[`ref${prevTextareaType.charAt(0).toUpperCase() + prevTextareaType.slice(1)}`];
-
-      if (prevTextarea && prevTextarea.current) {
-        prevTextarea.current.focus();
+    } catch (error) {
+      console.error(`Error generating ${textareaType}:`, error);
+    }
+  };
+  
+  const handleAutocompleteSelect = (option) => {
+    if (focusedTextarea.type && focusedTextarea.index !== null) {
+      const refKey = `ref${focusedTextarea.type.charAt(0).toUpperCase() + focusedTextarea.type.slice(1)}`;
+      const textarea = refs.current[focusedTextarea.index][refKey]?.current;
+      
+      if (textarea) {
+        textarea.value = option; // Update the textarea value
+        
+        // // Update the page in the state to reflect the change
+        // const updatedPages = [...pages];
+        // const fieldKey = focusedTextarea.type === 'onPage' ? 'onpage' : focusedTextarea.type;
+        // updatedPages[focusedTextarea.index][fieldKey] = option;
+        
+        // Update character count
+        setCharCount(option.length);
+        
+        // Close the autocomplete dropdown
+        setIsAutocompleteVisible(false);
+        setAutocompleteOptions([]);
+        
+        // Keep focus on the textarea
+        textarea.focus();
+        
+        // Trigger change event to update character counter and other UI elements
+        const event = new Event('input', { bubbles: true });
+        textarea.dispatchEvent(event);
       }
     }
   };
+  
+  const handleKeyDown = (e, currentIndex, textareaType) => {
+    // if (e.key === 'Tab' && !e.shiftKey) {
+    //   e.preventDefault();
+    //   let nextTextareaType;
+  
+    //   if (textareaType === 'title') {
+    //     nextTextareaType = 'meta';
+    //   } else if (textareaType === 'meta') {
+    //     nextTextareaType = 'header';
+    //   } else if (textareaType === 'header') {
+    //     nextTextareaType = 'onPage';
+    //   } else if (textareaType === 'onPage') {
+    //     nextTextareaType = 'title';
+    //     currentIndex += 1;
+    //   }
+  
+    //   const nextTextarea = refs.current[currentIndex]?.[`ref${nextTextareaType.charAt(0).toUpperCase() + nextTextareaType.slice(1)}`];
+  
+    //   if (nextTextarea && nextTextarea.current) {
+    //     generateMetaField(nextTextareaType, pages[currentIndex]);
+    //     nextTextarea.current.focus();
+    //   }
+    // } else if (e.key === 'Tab' && e.shiftKey) {
+    //   e.preventDefault();
+    //   let prevTextareaType;
+  
+    //   if (textareaType === 'title') {
+    //     prevTextareaType = 'onPage';
+    //     currentIndex -= 1;
+    //   } else if (textareaType === 'meta') {
+    //     prevTextareaType = 'title';
+    //   } else if (textareaType === 'header') {
+    //     prevTextareaType = 'meta';
+    //   } else if (textareaType === 'onPage') {
+    //     prevTextareaType = 'header';
+    //   }
+  
+    //   const prevTextarea = refs.current[currentIndex]?.[`ref${prevTextareaType.charAt(0).toUpperCase() + prevTextareaType.slice(1)}`];
+  
+    //   if (prevTextarea && prevTextarea.current) {
+    //     generateMetaField(prevTextareaType, pages[currentIndex]);
+    //     prevTextarea.current.focus();
+    //   }
+    // }
+  };
+  
 
   // ` Keyword Highlighting
   useEffect(() => {
@@ -432,8 +573,113 @@ const TableView = ({ webpages, registerFinalState }) => {
     );
   };
 
+  // Prefetch data for all fields in the background with progress tracking
+  useEffect(() => {
+    const prefetchData = async () => {
+      const newPrefetchedData = { ...prefetchedData };
+      const newPreviousValues = { ...previousValues };
+      let completed = 0;
+      let highestCompleted = 0; // Track highest completed number
+      const total = pages.length * 3; // 3 fields (title, meta, header) per page
+  
+      setProgress({ current: 0, total });
+      setIsLoading(true);
+  
+      for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+        const page = pages[pageIndex];
+        const keywords = page.keywords || [];
+  
+        if (!newPrefetchedData[pageIndex]) {
+          newPrefetchedData[pageIndex] = {};
+        }
+        if (!newPreviousValues[pageIndex]) {
+          newPreviousValues[pageIndex] = {};
+        }
+  
+        for (const textareaType of ['title', 'meta', 'header']) {
+          const optionMap = {
+            title: 'generate-meta-title',
+            meta: 'generate-meta-description',
+            header: 'generate-meta-header',
+          };
+  
+          const option = optionMap[textareaType];
+          const currentValue = refs.current[pageIndex]?.[`ref${textareaType.charAt(0).toUpperCase() + textareaType.slice(1)}`]?.current?.value || '';
+  
+          // Skip regeneration if the value hasn't changed
+          if (newPreviousValues[pageIndex][textareaType] === currentValue) {
+            completed++;
+            if (completed > highestCompleted) {
+              highestCompleted = completed;
+              setProgress({ current: highestCompleted, total });
+            }
+            continue;
+          }
+  
+          try {
+            console.log(`Fetching suggestions for ${textareaType} on page ${pageIndex}...`);
+  
+            const response = await axios.post('/api/openai', {
+              option,
+              currentValue,
+              keywords,
+            });
+  
+            const generatedOptions = response.data.generatedOptions || [];
+            newPrefetchedData[pageIndex][textareaType] = generatedOptions;
+            newPreviousValues[pageIndex][textareaType] = currentValue;
+  
+            console.log(`Received ${generatedOptions.length} suggestions for ${textareaType} on page ${pageIndex}`);
+          } catch (error) {
+            console.error(`Error prefetching ${textareaType} for page ${pageIndex}:`, error);
+            // Store empty array if there's an error
+            newPrefetchedData[pageIndex][textareaType] = [];
+          }
+  
+          completed++;
+          if (completed > highestCompleted) {
+            highestCompleted = completed;
+            setProgress({ current: highestCompleted, total });
+          }
+        }
+      }
+  
+      setPrefetchedData(newPrefetchedData);
+      setPreviousValues(newPreviousValues);
+      setIsLoading(false);
+    };
+  
+    prefetchData();
+  }, [pages]);
+
   return (
     <>
+      {isLoading && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '10px',
+            right: '20px', // Position on the right side instead of center
+            background: 'rgba(245, 245, 245, 0.8)', // Slightly transparent background
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px',
+            padding: '6px 12px',
+            zIndex: 1000,
+            fontSize: '13px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+            color: '#666',
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          Loading {Math.round((progress.current / progress.total) * 100)}%
+        </div>
+      )}
+      <AutocompleteDropdown
+        options={autocompleteOptions}
+        position={autocompletePosition}
+        onSelect={handleAutocompleteSelect}
+        isVisible={isAutocompleteVisible}
+      />
     <div
         style={{
           marginLeft: '220px',
@@ -556,7 +802,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                  
                                 width: '100%',
                                 resize: 'none',
-                                height: '5.5em',
+                                height: '4.5em',
                                 padding: '8px 22px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',

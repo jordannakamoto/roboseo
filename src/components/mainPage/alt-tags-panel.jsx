@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useRowSelect, useSortBy, useTable } from 'react-table';
 
 import { Button } from '@/components/ui/button';
+import axios from 'axios'; // Add this import for making API requests
 import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 
 const IndeterminateCheckbox = React.forwardRef(
@@ -98,7 +99,7 @@ const AltTagsPanel = ({alts, registerFinalState}) => {
     pages.flatMap(page => 
       page.keywords.flatMap(keyword => keyword.split(' '))
     )
-  )).join(' ');
+  )).join(', ');
 
   useEffect(() => {
     if (altImages) {
@@ -232,7 +233,28 @@ const groupSelectedImages = useCallback(() => {
     const newCaption = e.target.value;
     
     setFocusedCaption(newCaption); // Update central caption state
-    // Do not commit the value to state until blur
+    setCharCount(newCaption.length); // Update character count
+  
+    // Update the captions in the selected images immediately
+    setSelectedImages(prev => {
+      const updatedImages = { ...prev };
+      const groupedImages = groupSelectedImages();
+  
+      // Update all images with this URL
+      if (groupedImages[url] && groupedImages[url].uniqueIds) {
+        groupedImages[url].uniqueIds.forEach(uniqueId => {
+          if (updatedImages[uniqueId]) {
+            updatedImages[uniqueId] = {
+              ...updatedImages[uniqueId],
+              caption: newCaption,
+            };
+          }
+        });
+      }
+  
+      return updatedImages;
+    });
+    
   };
   
   const handleCaptionBlur = (e, url, captionLength) => {
@@ -260,7 +282,8 @@ const groupSelectedImages = useCallback(() => {
     } else if (captionLength > 125) {
       textarea.style.borderColor = '#ff6469'; // Light red if over the limit
     } else {
-      textarea.style.borderColor = '#ff6469'; // Light red if under the minimum limit
+      // Only show red if the caption length is greater than 0
+      textarea.style.borderColor = captionLength > 0 ? '#ff6469' : 'transparent';
     }
   };
 
@@ -274,6 +297,18 @@ const groupSelectedImages = useCallback(() => {
       }
     });
 
+    setSelectedImages(updatedImages);
+  };
+
+  const clearCaptions = () => {
+    const updatedImages = { ...selectedImages };
+  
+    Object.keys(updatedImages).forEach((uniqueId) => {
+      if (updatedImages[uniqueId].caption === updatedImages[uniqueId].originalAlt) {
+        updatedImages[uniqueId].caption = ''; // Clear the caption if it matches the initial value
+      }
+    });
+  
     setSelectedImages(updatedImages);
   };
 
@@ -377,7 +412,81 @@ const groupSelectedImages = useCallback(() => {
     return updatedRows;
   });
 
-
+  const generateAltText = async () => {
+    const groupedImages = groupSelectedImages();
+    const payload = Object.values(groupedImages).map(({ url, caption }) => ({
+      url,
+      description: caption,
+    }));
+  
+    try {
+      // Show some loading indicator
+      console.log('Generating alt text...');
+      
+      const response = await axios.post('/api/openai', {
+        option: 'generate-alt-text',
+        images: payload,
+        keywords: allKeywords
+      });
+  
+      console.log('Response received:', response.data);
+      const generatedAltTexts = response.data.altTexts;
+  
+      if (!generatedAltTexts || generatedAltTexts.length === 0) {
+        console.error('No alt texts returned from API');
+        return;
+      }
+  
+      // Update the captions with the generated alt text
+      setSelectedImages(prev => {
+        const updatedImages = { ...prev };
+      
+        // Debug logging
+        console.log('Previous selectedImages:', prev);
+        console.log('Generated alt texts:', generatedAltTexts);
+      
+        for (const uniqueId in updatedImages) {
+          const image = updatedImages[uniqueId];
+          const generatedAlt = generatedAltTexts.find(alt => alt.url === image.url);
+        
+          if (generatedAlt) {
+            console.log(`Updating image ${uniqueId} with new alt text: ${generatedAlt.altText}`);
+            updatedImages[uniqueId] = {
+              ...image,
+              caption: generatedAlt.altText,
+            };
+          }
+        }
+      
+        console.log('Updated selectedImages:', updatedImages);
+        return updatedImages;
+      });
+  
+      // Force update textareas to reflect new captions
+      setTimeout(() => {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+          const url = textarea.closest('div').getAttribute('data-url');
+          if (url) {
+            const generatedAlt = generatedAltTexts.find(alt => alt.url === url);
+            if (generatedAlt) {
+              textarea.value = generatedAlt.altText;
+            }
+            handleCaptionBlur(
+              { target: textarea }, 
+              url, 
+              textarea.value.length
+            );
+          }
+        });
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error generating alt text:', error);
+      // Show error to user
+      alert('Error generating alt text. Please check console for details.');
+    }
+  };
 
   const renderCharacterCounter = (text, minCount, maxCount) => {
     const count = text.length;
@@ -399,13 +508,12 @@ const groupSelectedImages = useCallback(() => {
     return (
       <span
         style={{
-          background: 'white',
           paddingLeft: '5px',
           paddingRight: '5px',
           zIndex: '100',
           position: 'absolute',
-          left: '0px',
-          bottom: '45px',
+          right: '0px',
+          bottom: '10px',
           fontSize: '12px',
           color,
           fontWeight,
@@ -541,9 +649,10 @@ const groupSelectedImages = useCallback(() => {
     top: '0',
     zIndex: 10,
     fontSize: '13px',
-    color: '#666',
+    color: 'black',
+    border: 'solid 2px blue',
     padding: '8px 12px',
-    background: '#f1f3f4',
+    background: '#deeaf8',
     borderRadius: '4px',
     lineHeight: 1.5,
     marginBottom: '16px',
@@ -559,38 +668,38 @@ const groupSelectedImages = useCallback(() => {
       {/* border: '1px solid #ccc' */}
       <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', background: '#f5f5f5' }}>
   <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
-    {Object.values(groupSelectedImages()).map(({ url, caption, count }) => (
-      <div key={url} style={{ textAlign: 'center', width: '340px', position: 'relative' }}>
-        <img
-          src={url}
-          alt="Selected"
-          style={{ width: '400px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
-        />
-        <textarea
-          defaultValue={caption}
-          onChange={(e) => handleCaptionChange(e, url)}
-          placeholder="Enter caption"
-          style={{ width: '100%', resize: 'none', fontSize: '12px', border: '1px solid #bbb' }}
-          onFocus={(e) => {
-            handleFocus(url, caption, e.target);
-            const firstIndex = caption.indexOf('*');
-            if (firstIndex !== -1) {
-              setTimeout(() => {
-                e.target.setSelectionRange(firstIndex, firstIndex + 1);
-              }, 0);
-            }
-          }}
-          onBlur={(e) => handleCaptionBlur(e, url, focusedCaption.length)}  // Apply background color on blur
-          onKeyDown={(e) => handleTabKey(e, e.target)}
-        />
-         {focusedTextarea === url && renderCharacterCounter(focusedCaption, 100, 125)}
-         {count > 1 && (
-          <div style={{ position: 'absolute', top: '5px', right: '5px', background: 'grey', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {count}
-          </div>
-        )}
+  {Object.values(groupSelectedImages()).map(({ url, caption, count }) => (
+  <div key={url} data-url={url} style={{ textAlign: 'center', width: '340px', position: 'relative' }}>
+    <img
+      src={url}
+      alt="Selected"
+      style={{ width: '400px', height: '200px', objectFit: 'cover', marginBottom: '5px' }}
+    />
+    <textarea
+      value={caption} // Use controlled component instead of defaultValue
+      onChange={(e) => handleCaptionChange(e, url)}
+      placeholder="Enter caption"
+      style={{ padding: '10px', paddingTop: '8px', height: '6em', width: '100%', resize: 'none', fontSize: '12px', border: '1px solid #bbb' }}
+      onFocus={(e) => {
+        handleFocus(url, caption, e.target);
+        const firstIndex = caption.indexOf('*');
+        if (firstIndex !== -1) {
+          setTimeout(() => {
+            e.target.setSelectionRange(firstIndex, firstIndex + 1);
+          }, 0);
+        }
+      }}
+      onBlur={(e) => handleCaptionBlur(e, url, e.target.value.length)}  // Use current value length
+      onKeyDown={(e) => handleTabKey(e, e.target)}
+    />
+    {focusedTextarea === url && renderCharacterCounter(focusedCaption, 100, 125)}
+    {count > 1 && (
+      <div style={{ position: 'absolute', top: '5px', right: '5px', background: 'grey', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {count}
       </div>
-    ))}
+    )}
+  </div>
+))}
   </div>
 </div>
 
@@ -617,11 +726,19 @@ const groupSelectedImages = useCallback(() => {
       >
         {fillInputCharCount}
       </span>
+        <Button onClick={clearCaptions} tabIndex="-1" variant="outline">
+          Clear
+        </Button>
         <Button onClick={fillCaptions} tabIndex="-1" variant="outline">
           Fill
         </Button>
         <Button onMouseDown={handleReplaceClick} onClick={overwriteMatches} tabIndex="-1" variant="outline">
           Replace All
+        </Button>
+      </div>
+      <div style={{ marginBottom: '20px', marginLeft: '20px' }}>
+        <Button onClick={generateAltText} variant="outline">
+          Generate Alt Text with AI
         </Button>
       </div>
       {/* <Button
