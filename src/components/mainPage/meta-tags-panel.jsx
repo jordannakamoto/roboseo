@@ -83,7 +83,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                         if (textareaType === 'onPage') {
                                             textareaRef.style.height = 'auto';
                                             textareaRef.style.height = `${textareaRef.scrollHeight}px`;
-                                            textareaRef.style.padding = `14px 10px`;
+                                            textareaRef.style.padding = `18px 12px`;
                                         } else if (textareaType === 'meta') {
                                             textareaRef.style.height = '4.4em';
                                         } else {
@@ -577,7 +577,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 resize: 'none',
                                 height: '2.4em',
                                 overflow: 'hidden',
-                                padding: '6px 10px',
+                                padding: '6px 22px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
                                 border: '1px solid #d3d3d3',
@@ -610,7 +610,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 width: '100%',
                                 resize: 'none',
                                 height: '4.5em',
-                                padding: '8px 10px',
+                                padding: '8px 22px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
                                 border: '1px solid #d3d3d3',
@@ -645,7 +645,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 // marginBottom: '-1px',
                                 height: '2.5em',                                 
                                 boxSizing: 'border-box',
-                                padding: '6px 10px',
+                                padding: '6px 22px',
                                 fontSize: '14px',
                                 verticalAlign: 'top',
                                 border: '1px solid #d3d3d3',
@@ -676,7 +676,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   resize: 'none',
                                    
                                   height: '2.6em',
-                                  padding: '8px 10px',
+                                  padding: '8px 22px',
                                   fontSize: '14px',
                                   boxSizing: 'border-box',
                                   verticalAlign: 'top',
@@ -710,7 +710,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                                   resize: 'none',
                                    
                                   height: 'auto',
-                                  padding: '18px 10px',
+                                  padding: '18px 22px',
                                   paddingTop: '14px',
                                   boxSizing: 'border-box',
                                   fontSize: '14px',

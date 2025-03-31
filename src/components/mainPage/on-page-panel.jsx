@@ -137,7 +137,7 @@ const OnPagePanel = () => {
         ref={scrollContainerRef}
         style={{
           overflowX: 'scroll',
-          marginLeft: '60px',
+          marginLeft: '30px',
           height: '100%',
           width: '80vw',
           display: 'flex',

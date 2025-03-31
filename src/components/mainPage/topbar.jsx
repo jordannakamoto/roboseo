@@ -3,6 +3,7 @@
 // Flash effect on field when url changes
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CheckCircle, Globe, Link, PenLine } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -534,10 +535,18 @@ const triggerFinalization = (mode) => {
 
   return (
     <div className="relative" style={{zIndex:'500'}}>
-      {isLoading && loadingMessage && (
+{isLoading && (
+  <div className="fixed top-0 left-0 h-1" style={{ width: 'calc(100vw - 180px)', zIndex: 9999 }}>
+    <div
+      className="h-full bg-blue-400 animate-grow"
+      style={{ animationDuration: '3s' }}
+    />
+  </div>
+)}
+{isLoading && loadingMessage && (
   <div
-    className="fixed top-1.5 left-4 text-xs text-gray-700 bg-white bg-opacity-80 px-2 py-1 rounded shadow"
-    style={{ zIndex: 1000 }}
+    className="fixed top-2 text-xs text-gray-700 bg-white bg-opacity-80 px-2 py-1 rounded shadow"
+    style={{ zIndex: 1001, right: '200px' }}
   >
     {loadingMessage}
   </div>
@@ -546,7 +555,7 @@ const triggerFinalization = (mode) => {
       <h1 style= {{fontWeight:'bold', }}>{currentClient.name}</h1>
     </div>
     <div className="fixed top-0 z-10 border-b border-gray-200" style={{ right: '-20px', width: '200px', background: 'rgba(255, 255, 255, 1.0)' }}>
-      <div style= {{borderLeft:'solid 1px rgb(231, 231, 231)', width: '180px',}} className="flex justify-between items-center" >
+      <div style= {{border:'solid 1px rgb(231, 231, 231)', width: '180px',}} className="flex justify-between items-center" >
         <div className="flex flex-grow items-center space-x-4">
           {/* <span style={{ marginLeft: "20px" }}>{currentClient.name}</span> */}
           {/* <input
@@ -562,23 +571,25 @@ const triggerFinalization = (mode) => {
           </Button>
         </div>
         {/* Toggle Master Sheet Input */}
-<Button
+
+        <Button
   style={{
     color: 'grey',
     backgroundColor: isMasterSheetVisible ? '#deeff5' : 'white',
+    width:'52px'
   }}
   onClick={toggleMasterSheetVisibility}
-  className="bg-white border-r border-gray-300 hover:bg-gray-100 rounded-none"
+  className="bg-white border border-gray-100 hover:bg-gray-100 rounded-none p-2"
 >
-  M 📖
+  <Link className="w-4 h-4" />
 </Button>
 
 {/* Conditionally rendered input + load button */}
 <div
-  className="absolute z-50 flex gap-1"
+  className="absolute z-50 flex gap-1 shadow-sm bg-white p-5"
   style={{
     top: '40px',
-    right: '0px',
+    right: '30px',
     opacity: isMasterSheetVisible ? 1 : 0,
     visibility: isMasterSheetVisible ? 'visible' : 'hidden',
     pointerEvents: isMasterSheetVisible ? 'auto' : 'none',
@@ -591,16 +602,16 @@ const triggerFinalization = (mode) => {
     className="p-2 rounded text-xs"
     onChange={(e) => setMasterSheetURL(e.target.value)}
     placeholder="Master sheet URL"
-    style={{ width: '180px' }}
+    style={{ width: '400px' }}
   />
   <Button
     onClick={handleLoadSheet}
-    className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs px-3 py-2"
+    className="bg-slate-100 border-none hover:bg-slate-300 text-gray-700 text-xs px-3 py-2"
   >
     Load
   </Button>
 </div>
-        <Button style={{color:'grey'}} onClick={runScraper} className="bg-white border-right border-gray-300 hover:bg-gray-100 rounded-none">
+        <Button style={{color:'grey'}} onClick={runScraper} className="bg-white border-none hover:bg-gray-100 rounded-none">
           Scrape
         </Button>
          {/* Right Sidebar */}
@@ -628,46 +639,43 @@ const triggerFinalization = (mode) => {
       </div>
       </div>
       {/* Bottom card for additional buttons */}
-      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '180px', border: 'none',borderLeft:'solid 1px rgb(231, 231, 231)', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '10px'}}>
+      <Card className="max-w-md mx-auto" style={{ background: '#f9f9f9',width: '180px', border: 'none',borderLeft:'solid 1px rgb(231, 231, 231)', borderRadius: '0',position: 'fixed', right: '0', bottom: '0', paddingBottom: '30px'}}>
         <CardHeader />
-        <CardContent className="flex p-2 flex-col items-center gap-1 text-xs">
-  {/* Toggle completed clients */}
-  <Button
-    variant="ghost"
-    size="sm"
-    onClick={() => setShowCompleted(prev => !prev)}
-    className="w-full text-gray-700"
-  >
-    {showCompleted ? 'Hide Completed' : 'Show Completed'}
-  </Button>
+        <CardContent className="flex p-1 flex-col items-center gap-1 text-xs">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCompleted(prev => !prev)}
+            className="w-full text-gray-700 text-[0.7rem]"
+          >
+            {showCompleted ? 'Hide Completed' : 'Show Completed'}
+          </Button>
 
-  {/* Open workbook */}
-  <Button
-    onClick={() => window.open(currentClient?.workbookURL, '_blank')}
-    variant="outline"
-    className="w-full h-10 text-s"
-  >
-    🌐 Open Workbook
-  </Button>
+          <Button
+            onClick={() => window.open(currentClient?.workbookURL, '_blank')}
+            variant="outline"
+            className="w-full h-10 text-[0.8rem] flex items-center justify-start gap-2 p-2"
+          >
+            <Globe size={16} /> Open Workbook
+          </Button>
 
-  {/* Finalize button */}
-  <Button
-    onClick={() => triggerFinalization(showH2 ? "h2" : "h1")}
-    variant="outline"
-    className="w-full h-10 text-s"
-  >
-    ✏️ Write To Workbook {showH2 ? "h2" : ""}
-  </Button>
+          <Button
+            onClick={() => triggerFinalization(showH2 ? "h2" : "h1")}
+            variant="outline"
+            className="w-full h-10 text-[0.8rem] flex items-center justify-start gap-2 p-2"
+          >
+            <PenLine size={16} /> Write To Workbook {showH2 ? "h2" : ""}
+          </Button>
 
-  {/* Mark done / undone */}
-  <Button
-    onClick={() => markClientDone()}
-    variant="outline"
-    className="w-full h-10 text-s"
-  >
-    {currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}
-  </Button>
-</CardContent>
+          <Button
+            onClick={() => markClientDone()}
+            variant="outline"
+            className="w-full h-10 text-[0.8rem] flex items-center justify-start gap-2 p-2"
+          >
+            <CheckCircle size={16} />
+            {currentClient.completed ? 'Un-Mark Done' : 'Mark Done'}
+          </Button>
+        </CardContent>
       </Card>
     </div>
   );
