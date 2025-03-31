@@ -2,8 +2,8 @@
 // TODO
 // Flash effect on field when url changes
 
+import { ArrowLeftRight, CheckCircle, Globe, Link, PenLine } from 'lucide-react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { CheckCircle, Globe, Link, PenLine } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,8 @@ export default function TopBar({onPrepareData}) {
   const { pages, setPages, sheetTitles, sheetUrl, altImages,altImagesProcessed, setAltImages, setSheetTitles, setSheetUrl, setClientUrl, showH2, finalizationState, setFinalizationState } = useClientWebpage();
   const { currentClient, setCurrentClient, setAllClients } = useClientsContext();
   const [masterSheetURL, setMasterSheetURL] = useState('');
+  const [isRefresh, setIsRefresh] = useState('initial'); // Default state
+
   // - Loading Modal
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -128,7 +130,8 @@ export default function TopBar({onPrepareData}) {
         const visibilityResponse = await fetch('/api/get-client-toggle-visibility', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens, spreadsheetId: sheetId, currentClient: currentClient }),
+          body: JSON.stringify({ tokens, spreadsheetId: sheetId, currentClient: currentClient, 
+            action: "initialize" }),
         });
         if (!visibilityResponse.ok) throw new Error(`HTTP error! Status: ${visibilityResponse.status}`);
 
@@ -401,6 +404,36 @@ export default function TopBar({onPrepareData}) {
 
   // end testscvParse
 
+    // -- Toggle IsRefresh
+    // Function to toggle sheet visibility
+    const toggleIsRefresh = async () => {
+      setIsLoading(true);
+      setLoadingMessage(`Toggling Visible Sheets to ${isRefresh === 'refresh' ? 'Initial' : 'Refresh'}`);
+      try {
+        const response = await fetch('/api/get-client-toggle-visibility', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tokens,
+            spreadsheetId: extractSheetIdFromUrl(sheetUrl),
+            currentClient: {isRefresh},
+            action: "toggle"
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to toggle sheet visibility');
+        }
+  
+        const result = await response.json();
+        setIsRefresh(result.isRefresh); // Update local state with the new value
+        // console.log('Sheet visibility toggled:', result);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error toggling sheet visibility:', error);
+      }
+    };
+
   // Trigger workbook writing
   useEffect(() => {
     if (finalizationState.status === "write" &&
@@ -659,12 +692,21 @@ const triggerFinalization = (mode) => {
             <Globe size={16} /> Open Workbook
           </Button>
 
+          {/* New Button to Toggle Sheet Visibility */}
+          <Button
+            onClick={toggleIsRefresh}
+            variant="outline"
+            className="w-full h-10 text-[0.8rem] flex items-center justify-start gap-2 p-2"
+          >
+                        <ArrowLeftRight size={16} /> Toggle {isRefresh.charAt(0).toUpperCase() + isRefresh.slice(1)}
+          </Button>
+
           <Button
             onClick={() => triggerFinalization(showH2 ? "h2" : "h1")}
             variant="outline"
             className="w-full h-10 text-[0.8rem] flex items-center justify-start gap-2 p-2"
           >
-            <PenLine size={16} /> Write To Workbook {showH2 ? "h2" : ""}
+            <PenLine size={16} /> Write To Workbook
           </Button>
 
           <Button

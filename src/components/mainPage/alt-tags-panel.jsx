@@ -256,11 +256,11 @@ const groupSelectedImages = useCallback(() => {
   
     // Apply visual feedback on the background color based on caption length
     if (captionLength >= 100 && captionLength <= 125) {
-      textarea.style.backgroundColor = '#eef6ec'; // Light green if within limits
+      textarea.style.borderColor = 'white'; // Light green if within limits
     } else if (captionLength > 125) {
-      textarea.style.backgroundColor = '#fbeeed'; // Light red if over the limit
+      textarea.style.borderColor = '#ff6469'; // Light red if over the limit
     } else {
-      textarea.style.backgroundColor = '#fbeeed'; // Light red if under the minimum limit
+      textarea.style.borderColor = '#ff6469'; // Light red if under the minimum limit
     }
   };
 
@@ -439,8 +439,8 @@ const groupSelectedImages = useCallback(() => {
         Cell: props => (
           <EditableCell {...props} updateMyData={updateMyData} />
         ),
-        width: 180,
-        maxWidth: 180,
+        width: 150,
+        maxWidth: 150,
       },
       {
         Header: 'Alt',
@@ -448,26 +448,40 @@ const groupSelectedImages = useCallback(() => {
         Cell: props => (
           <EditableCell {...props} updateMyData={updateMyData} />
         ),
-        width: 150,
-        maxWidth: 150,
+        width: 180,
+        maxWidth: 180,
       },
-      {
-        id: 'selection',
-        Header: '',
-        Cell: ({ row }) => {
-          const rowIndexInSortedOrder = rows.findIndex(r => r.id === row.id);
-          return (
-            <IndeterminateCheckbox
-              {...row.getToggleRowSelectedProps()}
-              onClick={(e) => {
-                handleRowSelection(row, rows, e);
-              }}
-            />
-          );
-        },
-        width: 10,
-        maxWidth: 10,
-      }
+      // {
+      //   id: 'selection',
+      //   Header: '',
+      //   Cell: ({ row }) => (
+      //     <div
+      //       onClick={(e) => {
+      //         e.stopPropagation(); // Prevent triggering row click event
+      //         handleRowSelection(row, rows, e);
+      //       }}
+      //       style={{
+      //         width: '100%',
+      //         height: '100%',
+      //         cursor: 'pointer',
+      //         display: 'flex',
+      //         justifyContent: 'center',
+      //         alignItems: 'center'
+      //       }}
+      //     >
+      //       {/* {row.isSelected ? (
+      //         <div style={{
+      //           width: '8px',
+      //           height: '8px',
+      //           borderRadius: '50%',
+      //           background: '#4285f4'
+      //         }}/>
+      //       ) : null} */}
+      //     </div>
+      //   ),
+      //   width: 20,
+      //   maxWidth: 20,
+      // }
     ],
     [updateMyData, lastSelectedAltID]
   );
@@ -504,21 +518,49 @@ const groupSelectedImages = useCallback(() => {
       <style>
         {`
           .non-editable-cell {
-            max-height: 1.2em;
+            max-height: 1.0em;
             overflow: hidden;
+            padding: none;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
           .selected-row {
             background: #F0F8FF !important;
           }
+            .data-table {
+      user-select: none; /* Prevent text selection */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
         `}
-      </style>
+      </style>{/* Keywords - Sticky */}
+{pages.length > 0 && (
+  <div style={{
+    position: 'sticky',
+    top: '0',
+    zIndex: 10,
+    fontSize: '13px',
+    color: '#666',
+    padding: '8px 12px',
+    background: '#f1f3f4',
+    borderRadius: '4px',
+    lineHeight: 1.5,
+    marginBottom: '16px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    width: 'calc(80vw - 24px)',
+    marginLeft: '20px',
+    maxHeight: '60px',
+    overflow: 'auto'
+  }}>
+    {allKeywords}
+  </div>
+)}
       {/* border: '1px solid #ccc' */}
       <div style={{ marginLeft: '20px', marginBottom: '20px', padding: '10px', background: '#f5f5f5' }}>
   <div style={{ width: '80vw', display: 'flex', flexWrap: 'wrap', gap: '10px', minHeight: '260px' }}>
     {Object.values(groupSelectedImages()).map(({ url, caption, count }) => (
-      <div key={url} style={{ textAlign: 'center', width: '400px', position: 'relative' }}>
+      <div key={url} style={{ textAlign: 'center', width: '340px', position: 'relative' }}>
         <img
           src={url}
           alt="Selected"
@@ -552,9 +594,6 @@ const groupSelectedImages = useCallback(() => {
   </div>
 </div>
 
-      <div style={{visibility: pages.length > 0 ? 'visible': 'hidden',fontSize:'13px', color: 'gray', width: '60%', marginLeft: '20vw'}}>
-      {allKeywords}
-      </div>
       <div className="flex" style={{marginBottom: '40px', visibility: pages.length > 0 ? 'visible': 'hidden', marginLeft: '20vw', position: 'relative'}}>
         <input
           id="fill-input"
@@ -597,38 +636,52 @@ const groupSelectedImages = useCallback(() => {
       >
         {clicked ? 'Tags Approved' : 'Approve Alt Tags For Writing'}
       </Button> */}
-      <table {...getTableProps()} style={{ fontSize: '12px', marginLeft: '20px', width: '80%' }}>
+      <table {...getTableProps()} className="data-table" style={{ fontSize: '12px', marginLeft: '20px', width: '80%' }}>
   <thead>
     {headerGroups.map((headerGroup, headerGroupIndex) => {
       const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
       return (
-        <tr style={{border: 'solid 1px #bbb', background: 'aliceblue'}}key={`header-group-${headerGroupIndex}`} {...restHeaderGroupProps}>
-          {headerGroup.headers.map((column, columnIndex) => {
-            const { key, ...restColumnProps } = column.getHeaderProps(column.getSortByToggleProps());
-            return (
-              <th
-                key={`header-${columnIndex}`}
-                {...restColumnProps}
-                style={{
-                  width: column.width,
-                  maxWidth: column.maxWidth,
-                  color: 'black',
-                  fontWeight: 'bold',
-                }}
-                className={column.className}
-              >
-                {column.render('Header')}
-                <span>
-                  {column.isSorted
-                    ? column.isSortedDesc
-                      ? ' v'
-                      : ' ^'
-                    : ''}
-                </span>
-              </th>
-            );
-          })}
-        </tr>
+<tr 
+  key={`header-group-${headerGroupIndex}`} 
+  {...restHeaderGroupProps}
+  style={{
+    background: 'white',
+    borderBottom: '1px solid #edf2f7',
+    height: '48px'
+  }}
+>
+  {headerGroup.headers.map((column, columnIndex) => {
+    const { key, ...restColumnProps } = column.getHeaderProps(column.getSortByToggleProps());
+    return (
+      <th
+        key={`header-${columnIndex}`}
+        {...restColumnProps}
+        style={{
+          width: column.width,
+          maxWidth: column.maxWidth,
+          color: '#64748b',
+          fontWeight: '500',
+          padding: '12px 16px',
+          textAlign: 'left',
+          fontSize: '13px',
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase'
+        }}
+        className={column.className}
+      >
+        {column.render('Header')}
+        {column.isSorted && (
+          <span style={{ 
+            marginLeft: '6px',
+            color: '#0f172a'
+          }}>
+            {column.isSortedDesc ? '↓' : '↑'}
+          </span>
+        )}
+      </th>
+    );
+  })}
+</tr>
       );
     })}
   </thead>
@@ -638,29 +691,39 @@ const groupSelectedImages = useCallback(() => {
       const { key, ...restRowProps } = row.getRowProps();
       return (
         <tr
-          key={`row-${rowIndex}`}
-          {...restRowProps}
-          className={row.isSelected ? 'selected-row' : ''}
-        >
-          {row.cells.map((cell, cellIndex) => {
-            const { key, ...restCellProps } = cell.getCellProps();
-            return (
-              <td
-                key={`cell-${cellIndex}`}
-                {...restCellProps}
-                style={{
-                  overflow: 'hidden',
-                  width: cell.column.width,
-                  maxWidth: cell.column.maxWidth,
-                  border: 'solid 1px gray',
-                }}
-                className={cell.column.className}
-              >
-                {cell.render('Cell')}
-              </td>
-            );
-          })}
-        </tr>
+  key={`row-${rowIndex}`}
+  {...restRowProps}
+  className={row.isSelected ? 'selected-row' : ''}
+  onClick={(e) => handleRowSelection(row, rows, e)}
+  style={{ 
+    height: '10px',
+    fontSize: '11px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+    borderRight: row.isSelected ? '3px solid #4285f4' : '1px solid #e2e8f0',
+    background: row.isSelected ? '#e6f2ff' : (rowIndex % 2 === 0 ? '#f8fafc' : 'white'),
+  }}
+>
+  {row.cells.map((cell, cellIndex) => {
+    const { key, ...restCellProps } = cell.getCellProps();
+    return (
+      <td
+        key={`cell-${cellIndex}`}
+        {...restCellProps}
+        style={{
+          overflow: 'hidden',
+          width: cell.column.width,
+          maxWidth: cell.column.maxWidth,
+          border: '1px solid #e2e8f0',
+          // padding: '8px 12px',
+        }}
+        className={cell.column.className}
+      >
+        {cell.render('Cell')}
+      </td>
+    );
+  })}
+</tr>
       );
     })}
   </tbody>

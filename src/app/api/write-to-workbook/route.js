@@ -18,14 +18,15 @@ async function getSheetValues(client, sheetId, sheetName) {
     const response = await client.spreadsheets.values.get({
         spreadsheetId: sheetId,
         range: range,
-    });`    
+    });    
 
     const rowCount = response.data.values ? response.data.values.length : 0;
     const values = Array(rowCount).fill(null);
 
     response.data.values.forEach((row, index) => {
-        values[index] = row[0];  // Assuming single column (A) rk   `
-
+        values[index] = row[0];  // Assuming single column (A)
+    });
+    
     return values;
 }
 
@@ -102,7 +103,7 @@ async function updateRecommendationCell(client, sheetId, sheetName, currentClien
             return false;
         }
     } else if (headerIndex.index == -2){
-        console.log("Recommendations header is already correct");
+        // console.log("Recommendations header is already correct");
         return false;
     }
      else {
@@ -350,39 +351,23 @@ async function processH1MetaSheets(sheets, data, titleSheetInfo) {
         }
     });
     
-    // ` H1 Procedure       
+    // ` Header Procedure       
     await processSheet("H1/H2", async (rowIndex, requests, sheetName) => {
         const sheetId = await getSheetId(sheets, data.sheetId, sheetName);
 
         for (let page of data.webpages) {
-            if (data.hMode === "h1") {
-                requests.push(
-                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } }] }], fields: 'userEnteredValue' } },
-                );
+            requests.push(
+                { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.header } }] }], fields: 'userEnteredValue' } },
+            );
 
-                if (page.h1New) {
-                    requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
-                    );
-                } else {
-                    requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h1 } , userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
-                    );
-                }
-            } else if (data.hMode === "h2") {
+            if (page.headerNew) {
                 requests.push(
-                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 3, endColumnIndex: 4 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } }] }], fields: 'userEnteredValue' } },
+                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.headerNew }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
                 );
-
-                if (page.h2New) {
-                    requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2New }, userEnteredFormat: { backgroundColor: HIGHLIGHT_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
-                    );
-                } else {
-                    requests.push(
-                        { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.h2 } , userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
-                    );
-                }
+            } else {
+                requests.push(
+                    { updateCells: { range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: 5, endColumnIndex: 6 }, rows: [{ values: [{ userEnteredValue: { stringValue: page.header }, userEnteredFormat: { backgroundColor: WHITE_COLOR } }] }], fields: 'userEnteredValue,userEnteredFormat.backgroundColor' } },
+                );
             }
             rowIndex++;
         }

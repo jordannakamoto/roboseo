@@ -15,6 +15,26 @@ export async function POST(request) {
     const sheets = google.sheets({ version: 'v4', auth: client });
 
     try {
+        // Determine the action: "initialize" or "toggle"
+        const action = data.action || "initialize";
+
+        // Flip the isRefresh value if the action is "toggle"
+        if (action === "toggle") {
+            const currentIsRefresh = data.currentClient.isRefresh?.toLowerCase();
+            if (currentIsRefresh === "refresh") {
+                data.currentClient.isRefresh = "initial";
+            } else if (currentIsRefresh === "initial") {
+                data.currentClient.isRefresh = "refresh";
+            } else {
+                // Handle unexpected values by defaulting to "initial"
+                console.warn(`Unexpected isRefresh value: ${data.currentClient.isRefresh}. Defaulting to "initial".`);
+                data.currentClient.isRefresh = "initial";
+            }
+            // console.log(`Toggled isRefresh to: ${data.currentClient.isRefresh}`);
+        } else {
+            // console.log(`Initializing with isRefresh: ${data.currentClient.isRefresh}`);
+        }
+
         // Get metadata of all sheets
         const sheetMetadata = await sheets.spreadsheets.get({
             spreadsheetId: data.spreadsheetId,
@@ -28,6 +48,9 @@ export async function POST(request) {
 
         // Base names for sheets
         const sheetBaseNames = ['keyword', 'on-page', 'title', 'meta', 'h1', 'alt'];
+
+        // Debug: Log all sheet titles
+        // console.log('All sheets:', allSheets.map(sheet => sheet.properties.title));
 
         // Build the requests to hide/show sheets
         const requests = allSheets.map(sheet => {
@@ -44,7 +67,7 @@ export async function POST(request) {
                     sheetTitle.startsWith(baseName) && sheetTitle.includes("refresh")
                 );
 
-                // if refresh is anywhere in the description column
+                // Apply visibility logic based on the current isRefresh value
                 if (data.currentClient.isRefresh.toLowerCase().includes("refresh")) {
                     // If in refresh mode, show both base and refresh versions
                     if (isBaseNameMatch && isRefreshMatch) {
@@ -58,6 +81,9 @@ export async function POST(request) {
                 }
             }
 
+            // Debug: Log visibility decision for each sheet
+            console.log(`Sheet: ${sheet.properties.title}, Should Hide: ${shouldHide}`);
+
             return {
                 updateSheetProperties: {
                     properties: {
@@ -70,14 +96,17 @@ export async function POST(request) {
         });
 
         // Execute the batch update to hide/show sheets
-        await sheets.spreadsheets.batchUpdate({
+        const batchUpdateResponse = await sheets.spreadsheets.batchUpdate({
             spreadsheetId: data.spreadsheetId,
             requestBody: {
                 requests: requests
             }
         });
 
-        return NextResponse.json({ success: true }, { status: 200 });
+        // Debug: Log the batch update response
+        console.log('Batch update response:', batchUpdateResponse.data);
+
+        return NextResponse.json({ success: true, isRefresh: data.currentClient.isRefresh }, { status: 200 });
     } catch (error) {
         console.error('Failed to toggle sheet visibility:', error);
         // Respond with an error message

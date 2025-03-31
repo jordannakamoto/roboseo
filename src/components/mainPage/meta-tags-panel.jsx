@@ -9,20 +9,18 @@ import { useClientWebpage } from '@/contexts/ClientWebpageContext';
 const TableView = ({ webpages, registerFinalState }) => {
 
   // STATES
-  const { pages, setPages, finalizationState, setFinalizationState, showH2, setShowH2 } = useClientWebpage();
+  const { pages, setPages, finalizationState, setFinalizationState } = useClientWebpage();
   const [showTable, setShowTable] = useState(true); // .. Unused
   const [modalData, setModalData] = useState(null);
   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-
   const [focusedTextarea, setFocusedTextarea] = useState({ type: null, index: null });
   const [charCount, setCharCount] = useState(0);
 
-  const toggleH2 = () => setShowH2(!showH2);
-
   const refs = useRef([]);
   const previousOnpageValues = useRef([]);
+  const previousHeaderValues = useRef([]);
   const modalRef = useRef();
   
   // ` Modal Component
@@ -39,11 +37,8 @@ const TableView = ({ webpages, registerFinalState }) => {
         case 'meta':
             fieldValue = page.meta;
             break;
-        case 'h1':
-            fieldValue = page.h1;
-            break;
-        case 'h2':
-            fieldValue = page.h2;
+        case 'header':
+            fieldValue = page.header;
             break;
         case 'onPage':
             fieldValue = page.onpage;
@@ -133,30 +128,38 @@ const TableView = ({ webpages, registerFinalState }) => {
   
 
   // When OnPage data change from on-page-panel.jsx:
-  // `UseEffect for OnPageValues
+  // `UseEffect for OnPageValues and HeaderValues
   useEffect(() => {
     pages.forEach((page, pageIndex) => {
-      const textareaRef = refs.current[pageIndex]?.refOnPage?.current;
+      const textareaOnPageRef = refs.current[pageIndex]?.refOnPage?.current;
+      const textareaHeaderRef = refs.current[pageIndex]?.refHeader?.current;
 
-      if (textareaRef) {
+
+      if (textareaOnPageRef && textareaHeaderRef) {
         const prevOnpage = previousOnpageValues.current[pageIndex];
         const currentOnpage = page.onpage;
-
+        const prevHeader = previousHeaderValues.current[pageIndex];
+        const currentHeader = page.header;
+// 
         if (currentOnpage !== prevOnpage) {
           // Update the specific textarea with the new onpage value
-          textareaRef.value = currentOnpage;
+          textareaOnPageRef.value = currentOnpage;
 
           // Adjust the height dynamically as the content changes
-          textareaRef.style.height = 'auto';
-          textareaRef.style.height = `${textareaRef.scrollHeight}px`;
+          textareaOnPageRef.style.height = 'auto';
+          textareaOnPageRef.style.height = `${textareaOnPageRef.scrollHeight}px`;
 
           // Update the previous value to the current one
           previousOnpageValues.current[pageIndex] = currentOnpage;
         }
+
+        if (currentHeader !== prevHeader) {
+          textareaHeaderRef.value = currentHeader;
+          previousHeaderValues.current[pageIndex] = currentHeader;
+        }
       }
     });
   }, [pages]); // Depend on pages, so it runs when pages state changes
-  
 
 
   // Set Modal information when field gets focus
@@ -169,7 +172,7 @@ const TableView = ({ webpages, registerFinalState }) => {
 
 
     // ` Modal Coordinates
-    let topPos = window.scrollY + rowRect.top - 264; // Adjust to consider scrolling
+    let topPos = window.scrollY + rowRect.top - 52; // Adjust to consider scrolling
     let leftPos = rowRect.left + (110);
 
     switch (textareaType) {
@@ -179,12 +182,8 @@ const TableView = ({ webpages, registerFinalState }) => {
       case 'meta':
           topPos -= 607;
           break;
-      case 'h1':
+      case 'header':
           topPos -= 544;
-          break;
-      case 'h2':
-          topPos -= 528;
-          break;
           break;
       case 'onPage':
           topPos -= 510; // 40 old 
@@ -208,8 +207,7 @@ const TableView = ({ webpages, registerFinalState }) => {
   const charLimits = {
     title: { min: 55, max: 60 },
     meta: { min: 155, max: 160 },
-    h1: { min: 20, max: 70 },
-    h2: { min: 20, max: 70 },
+    header: { min: 20, max: 70 },
     onPage: { min: 50, max: 200 }, // example range for onPage
   };
   
@@ -230,11 +228,8 @@ const TableView = ({ webpages, registerFinalState }) => {
       case 'meta':
         originalValue = page.meta;
         break;
-      case 'h1':
-        originalValue = page.h1;
-        break;
-      case 'h2':
-        originalValue = page.h2;
+      case 'header':
+        originalValue = page.header;
         break;
       case 'onPage':
         originalValue = page.onpage;
@@ -284,22 +279,11 @@ const TableView = ({ webpages, registerFinalState }) => {
       if (textareaType === 'title') {
         nextTextareaType = 'meta';
       } else if (textareaType === 'meta') {
-        nextTextareaType = 'h1';
-      } else if (textareaType === 'h1' && showH2) {
-        nextTextareaType = 'h2';
-      } else if (textareaType === 'h1' && !showH2) {
-        if(pages[currentIndex].onpage){
-        nextTextareaType = 'onPage';
-        }
-        else{
-        nextTextareaType = 'title';
-        currentIndex += 1;
-        }
-      } else if (textareaType === 'h2') {
+        nextTextareaType = 'header';
+      } else if (textareaType === 'header') {
         nextTextareaType = 'onPage';
         currentIndex += 1;
-      }
-        else if (textareaType === 'onPage') {
+      } else if (textareaType === 'onPage') {
         nextTextareaType = 'title';
         currentIndex += 1;
       }
@@ -314,26 +298,14 @@ const TableView = ({ webpages, registerFinalState }) => {
       let prevTextareaType;
 
       if (textareaType === 'title') {
-        if(pages[currentIndex-1]){
-          if(pages[currentIndex-1].onpage){
-            prevTextareaType = 'onPage';
-          }
-          else{
-            prevTextareaType = showH2 ? 'h2' : 'h1';
-          }
-          currentIndex -= 1;
-        }
-        else{ // break the loop
-          return;
-        }
+        prevTextareaType = 'onPage';
+        currentIndex -= 1;
       } else if (textareaType === 'meta') {
         prevTextareaType = 'title';
-      } else if (textareaType === 'h1') {
+      } else if (textareaType === 'header') {
         prevTextareaType = 'meta';
-      } else if (textareaType === 'h2') {
-        prevTextareaType = 'h1';
       } else if (textareaType === 'onPage') {
-        prevTextareaType = showH2 ? 'h2' : 'h1';
+        prevTextareaType = 'header';
       }
 
       const prevTextarea = refs.current[currentIndex]?.[`ref${prevTextareaType.charAt(0).toUpperCase() + prevTextareaType.slice(1)}`];
@@ -349,15 +321,14 @@ const TableView = ({ webpages, registerFinalState }) => {
     webpages.forEach((_, pageIndex) => {
       highlightKeywords(pageIndex);
     });
-  }, [pages, showH2]);
+  }, [pages]);
 
   const highlightKeywords = (pageIndex) => {
     const page = pages[pageIndex];
     const keywordPhrases = page.keywords; // Keep phrases intact
     const titleValue = refs.current[pageIndex]?.refTitle?.current?.value?.toLowerCase() || '';
     const metaValue = refs.current[pageIndex]?.refMeta?.current?.value?.toLowerCase() || '';
-    const h1Value = refs.current[pageIndex]?.refH1?.current?.value?.toLowerCase() || '';
-    const h2Value = showH2 ? (refs.current[pageIndex]?.refH2?.current?.value?.toLowerCase() || '') : '';
+    const headerValue = refs.current[pageIndex]?.refHeader?.current?.value?.toLowerCase() || '';
     const onPageValue = page.onpage ? (refs.current[pageIndex]?.refOnPage?.current?.value?.toLowerCase() || '') : '';
   
     keywordPhrases.forEach((keywordPhrase, phraseIndex) => {
@@ -367,8 +338,7 @@ const TableView = ({ webpages, registerFinalState }) => {
         const wordLower = word.toLowerCase();
         const isFound = titleValue.includes(wordLower) ||
                         metaValue.includes(wordLower) ||
-                        h1Value.includes(wordLower) ||
-                        h2Value.includes(wordLower) ||
+                        headerValue.includes(wordLower) ||
                         onPageValue.includes(wordLower);
   
         const keywordElement = document.getElementById(`keyword-${pageIndex}-${phraseIndex}-${wordIndex}`);
@@ -399,8 +369,7 @@ const TableView = ({ webpages, registerFinalState }) => {
         const updatedPage = { ...page };
         const nameValue = refs.current[pageIndex].refName.current.value;
         const titleValue = refs.current[pageIndex].refTitle.current.value;
-        const h1Value = refs.current[pageIndex].refH1.current.value;
-        const h2Value = refs.current[pageIndex].refH2.current.value;
+        const headerValue = refs.current[pageIndex].refHeader.current.value;
         const metaValue = refs.current[pageIndex].refMeta.current.value;
         const onpageValue = page.onpage ? refs.current[pageIndex].refOnPage.current.value : null;
 
@@ -410,11 +379,8 @@ const TableView = ({ webpages, registerFinalState }) => {
         if (titleValue !== page.title) {
           updatedPage.titleNew = titleValue;
         }
-        if (h1Value !== page.h1) {
-          updatedPage.h1New = h1Value;
-        }
-        if (showH2 && h2Value !== page.h2) {
-          updatedPage.h2New = h2Value;
+        if (headerValue !== page.header) {
+          updatedPage.headerNew = headerValue;
         }
         if (metaValue !== page.meta) {
           updatedPage.metaNew = metaValue;
@@ -469,23 +435,7 @@ const TableView = ({ webpages, registerFinalState }) => {
 
   return (
     <>
-    <Button
-        style={{
-          marginLeft: '60vw',
-          width: '300px',
-          marginBottom: '20px',
-          fontSize: '12px',
-          marginTop: '60px',
-
-          height: '20px'
-        }}
-        variant="outline"
-        onClick={toggleH2}
-        tabIndex="-1"
-      >
-        Show H2s
-      </Button>
-      <div
+    <div
         style={{
           marginLeft: '100px',
           position: 'relative',
@@ -505,8 +455,7 @@ const TableView = ({ webpages, registerFinalState }) => {
                 refs.current[pageIndex] = {
                   refName: React.createRef(),
                   refTitle: React.createRef(),
-                  refH1: React.createRef(),
-                  refH2: React.createRef(),
+                  refHeader: React.createRef(),
                   refMeta: React.createRef(),
                   refOnPage: React.createRef(),
                 };
@@ -621,12 +570,12 @@ const TableView = ({ webpages, registerFinalState }) => {
                               tabIndex={0}
                               onFocus={(e) => {
                                 e.target.style.borderColor = '#4fc1ff';
-                                refs.current[pageIndex].refH1.current.style.borderTop = '1px solid #4fc1ff';
+                                refs.current[pageIndex].refHeader.current.style.borderTop = '1px solid #4fc1ff';
                                 handleFocus(e, page, rowRef, 'meta', pageIndex);
                               }}
                               onBlur={(e) => {
                                 e.target.style.borderColor= '#d3d3d3';
-                                refs.current[pageIndex].refH1.current.style.borderTop = '1px solid #d3d3d3';
+                                refs.current[pageIndex].refHeader.current.style.borderTop = '1px solid #d3d3d3';
                                 handleBlur(e,page,'meta');
                               }}
                               onChange={handleChange}
@@ -634,16 +583,16 @@ const TableView = ({ webpages, registerFinalState }) => {
                             />
                             {refs.current[pageIndex].refMeta.current && renderCharacterCounter(refs.current[pageIndex].refMeta.current.value, 155, 160)}
                           </div>
-                          {/* H1 Area */}
+                          {/* Header Area */}
                           <div style={{ position: 'relative' }}>
                             <textarea
-                              ref={refs.current[pageIndex].refH1}
+                              ref={refs.current[pageIndex].refHeader}
                               style={{
                                 width: '100%',
                                 overflow: 'hidden',
                                 resize: 'none',
                                 // marginBottom: '-1px',
-                                height: '2.5em',                                 
+                                height: '2.5em', // Adjusted height to better match a single line of text
                                 boxSizing: 'border-box',
                                 padding: '6px 22px',
                                 fontSize: '14px',
@@ -651,54 +600,21 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 border: '1px solid #d3d3d3',
                                 outline: 'none',
                               }}
-                              defaultValue={page.h1}
+                              defaultValue={page.header}
                               tabIndex={0}
                               onFocus={(e) => {
                                 e.target.style.borderColor = '#4fc1ff';
-                                handleFocus(e, page, rowRef, 'h1', pageIndex);
+                                handleFocus(e, page, rowRef, 'header', pageIndex);
                               }}
                               onBlur={(e) => {
                                 e.target.style.borderColor = '#d3d3d3';
-                                handleBlur(e, page, 'h1');
+                                handleBlur(e, page, 'header');
                               }}
                               onChange={handleChange}
-                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h1')}
+                              onKeyDown={(e) => handleKeyDown(e, pageIndex, 'header')}
                             />
-                            {refs.current[pageIndex].refH1.current && renderCharacterCounter(refs.current[pageIndex].refH1.current.value, 20, 70)}
+                            {refs.current[pageIndex].refHeader.current && renderCharacterCounter(refs.current[pageIndex].refHeader.current.value, 20, 70)}
                           </div>
-                          {/* H2 Area */}
-                            <div style={{ position: 'relative', display: showH2 ? 'block' : 'none' }}>
-                              <textarea
-                                ref={refs.current[pageIndex].refH2}
-                                style={{
-                                  width: '100%',
-                                  overflow: 'hidden',
-                                  resize: 'none',
-                                   
-                                  height: '2.6em',
-                                  padding: '8px 22px',
-                                  fontSize: '14px',
-                                  boxSizing: 'border-box',
-                                  verticalAlign: 'top',
-                                  backgroundColor: '#f7f7f7',
-                                  border: '1px solid #d3d3d3',
-                                  outline: 'none'
-                                }}
-                                defaultValue={page.h2}
-                                tabIndex={0}
-                                onFocus={(e) => {
-                                  e.target.style.border = '1px solid #4fc1ff';
-                                  handleFocus(e, page, rowRef, 'h2', pageIndex);
-                                }}
-                                onBlur={(e) => {
-                                  e.target.style.border = '1px solid #d3d3d3';
-                                  handleBlur(e, page, 'h2');
-                                }}
-                                onChange={handleChange}
-                                onKeyDown={(e) => handleKeyDown(e, pageIndex, 'h2')}
-                              />
-                              {refs.current[pageIndex].refH2.current && renderCharacterCounter(refs.current[pageIndex].refH2.current.value, 20, 70)}
-                            </div>
                           {/* ONPAGE AREA */}
                           {page.onpage && (
                             <div style={{ position: 'relative' }}>
@@ -723,14 +639,14 @@ const TableView = ({ webpages, registerFinalState }) => {
                                 tabIndex={0}
                                 onFocus={(e) => {
                                   e.target.style.borderColor = '#4fc1ff';
-                                  refs.current[pageIndex].refH1.current.style.borderBottom = '1px solid #4fc1ff';
+                                  refs.current[pageIndex].refHeader.current.style.borderBottom = '1px solid #4fc1ff';
                                   handleFocus(e, page, rowRef, 'onPage', pageIndex);
                                   e.target.style.height = 'auto';
                                   e.target.style.height = `${e.target.scrollHeight}px`;
                                 }}
                                 onBlur={(e) => {
                                   e.target.style.borderColor = '#d3d3d3';
-                                  refs.current[pageIndex].refH1.current.style.borderBottom = '1px solid #d3d3d3';
+                                  refs.current[pageIndex].refHeader.current.style.borderBottom = '1px solid #d3d3d3';
                                   handleBlur(e, page, 'onPage');
                                 }}
                                 onChange={(e) => {
