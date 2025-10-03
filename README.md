@@ -1,7 +1,7 @@
 # Project Overview
 
 Challenge:
-Managing seasonal SEO updates across hundreds of websites and thousands of pages is time-consuming and requires manual processes behind several different tools. This is for a marketing agency, who is recommending optimizations for a large national rental company with many individual property managers and web admins.
+Managing seasonal SEO updates across hundreds of websites and thousands of pages is time-consuming and requires manual processes behind several different tools. This project is in use for a marketing agency, who is recommending optimizations for a large national rental company with many individual property managers and web admins.
 
 Solution:
 An integrated workspace for SEO editing tasks:
