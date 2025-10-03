@@ -3,7 +3,7 @@ Designed for a client to speed up webscraping and data entry for SEO content wri
 For monthly batches of ~100 client sites. Ongoing updates are being implemented on different version on client's machine.
 
 ## Screenshot
-Sorry these screenshots look a bit horrendous to maintain client anonymity.
+Sorry these screenshots are blurred to maintain client anonymity.
 
 <img src="./-DevLog/scraper.png" alt="Scraper" width="50%"/>
 Backend grabbing existing website content.
