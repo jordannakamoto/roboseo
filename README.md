@@ -6,10 +6,10 @@ Managing seasonal SEO updates across hundreds of websites and thousands of pages
 Solution:
 An integrated workspace for SEO editing tasks:
 - Page data collection via scraping.
-- Metadata editing with visual page previews
-- AI recommendations for content updates
-- Bulk image review with editable alt tags
-- Integration with Google Sheets for writing final work report for delivery
+- Metadata editing with visual page previews.
+- AI recommendations for content updates.
+- Bulk image review with editable alt tags.
+- Integration with Google Sheets for writing final work report for delivery.
 
 This tool reduces friction in high-volume SEO work, enabling faster turnaround and a better UX.
 
