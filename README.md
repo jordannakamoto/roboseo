@@ -7,7 +7,7 @@ Challenge:
 Managing seasonal SEO updates across hundreds of websites and thousands of pages is time-consuming and requires manual processes behind several different tools.
 
 Solution:
-An integrated workspace that centralizes all SEO editing tasks:
+An integrated workspace for SEO editing tasks:
 - Page data collection via scraping.
 - Metadata editing with visual page previews
 - AI recommendations for content updates
