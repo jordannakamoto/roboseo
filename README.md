@@ -1,6 +1,20 @@
 # SEO Content Refresher
-Designed for a client to speed up webscraping and data entry for SEO content writing.  
-For monthly batches of ~100 client sites. Ongoing updates are being implemented on different version on client's machine.
+Designed for a client to speed up webscraping and data entry for SEO content writing. Ongoing updates are being implemented on different version on client's machine.
+
+# Project Overview
+
+Challenge:
+Managing seasonal SEO updates across hundreds of websites and thousands of pages is time-consuming and requires manual processes between several different tools.
+
+Solution:
+An integrated workspace that centralizes all essential SEO editing tasks:
+- Page data collection via scraping.
+- Metadata editing with visual page previews
+- AI recommendations for content updates
+- Bulk image review with editable alt tags
+- Integration with Google Sheets for writing final work report for delivery
+
+This tool reduces friction in high-volume SEO work, enabling faster turnaround and a better UX.
 
 ## Screenshot
 Sorry these screenshots are blurred to maintain client anonymity.
