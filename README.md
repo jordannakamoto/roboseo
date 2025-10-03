@@ -1,5 +1,5 @@
 # SEO Content Refresher
-Designed for a client to speed up webscraping and data entry for SEO content writing. Ongoing updates are being implemented on a different version on client's machine.
+Designed for a client to speed up webscraping and data entry for SEO content writing. This is for a marketing agency, who is recommending optimizations for a large national real estae company with many individual property managers and web admins. Ongoing updates are being implemented on a different version on client's machine.
 
 # Project Overview
 
