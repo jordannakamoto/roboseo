@@ -1,13 +1,13 @@
 # SEO Content Refresher
-Designed for a client to speed up webscraping and data entry for SEO content writing. Ongoing updates are being implemented on different version on client's machine.
+Designed for a client to speed up webscraping and data entry for SEO content writing. Ongoing updates are being implemented on a different version on client's machine.
 
 # Project Overview
 
 Challenge:
-Managing seasonal SEO updates across hundreds of websites and thousands of pages is time-consuming and requires manual processes between several different tools.
+Managing seasonal SEO updates across hundreds of websites and thousands of pages is time-consuming and requires manual processes behind several different tools.
 
 Solution:
-An integrated workspace that centralizes all essential SEO editing tasks:
+An integrated workspace that centralizes all SEO editing tasks:
 - Page data collection via scraping.
 - Metadata editing with visual page previews
 - AI recommendations for content updates
